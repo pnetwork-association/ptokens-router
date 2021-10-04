@@ -81,12 +81,12 @@ module.exports = {
   // Configure your compilers
   compilers: {
     solc: {
-      version: "0.8.9",
-      settings: {          // See the solidity docs for advice about optimization and evmVersion
-       optimizer: {
-         enabled: false,
-         runs: 200
-       },
+      version: '0.8.9',
+      settings: { // See the solidity docs for advice about optimization and evmVersion
+        optimizer: {
+          enabled: false,
+          runs: 200
+        },
       }
     }
   },
@@ -102,13 +102,13 @@ module.exports = {
   // $ truffle migrate --reset --compile-all
   //
   // db: {
-    // enabled: false,
-    // host: "127.0.0.1",
-    // adapter: {
-    //   name: "sqlite",
-    //   settings: {
-    //     directory: ".db"
-    //   }
-    // }
+  // enabled: false,
+  // host: "127.0.0.1",
+  // adapter: {
+  //   name: "sqlite",
+  //   settings: {
+  //     directory: ".db"
+  //   }
   // }
-};
+  // }
+}
