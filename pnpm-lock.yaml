@@ -1,0 +1,19 @@
+lockfileVersion: 5.3
+
+specifiers:
+  '@openzeppelin/contracts': ^4.3.2
+  ramda: ^0.27.1
+
+dependencies:
+  '@openzeppelin/contracts': 4.3.2
+  ramda: 0.27.1
+
+packages:
+
+  /@openzeppelin/contracts/4.3.2:
+    resolution: {integrity: sha512-AybF1cesONZStg5kWf6ao9OlqTZuPqddvprc0ky7lrUVOjXeKpmQ2Y9FK+6ygxasb+4aic4O5pneFBfwVsRRRg==}
+    dev: false
+
+  /ramda/0.27.1:
+    resolution: {integrity: sha512-PgIdVpn5y5Yns8vqb8FzBUEYn98V3xcPgawAkkgj0YJ0qDsnHCiNmZYfOGMgOvoB0eWFLpYbhxUR3mxfDIMvpw==}
+    dev: false

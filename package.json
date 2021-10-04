@@ -13,5 +13,9 @@
     "crypto"
   ],
   "author": "Greg Kapka (greg@oraclize.it)",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "@openzeppelin/contracts": "^4.3.2",
+    "ramda": "^0.27.1"
+  }
 }
