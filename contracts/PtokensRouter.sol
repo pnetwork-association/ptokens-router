@@ -62,10 +62,5 @@ contract PTokensRouter is IERC777Recipient {
             bytes4 destinationChainId,
             address destinationAddress
         ) = decodeUserDataToDestinationChainAndAddress(userData);
-
-        //..
-        // Or, rather than just firing a boring event, do other cool things with your metadata instead!
-        //..
-
     }
 }

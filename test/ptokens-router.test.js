@@ -6,7 +6,9 @@ contract('pTokens Router', ([OWNER, ...accounts]) => {
   const SAMPLE_USER_DATA = '0xd3caff'
   const SAMPLE_METADATA_VERSION = '0x01'
   const SAMPLE_METADATA_CHAIN_ID = '0x00f34368' // NOTE: Rinkeby
+  const SAMPLE_METADATA_CHAIN_ID_2 = '0x0069c322' // NOTE: Ropstennini
   const SAMPLE_ETH_ADDRESS = '0xfEDFe2616EB3661CB8FEd2782F5F0cC91D59DCaC'
+  const SAMPLE_ETH_ADDRESS_2 = '0xedB86cd455ef3ca43f0e227e00469C3bDFA40628'
 
   const getContract = (_web3, _artifact, _constructorParams = []) =>
     new Promise((resolve, reject) =>
@@ -31,6 +33,23 @@ contract('pTokens Router', ([OWNER, ...accounts]) => {
       [_destinationAddress, _destinationChainId]
     )
   }
+
+  const encodeUserDataInMetadata = (
+    _web3,
+    _metadataVersion,
+    _userData,
+    _protocolId,
+    _originAddress,
+    _destinationAddress,
+    _destinationChainId,
+  ) =>
+    encodeCoreMetadata(
+      _web3,
+      _metadataVersion,
+      encodeUserData(_web3, _destinationAddress, _destinationChainId),
+      _protocolId,
+      _originAddress
+  )
 
   const getSampleMetadata = _web3 =>
     encodeCoreMetadata(_web3, '0x01', '0xd3caff', SAMPLE_METADATA_CHAIN_ID, SAMPLE_ETH_ADDRESS)
@@ -79,5 +98,19 @@ contract('pTokens Router', ([OWNER, ...accounts]) => {
     const result = await METHODS.decodeUserDataToDestinationChainAndAddress(getSampleUserData(web3)).call()
     assert.strictEqual(result.destinationChain, SAMPLE_METADATA_CHAIN_ID)
     assert.strictEqual(result.destinationAddress, SAMPLE_ETH_ADDRESS)
+  })
+
+  it('Should encode user data in metadata', () => {
+    const result = encodeUserDataInMetadata(
+      web3,
+      SAMPLE_METADATA_VERSION,
+      SAMPLE_USER_DATA,
+      SAMPLE_METADATA_CHAIN_ID,
+      SAMPLE_ETH_ADDRESS,
+      SAMPLE_METADATA_CHAIN_ID_2,
+      SAMPLE_ETH_ADDRESS_2,
+    )
+    const expectedResult = '0x0100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000008000f3436800000000000000000000000000000000000000000000000000000000000000000000000000000000fedfe2616eb3661cb8fed2782f5f0cc91d59dcac00000000000000000000000000000000000000000000000000000000000000400069c32200000000000000000000000000000000000000000000000000000000000000000000000000000000edb86cd455ef3ca43f0e227e00469c3bdfa40628'
+    assert.strictEqual(result, expectedResult)
   })
 })
