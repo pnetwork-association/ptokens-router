@@ -1,0 +1,17 @@
+{
+  "name": "ptokens-router",
+  "version": "0.1.0",
+  "description": "The pTokens interim-chain router",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "pTokens",
+    "Provable",
+    "Defi",
+    "crypto"
+  ],
+  "author": "Greg Kapka (greg@oraclize.it)",
+  "license": "MIT"
+}
