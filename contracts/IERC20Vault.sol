@@ -6,14 +6,6 @@ interface IERC20Vault {
     function pegIn(
         uint256 _tokenAmount,
         address _tokenAddress,
-        string calldata _destinationAddress
-    )
-        external
-        returns (bool);
-
-    function pegIn(
-        uint256 _tokenAmount,
-        address _tokenAddress,
         string memory _destinationAddress,
         bytes memory _userData
     )
