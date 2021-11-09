@@ -3,16 +3,17 @@ const {
   encodeCoreMetadata,
   encodeUserDataInMetadata,
 } = require('../lib/metadata-encoder')
+const {
+  SAMPLE_USER_DATA,
+  SAMPLE_ETH_ADDRESS_1,
+  SAMPLE_ETH_ADDRESS_2,
+  SAMPLE_METADATA_VERSION,
+  SAMPLE_METADATA_CHAIN_ID_1,
+  SAMPLE_METADATA_CHAIN_ID_2,
+} = require('./test-utils')
 const assert = require('assert')
 
 describe('Metadata Encoder', () => {
-  const SAMPLE_USER_DATA = '0xd3caff'
-  const SAMPLE_METADATA_VERSION = '0x01'
-  const SAMPLE_METADATA_CHAIN_ID_1 = '0x00f34368' // NOTE: Rinkeby
-  const SAMPLE_METADATA_CHAIN_ID_2 = '0x0069c322' // NOTE: Ropstennini
-  const SAMPLE_ETH_ADDRESS_1 = '0xfEDFe2616EB3661CB8FEd2782F5F0cC91D59DCaC'
-  const SAMPLE_ETH_ADDRESS_2 = '0xedB86cd455ef3ca43f0e227e00469C3bDFA40628'
-
   it('Should encode metadata', () => {
     const result = encodeCoreMetadata(
       SAMPLE_METADATA_VERSION,
@@ -32,7 +33,7 @@ describe('Metadata Encoder', () => {
     assert.strictEqual(result, expectedResult)
   })
 
-  it('Should encode user-data in metadata', () => {
+  it('Should encode user data in metadata', () => {
     const result = encodeUserDataInMetadata(
       SAMPLE_METADATA_VERSION,
       SAMPLE_USER_DATA,
