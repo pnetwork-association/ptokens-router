@@ -3,11 +3,13 @@
 require('dotenv').config()
 const { docopt } = require('docopt')
 const { version } = require('./package.json')
+const { deployContract } = require('./lib/deploy-contract')
 
 const TOOL_NAME = 'cli.js'
 const HELP_OPTION = '--help'
 const VERSION_OPTION = '--version'
 const VERIFY_CONTRACT_CMD = 'verifyContract'
+const DEPLOY_CONTRACT_CMD = 'deployContract'
 
 const USAGE_INFO = `
 ❍ pTokens Router Contract Command Line Interface
@@ -32,8 +34,10 @@ const USAGE_INFO = `
 ❍ Usage:
   ${TOOL_NAME} ${HELP_OPTION}
   ${TOOL_NAME} ${VERSION_OPTION}
+  ${TOOL_NAME} ${DEPLOY_CONTRACT_CMD}
 
 ❍ Commands:
+  ${DEPLOY_CONTRACT_CMD}        ❍ Deploy the logic contract.
 
 ❍ Options:
   ${HELP_OPTION}                ❍ Show this message.
@@ -42,6 +46,8 @@ const USAGE_INFO = `
 
 const main = _ => {
   const CLI_ARGS = docopt(USAGE_INFO, { version })
+  if (CLI_ARGS[DEPLOY_CONTRACT_CMD])
+    return deployContract()
 }
 
 main().catch(_err => console.error('✘', _err.message))
