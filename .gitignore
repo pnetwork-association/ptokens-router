@@ -7,3 +7,4 @@
 !private-key.gpg
 /cache
 /artifacts
+**/.openzeppelin
