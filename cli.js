@@ -3,12 +3,14 @@
 require('dotenv').config()
 const { docopt } = require('docopt')
 const { version } = require('./package.json')
+const { getOwner } = require('./lib/get-owner')
 const { deployContract } = require('./lib/deploy-contract')
 const { verifyContract } = require('./lib/verify-contract')
 
 const TOOL_NAME = 'cli.js'
 const HELP_OPTION = '--help'
 const NETWORK_ARG = '<network>'
+const GET_OWNER_CMD = 'getOwner'
 const VERSION_OPTION = '--version'
 const VERIFY_CONTRACT_CMD = 'verifyContract'
 const DEPLOY_CONTRACT_CMD = 'deployContract'
@@ -38,11 +40,13 @@ const USAGE_INFO = `
   ${TOOL_NAME} ${HELP_OPTION}
   ${TOOL_NAME} ${VERSION_OPTION}
   ${TOOL_NAME} ${DEPLOY_CONTRACT_CMD}
+  ${TOOL_NAME} ${GET_OWNER_CMD} ${DEPLOYED_ADDRESS_ARG}
   ${TOOL_NAME} ${VERIFY_CONTRACT_CMD} ${DEPLOYED_ADDRESS_ARG} ${NETWORK_ARG}
 
 ❍ Commands:
   ${DEPLOY_CONTRACT_CMD}        ❍ Deploy the logic contract.
   ${VERIFY_CONTRACT_CMD}        ❍ Verify the logic contract.
+  ${GET_OWNER_CMD}        ❍ Get the owner of the contract at ${DEPLOYED_ADDRESS_ARG}.
 
 ❍ Options:
   ${HELP_OPTION}                ❍ Show this message.
@@ -57,6 +61,8 @@ const main = _ => {
     return deployContract()
   if (CLI_ARGS[VERIFY_CONTRACT_CMD])
     return verifyContract(CLI_ARGS[DEPLOYED_ADDRESS_ARG], CLI_ARGS[NETWORK_ARG])
+  if (CLI_ARGS[GET_OWNER_CMD])
+    return getOwner(CLI_ARGS[DEPLOYED_ADDRESS_ARG])
 }
 
 main().catch(_err => console.error('✘', _err.message))
