@@ -14,7 +14,7 @@ contract PTokensRouter is
     IERC777Recipient,
     ConvertAddressToString
 {
-    IERC1820RegistryUpgradeable private _erc1820 = IERC1820RegistryUpgradeable(
+    IERC1820RegistryUpgradeable constant private _erc1820 = IERC1820RegistryUpgradeable(
         0x1820a4B7618BdE71Dce8cdc73aAB6C95905faD24
     );
     bytes32 constant private TOKENS_RECIPIENT_INTERFACE_HASH = keccak256("ERC777TokensRecipient");
