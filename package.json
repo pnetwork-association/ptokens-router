@@ -19,6 +19,7 @@
     "@nomiclabs/hardhat-etherscan": "^2.1.7",
     "@nomiclabs/hardhat-waffle": "^2.0.1",
     "@openzeppelin/contracts": "^4.3.2",
+    "@openzeppelin/contracts-upgradeable": "^4.3.2",
     "@openzeppelin/test-helpers": "^0.5.13",
     "docopt": "^0.6.2",
     "dotenv": "^10.0.0",
@@ -29,6 +30,7 @@
     "truffle-flattener": "^1.5.0"
   },
   "devDependencies": {
+    "@openzeppelin/hardhat-upgrades": "^1.12.0",
     "eslint": "^5.14.1",
     "eslint-config-standard": "^12.0.0",
     "eslint-plugin-import": "^2.16.0",

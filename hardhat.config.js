@@ -11,6 +11,7 @@ const {
 require('hardhat-erc1820')
 require('@nomiclabs/hardhat-waffle')
 require('@nomiclabs/hardhat-etherscan')
+require('@openzeppelin/hardhat-upgrades')
 
 const SUPPORTED_NETWORKS = [
   'rinkeby',
