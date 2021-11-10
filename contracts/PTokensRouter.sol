@@ -6,26 +6,7 @@ import "./IERC20Vault.sol";
 import "./IERC1820Registry.sol";
 import "@openzeppelin/contracts/token/ERC777/IERC777Recipient.sol";
 
-contract AddressToString {
-	function addressToString(address account) public pure returns(string memory) {
-		return toString(abi.encodePacked(account));
-	}
-
-	function toString(bytes memory data) public pure returns(string memory) { // TODO Test
-		bytes memory alphabet = "0123456789abcdef";
-
-		bytes memory str = new bytes(2 + data.length * 2);
-		str[0] = "0";
-		str[1] = "x";
-		for (uint i = 0; i < data.length; i++) {
-			str[2+i*2] = alphabet[uint(uint8(data[i] >> 4))];
-			str[3+i*2] = alphabet[uint(uint8(data[i] & 0x0f))];
-		}
-		return string(str);
-	}
-}
-
-contract PTokensRouter is IERC777Recipient, AddressToString {
+contract PTokensRouter is IERC777Recipient, ConvertAddressToString {
     IERC1820Registry private _erc1820 = IERC1820Registry(0x1820a4B7618BdE71Dce8cdc73aAB6C95905faD24);
     bytes32 constant private TOKENS_RECIPIENT_INTERFACE_HASH = keccak256("ERC777TokensRecipient");
     mapping(bytes4 => address) public vaultAddresses;
