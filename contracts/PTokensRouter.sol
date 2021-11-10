@@ -5,6 +5,7 @@ pragma solidity ^0.8.0;
 import "./IERC20Vault.sol";
 import "./ConvertAddressToString.sol";
 import "@openzeppelin/contracts/token/ERC777/IERC777Recipient.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/interfaces/IERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/interfaces/IERC1820RegistryUpgradeable.sol";
@@ -12,6 +13,7 @@ import "@openzeppelin/contracts-upgradeable/interfaces/IERC1820RegistryUpgradeab
 contract PTokensRouter is
     Initializable,
     IERC777Recipient,
+    OwnableUpgradeable,
     ConvertAddressToString
 {
     IERC1820RegistryUpgradeable constant private _erc1820 = IERC1820RegistryUpgradeable(
@@ -23,6 +25,7 @@ contract PTokensRouter is
     function initialize ()
         public initializer
     {
+        __Ownable_init();
         _erc1820.setInterfaceImplementer(address(this), TOKENS_RECIPIENT_INTERFACE_HASH, address(this));
     }
 
@@ -71,9 +74,9 @@ contract PTokensRouter is
         bytes4 _chainId,
         address _vaultAddress
     )
-        public
+        external
+        onlyOwner
         returns (bool success)
-        // TODO Only owner
     {
         vaultAddresses[_chainId] = _vaultAddress;
         return true;
