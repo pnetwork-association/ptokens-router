@@ -82,6 +82,17 @@ contract PTokensRouter is
         return true;
     }
 
+    function removeVaultAddress(
+        bytes4 _chainId
+    )
+        external
+        onlyOwner
+        returns (bool success)
+    {
+        delete vaultAddresses[_chainId];
+        return true;
+    }
+
     function tokensReceived(
         address /*operator*/,
         address /*from*/,

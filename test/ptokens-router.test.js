@@ -30,6 +30,15 @@ describe('pTokens Router Contract', () => {
       assert.strictEqual(vaultAddressAfter, SAMPLE_ETH_ADDRESS_1)
     })
 
+    it('Owner can remove vault addresses', async () => {
+      await OWNED_CONTRACT.addVaultAddress(SAMPLE_METADATA_CHAIN_ID_1, SAMPLE_ETH_ADDRESS_1)
+      const vaultAddressBefore = await OWNED_CONTRACT.vaultAddresses(SAMPLE_METADATA_CHAIN_ID_1)
+      assert.strictEqual(vaultAddressBefore, SAMPLE_ETH_ADDRESS_1)
+      await OWNED_CONTRACT.removeVaultAddress(SAMPLE_METADATA_CHAIN_ID_1)
+      const vaultAddressAfter = await OWNED_CONTRACT.vaultAddresses(SAMPLE_METADATA_CHAIN_ID_1)
+      assert.strictEqual(vaultAddressAfter, ZERO_ADDRESS)
+    })
+
     it('Non owner cannot add vault addresses', async () => {
       try {
         await NON_OWNED_CONTRACT.addVaultAddress(SAMPLE_METADATA_CHAIN_ID_1, SAMPLE_ETH_ADDRESS_1)
@@ -38,6 +47,19 @@ describe('pTokens Router Contract', () => {
         const expectedErr = 'Ownable: caller is not the owner'
         assert(_err.message.includes(expectedErr))
       }
+    })
+
+    it('Non owner cannot add vault addresses', async () => {
+      OWNED_CONTRACT.addVaultAddress(SAMPLE_METADATA_CHAIN_ID_1, SAMPLE_ETH_ADDRESS_1)
+      assert.strictEqual(await OWNED_CONTRACT.vaultAddresses(SAMPLE_METADATA_CHAIN_ID_1), SAMPLE_ETH_ADDRESS_1)
+      try {
+        await NON_OWNED_CONTRACT.removeVaultAddress(SAMPLE_METADATA_CHAIN_ID_1)
+        assert.fail('Should not have succeeded!')
+      } catch (_err) {
+        const expectedErr = 'Ownable: caller is not the owner'
+        assert(_err.message.includes(expectedErr))
+      }
+      assert.strictEqual(await OWNED_CONTRACT.vaultAddresses(SAMPLE_METADATA_CHAIN_ID_1), SAMPLE_ETH_ADDRESS_1)
     })
   })
 
