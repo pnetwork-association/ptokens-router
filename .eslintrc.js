@@ -18,6 +18,7 @@ module.exports = {
   globals: {
     "ethers": false,
     "artifacts": false,
+    "upgrades": false,
   },
   rules: {
     "max-len": ["error", 120, 2, {
