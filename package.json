@@ -5,6 +5,7 @@
   "main": "cli.js",
   "scripts": {
     "test": "npx hardhat test",
+    "tests": "npx hardhat test",
     "compile": "npx hardhat compile"
   },
   "keywords": [
