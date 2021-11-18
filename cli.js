@@ -60,7 +60,7 @@ const USAGE_INFO = `
   ${VERIFY_CONTRACT_CMD}        ❍ Verify the logic contract.
   ${GET_OWNER_CMD}              ❍ Get the owner of the contract at ${DEPLOYED_ADDRESS_ARG}.
   ${TRANSFER_OWNER_CMD}         ❍ Transfer ownership of contract at ${DEPLOYED_ADDRESS_ARG} to ${ETH_ADDRESS_ARG}.
-  ${REMOVE_VAULT_ADDRESS_CMD}       ❍ Removess vault address with ${CHAIN_ID_ARG} from ${DEPLOYED_ADDRESS_ARG}.
+  ${REMOVE_VAULT_ADDRESS_CMD}    ❍ Removess vault address with ${CHAIN_ID_ARG} from ${DEPLOYED_ADDRESS_ARG}.
   ${ADD_VAULT_ADDRESS_CMD}       ❍ Adds ${ETH_ADDRESS_ARG} as vault address with ${CHAIN_ID_ARG} to ${DEPLOYED_ADDRESS_ARG}.
 
 ❍ Options:
