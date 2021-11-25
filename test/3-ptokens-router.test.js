@@ -181,4 +181,22 @@ describe('pTokens Router Contract', () => {
       }
     })
   })
+
+  describe('Vault Address Getter Tests', () => {
+    it('Should get vault address correctly', async () => {
+      await ROUTER_CONTRACT.addVaultAddress(SAMPLE_METADATA_CHAIN_ID_1, SAMPLE_ETH_ADDRESS_1)
+      const result = await ROUTER_CONTRACT.getVaultAddressFromChainId(SAMPLE_METADATA_CHAIN_ID_1)
+      assert.strictEqual(result, SAMPLE_ETH_ADDRESS_1)
+    })
+
+    it('Should revert if vault address does not exist', async () => {
+      assert.strictEqual(await ROUTER_CONTRACT.vaultAddresses(SAMPLE_METADATA_CHAIN_ID_1), ZERO_ADDRESS)
+      try {
+        await ROUTER_CONTRACT.getVaultAddressFromChainId(SAMPLE_METADATA_CHAIN_ID_1)
+        assert.fail('Should not have succeeded!')
+      } catch (_err) {
+        assert(_err.message.includes('No vault address set for that chain ID'))
+      }
+    })
+  })
 })

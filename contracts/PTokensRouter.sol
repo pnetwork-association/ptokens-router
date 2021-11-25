@@ -95,17 +95,15 @@ contract PTokensRouter is
         return hasRole(REDEEMER_ROLE, _account);
     }
 
-    function getVaultAddressFromDestinationChainId( // TODO test
-        bytes4 _destinationChainId
+    function getVaultAddressFromChainId(
+        bytes4 _chainId
     )
         view
-        internal
+        public
         returns (address)
     {
-        address vaultAddress =  vaultAddresses[_destinationChainId];
-        require(vaultAddress != address(0), 'No vault address set for that chain ID');
-        // TODO divert to a safe address in the above case instead of reverting?
+        address vaultAddress =  vaultAddresses[_chainId];
+        require(vaultAddress != address(0), 'No vault address set for that chain ID'); // FIXME Divert instead?
         return vaultAddress;
     }
-
 }
