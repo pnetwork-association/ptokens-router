@@ -4,7 +4,6 @@ pragma solidity ^0.8.0;
 
 import "./IERC20Vault.sol";
 import "./ConvertAddressToString.sol";
-import "@openzeppelin/contracts/token/ERC777/IERC777Recipient.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/interfaces/IERC20Upgradeable.sol";
@@ -12,7 +11,6 @@ import "@openzeppelin/contracts-upgradeable/interfaces/IERC1820RegistryUpgradeab
 
 contract PTokensRouter is
     Initializable,
-    IERC777Recipient,
     OwnableUpgradeable,
     ConvertAddressToString
 {
@@ -63,30 +61,5 @@ contract PTokensRouter is
     {
         delete vaultAddresses[_chainId];
         return true;
-    }
-
-    function tokensReceived(
-        address /*operator*/,
-        address /*from*/,
-        address /*to*/,
-        uint256 amount,
-        bytes calldata metadata,
-        bytes calldata /*operatorData*/
-    )
-        external
-        override
-    {
-        (, bytes memory userData, ,) = decodeMetadata(metadata);
-        (
-            bytes4 destinationChainId,
-            address destinationAddress
-        ) = decodeUserDataToDestinationChainAndAddress(userData);
-        address vaultAddress = getVaultAddressFromDestinationChainId(destinationChainId);
-        IERC20Upgradeable interimToken = IERC20Upgradeable(msg.sender);
-        interimToken.approve(vaultAddress, amount);
-        // NOTE: ∵ ETH metadata encodes the destination as an `address` type
-        string memory destinationAddressStr = convertAddressToString(destinationAddress);
-        IERC20Vault vault = IERC20Vault(vaultAddress);
-        vault.pegIn(amount, msg.sender, destinationAddressStr, userData);
     }
 }
