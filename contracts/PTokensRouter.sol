@@ -35,6 +35,7 @@ contract PTokensRouter is
             TOKENS_RECIPIENT_INTERFACE_HASH,
             address(this)
         );
+        _setupRole(ADMIN_ROLE, _msgSender());
         _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
     }
 

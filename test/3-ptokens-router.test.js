@@ -10,11 +10,9 @@ describe('pTokens Router Contract', () => {
   const getRoleHash = _roleStr =>
     ethers.utils.keccak256(ethers.utils.toUtf8Bytes(_roleStr))
 
-  let ROUTER_CONTRACT, CONTRACT_FACTORY, NON_ADMIN, NON_ADMIN_ROUTER_CONTRACT, OWNER
+  let ROUTER_CONTRACT, NON_ADMIN, NON_ADMIN_ROUTER_CONTRACT, OWNER
   const ADMIN_ROLE = getRoleHash('ADMIN_ROLE')
-  const MINTER_ROLE = getRoleHash('MINTER_ROLE')
   const NON_ADMIN_ERROR = 'Caller is not an admin'
-  const REDEEMER_ROLE = getRoleHash('REDEEMER_ROLE')
   const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
   const DEFAULT_ADMIN_ROLE = '0x0000000000000000000000000000000000000000000000000000000000000000'
 
@@ -27,8 +25,12 @@ describe('pTokens Router Contract', () => {
   })
 
   describe('Initialization Tests', () => {
-    it('Deploying account should have admin role', async () => {
+    it('Deploying account should have default admin role', async () => {
       assert(await ROUTER_CONTRACT.hasRole(DEFAULT_ADMIN_ROLE, OWNER.address))
+    })
+
+    it('Deploying account should have admin role', async () => {
+      assert(await ROUTER_CONTRACT.hasRole(ADMIN_ROLE, OWNER.address))
     })
   })
 
