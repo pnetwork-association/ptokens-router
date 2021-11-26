@@ -1,7 +1,7 @@
 const assert = require('assert')
 const { prop } = require('ramda')
 
-describe('Convert String To Address', () => {
+describe('Convert String To Address Contract', () => {
   let CONTRACT, CONTRACT_FACTORY
 
   beforeEach(async () => {

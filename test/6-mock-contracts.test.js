@@ -4,7 +4,7 @@ const {
 } = require('./test-utils')
 const assert = require('assert')
 
-describe('Mock Contact Origin Chain IDs', () => {
+describe('Mock Contacts', () => {
   let ROUTER_CONTRACT
 
   beforeEach(async () => {

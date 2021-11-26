@@ -13,7 +13,7 @@ const {
 } = require('./test-utils')
 const assert = require('assert')
 
-describe('Metadata Encoder', () => {
+describe('Metadata Encoder Contract', () => {
   it('Should encode metadata', () => {
     const result = encodeCoreMetadata(
       SAMPLE_METADATA_VERSION,

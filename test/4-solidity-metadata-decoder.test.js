@@ -8,7 +8,7 @@ const {
 } = require('./test-utils')
 const assert = require('assert')
 
-describe('Metadata Decoder Tests', () => {
+describe('Metadata Decoder Contract', () => {
   let CONTRACT
 
   beforeEach(async () => {
