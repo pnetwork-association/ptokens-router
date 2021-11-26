@@ -15,10 +15,25 @@ const getSampleMetadata = _ =>
 const getSampleUserData = _ =>
   encodeUserData(SAMPLE_METADATA_CHAIN_ID_1, SAMPLE_ETH_ADDRESS_1)
 
+const deployRouterContract = async (_deployArgs = []) =>
+  upgrades.deployProxy(
+    await ethers.getContractFactory('contracts/PTokensRouter.sol:PTokensRouter'),
+    _deployArgs
+  )
+
+const deployNonUpgradeableContract = (_contractPath, _deployArgs = []) =>
+  ethers
+    .getContractFactory(_contractPath)
+    .then(_factory => _factory.deploy(..._deployArgs))
+    .then(_contract => Promise.all([ _contract, _contract.deployTransaction.wait() ]))
+    .then(([ _contract ]) => _contract)
+
 module.exports = {
+  deployNonUpgradeableContract,
   SAMPLE_METADATA_CHAIN_ID_1,
   SAMPLE_METADATA_CHAIN_ID_2,
   SAMPLE_METADATA_VERSION,
+  deployRouterContract,
   SAMPLE_ETH_ADDRESS_1,
   SAMPLE_ETH_ADDRESS_2,
   getSampleMetadata,
