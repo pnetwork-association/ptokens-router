@@ -2,26 +2,30 @@
 
 pragma solidity ^0.8.0;
 
-import "./IVault.sol";
-import "./IPToken.sol";
+import "hardhat/console.sol"; // FIXME rm!
+
+import "./interfaces/IVault.sol";
+import "./interfaces/IPToken.sol";
+import "./PTokensMetadataDecoder.sol";
 import "./ConvertStringToAddress.sol";
+import "./interfaces/IOriginChainIdGetter.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/interfaces/IERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/interfaces/IERC1820RegistryUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC777/IERC777RecipientUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlEnumerableUpgradeable.sol";
 
 contract PTokensRouter is
     Initializable,
+    PTokensMetadataDecoder,
     ConvertStringToAddress,
+    IERC777RecipientUpgradeable,
     AccessControlEnumerableUpgradeable
 {
+    bytes4 public constant ORIGIN_CHAIN_ID = 0xff000000;
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
-    bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
-    bytes32 public constant REDEEMER_ROLE = keccak256("REDEEMER_ROLE");
     bytes32 public constant TOKENS_RECIPIENT_INTERFACE_HASH = keccak256("ERC777TokensRecipient");
-
     mapping(bytes4 => address) public interimVaultAddresses;
-    mapping(bytes4 => mapping(address => address)) public destinationChainPTokenAddresses;
 
     function initialize ()
         public initializer
@@ -39,16 +43,6 @@ contract PTokensRouter is
             hasRole(DEFAULT_ADMIN_ROLE, _msgSender()) || hasRole(ADMIN_ROLE, _msgSender()),
             "Caller is not an admin!"
         );
-        _;
-    }
-
-    modifier onlyMinter() {
-        require(hasRole(ADMIN_ROLE, _msgSender()), "Caller is not a minter!");
-        _;
-    }
-
-    modifier onlyRedeemer() {
-        require(hasRole(ADMIN_ROLE, _msgSender()), "Caller is not a redeemer!");
         _;
     }
 
@@ -75,78 +69,51 @@ contract PTokensRouter is
         return true;
     }
 
-    function addDestinationChainPTokenAddress(
-        bytes4 _destinationChainId,
-        address _interimPTokenAddress,
-        address _pTokenAddress
+    function getOriginChainIdFromContract(
+        address _contractAddress
     )
-        external
-        onlyAdmin
+        public
+        returns (bytes4)
+    {
+        return IOriginChainIdGetter(_contractAddress).ORIGIN_CHAIN_ID();
+    }
+
+    function callerIsInterimVault(
+        address _caller
+    )
+        public
         returns (bool)
     {
-        destinationChainPTokenAddresses[_destinationChainId][_interimPTokenAddress] = _pTokenAddress;
-        return true;
+        return getOriginChainIdFromContract(_caller) == ORIGIN_CHAIN_ID;
     }
 
-    function removeDestinationChainPTokenAddress(
-        bytes4 _destinationChainId,
-        address _interimPTokenAddress
+
+    function callerIsInterimPToken(
+        address _caller
     )
-        external
-        onlyAdmin
+        public
         returns (bool)
     {
-        delete destinationChainPTokenAddresses[_destinationChainId][_interimPTokenAddress];
-        return true;
+        return !callerIsInterimVault(_caller);
     }
 
-    function grantMinterRole(address _account) external {
-        grantRole(MINTER_ROLE, _account);
-    }
-
-    function revokeMinterRole(address _account) external {
-        revokeRole(MINTER_ROLE, _account);
-    }
-
-    function hasMinterRole(address _account) external view returns (bool) {
-        return hasRole(MINTER_ROLE, _account);
-    }
-
-    function grantRedeemerRole(address _account) external {
-        grantRole(REDEEMER_ROLE, _account);
-    }
-
-    function revokeRedeemerRole(address _account) external {
-        revokeRole(REDEEMER_ROLE, _account);
-    }
-
-    function hasRedeemerRole(address _account) external view returns (bool) {
-        return hasRole(REDEEMER_ROLE, _account);
-    }
-
-    function safelyGetInterimVaultAddress(
-        bytes4 _destinationChainId
+    function tokensReceived(
+        address /*_operator*/,
+        address _from,
+        address _to,
+        uint256 _amount,
+        bytes calldata _userData,
+        bytes calldata /*_operatorData*/
     )
-        view
-        public
-        returns (address)
+        external
+        override
     {
-        address vaultAddress =  interimVaultAddresses[_destinationChainId];
-        require(vaultAddress != address(0), 'No vault address set for that chain ID'); // FIXME Divert instead?
-        return vaultAddress;
-    }
-
-    // TODO test
-    function safelyGetDestinationChainPTokenAddress(
-        bytes4 _destinationChainId,
-        address _interimPTokenAddress
-    )
-        view
-        public
-        returns (address)
-    {
-        address result = destinationChainPTokenAddresses[_destinationChainId][_interimPTokenAddress];
-        require(result != address(0), 'No destination chain token token address set!'); // FIXME Divert instead?
-        return result;
+        if (callerIsInterimPToken(msg.sender)) {
+            return;
+        } else if (callerIsInterimVault(msg.sender)) {
+            return;
+        } else {
+            return; // FIXME What to do in this case?
+        }
     }
 }
