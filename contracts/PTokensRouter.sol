@@ -2,8 +2,9 @@
 
 pragma solidity ^0.8.0;
 
-import "./IERC20Vault.sol";
-import "./ConvertAddressToString.sol";
+import "./IVault.sol";
+import "./IPToken.sol";
+import "./ConvertStringToAddress.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/interfaces/IERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/interfaces/IERC1820RegistryUpgradeable.sol";
@@ -11,22 +12,25 @@ import "@openzeppelin/contracts-upgradeable/access/AccessControlEnumerableUpgrad
 
 contract PTokensRouter is
     Initializable,
-    ConvertAddressToString,
+    ConvertStringToAddress,
     AccessControlEnumerableUpgradeable
 {
-    IERC1820RegistryUpgradeable constant private _erc1820 = IERC1820RegistryUpgradeable(
-        0x1820a4B7618BdE71Dce8cdc73aAB6C95905faD24
-    );
-    bytes32 constant private TOKENS_RECIPIENT_INTERFACE_HASH = keccak256("ERC777TokensRecipient");
-    mapping(bytes4 => address) public vaultAddresses;
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
     bytes32 public constant REDEEMER_ROLE = keccak256("REDEEMER_ROLE");
+    bytes32 public constant TOKENS_RECIPIENT_INTERFACE_HASH = keccak256("ERC777TokensRecipient");
+
+    mapping(bytes4 => address) public interimVaultAddresses;
+    mapping(bytes4 => mapping(address => address)) public destinationChainPTokenAddresses;
 
     function initialize ()
         public initializer
     {
-        _erc1820.setInterfaceImplementer(address(this), TOKENS_RECIPIENT_INTERFACE_HASH, address(this));
+        IERC1820RegistryUpgradeable(0x1820a4B7618BdE71Dce8cdc73aAB6C95905faD24).setInterfaceImplementer(
+            address(this),
+            TOKENS_RECIPIENT_INTERFACE_HASH,
+            address(this)
+        );
         _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
     }
 
@@ -56,7 +60,7 @@ contract PTokensRouter is
         onlyAdmin
         returns (bool success)
     {
-        vaultAddresses[_chainId] = _vaultAddress;
+        interimVaultAddresses[_chainId] = _vaultAddress;
         return true;
     }
 
@@ -67,7 +71,32 @@ contract PTokensRouter is
         onlyAdmin
         returns (bool success)
     {
-        delete vaultAddresses[_chainId];
+        delete interimVaultAddresses[_chainId];
+        return true;
+    }
+
+    function addDestinationChainPTokenAddress(
+        bytes4 _destinationChainId,
+        address _interimPTokenAddress,
+        address _pTokenAddress
+    )
+        external
+        onlyAdmin
+        returns (bool)
+    {
+        destinationChainPTokenAddresses[_destinationChainId][_interimPTokenAddress] = _pTokenAddress;
+        return true;
+    }
+
+    function removeDestinationChainPTokenAddress(
+        bytes4 _destinationChainId,
+        address _interimPTokenAddress
+    )
+        external
+        onlyAdmin
+        returns (bool)
+    {
+        delete destinationChainPTokenAddresses[_destinationChainId][_interimPTokenAddress];
         return true;
     }
 
@@ -95,15 +124,29 @@ contract PTokensRouter is
         return hasRole(REDEEMER_ROLE, _account);
     }
 
-    function getVaultAddressFromChainId(
-        bytes4 _chainId
+    function safelyGetInterimVaultAddress(
+        bytes4 _destinationChainId
     )
         view
         public
         returns (address)
     {
-        address vaultAddress =  vaultAddresses[_chainId];
+        address vaultAddress =  interimVaultAddresses[_destinationChainId];
         require(vaultAddress != address(0), 'No vault address set for that chain ID'); // FIXME Divert instead?
         return vaultAddress;
+    }
+
+    // TODO test
+    function safelyGetDestinationChainPTokenAddress(
+        bytes4 _destinationChainId,
+        address _interimPTokenAddress
+    )
+        view
+        public
+        returns (address)
+    {
+        address result = destinationChainPTokenAddresses[_destinationChainId][_interimPTokenAddress];
+        require(result != address(0), 'No destination chain token token address set!'); // FIXME Divert instead?
+        return result;
     }
 }

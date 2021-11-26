@@ -1,5 +1,6 @@
 const {
   SAMPLE_ETH_ADDRESS_1,
+  SAMPLE_ETH_ADDRESS_2,
   SAMPLE_METADATA_CHAIN_ID_1,
 } = require('./test-utils')
 const assert = require('assert')
@@ -34,19 +35,19 @@ describe('pTokens Router Contract', () => {
 
   describe('Admin Tests', () => {
     it('Admin can add vault addresses', async () => {
-      const vaultAddressBefore = await ROUTER_CONTRACT.vaultAddresses(SAMPLE_METADATA_CHAIN_ID_1)
+      const vaultAddressBefore = await ROUTER_CONTRACT.interimVaultAddresses(SAMPLE_METADATA_CHAIN_ID_1)
       assert.strictEqual(vaultAddressBefore, ZERO_ADDRESS)
       await ROUTER_CONTRACT.addVaultAddress(SAMPLE_METADATA_CHAIN_ID_1, SAMPLE_ETH_ADDRESS_1)
-      const vaultAddressAfter = await ROUTER_CONTRACT.vaultAddresses(SAMPLE_METADATA_CHAIN_ID_1)
+      const vaultAddressAfter = await ROUTER_CONTRACT.interimVaultAddresses(SAMPLE_METADATA_CHAIN_ID_1)
       assert.strictEqual(vaultAddressAfter, SAMPLE_ETH_ADDRESS_1)
     })
 
     it('Admin can remove vault addresses', async () => {
       await ROUTER_CONTRACT.addVaultAddress(SAMPLE_METADATA_CHAIN_ID_1, SAMPLE_ETH_ADDRESS_1)
-      const vaultAddressBefore = await ROUTER_CONTRACT.vaultAddresses(SAMPLE_METADATA_CHAIN_ID_1)
+      const vaultAddressBefore = await ROUTER_CONTRACT.interimVaultAddresses(SAMPLE_METADATA_CHAIN_ID_1)
       assert.strictEqual(vaultAddressBefore, SAMPLE_ETH_ADDRESS_1)
       await ROUTER_CONTRACT.removeVaultAddress(SAMPLE_METADATA_CHAIN_ID_1)
-      const vaultAddressAfter = await ROUTER_CONTRACT.vaultAddresses(SAMPLE_METADATA_CHAIN_ID_1)
+      const vaultAddressAfter = await ROUTER_CONTRACT.interimVaultAddresses(SAMPLE_METADATA_CHAIN_ID_1)
       assert.strictEqual(vaultAddressAfter, ZERO_ADDRESS)
     })
 
@@ -61,26 +62,38 @@ describe('pTokens Router Contract', () => {
 
     it('Non owner cannot add vault addresses', async () => {
       ROUTER_CONTRACT.addVaultAddress(SAMPLE_METADATA_CHAIN_ID_1, SAMPLE_ETH_ADDRESS_1)
-      assert.strictEqual(await ROUTER_CONTRACT.vaultAddresses(SAMPLE_METADATA_CHAIN_ID_1), SAMPLE_ETH_ADDRESS_1)
+      assert.strictEqual(
+        await ROUTER_CONTRACT.interimVaultAddresses(SAMPLE_METADATA_CHAIN_ID_1),
+        SAMPLE_ETH_ADDRESS_1
+      )
       try {
         await NON_ADMIN_ROUTER_CONTRACT.removeVaultAddress(SAMPLE_METADATA_CHAIN_ID_1)
         assert.fail('Should not have succeeded!')
       } catch (_err) {
         assert(_err.message.includes(NON_ADMIN_ERROR))
       }
-      assert.strictEqual(await ROUTER_CONTRACT.vaultAddresses(SAMPLE_METADATA_CHAIN_ID_1), SAMPLE_ETH_ADDRESS_1)
+      assert.strictEqual(
+        await ROUTER_CONTRACT.interimVaultAddresses(SAMPLE_METADATA_CHAIN_ID_1),
+        SAMPLE_ETH_ADDRESS_1
+      )
     })
   })
 
-  describe('Adding & Removing Vault Addresses', () => {
+  describe('Adding & Removing Interim Vault Addresses', () => {
     it('Admin can add vault address', async () => {
-      assert.strictEqual(await ROUTER_CONTRACT.vaultAddresses(SAMPLE_METADATA_CHAIN_ID_1), ZERO_ADDRESS)
+      assert.strictEqual(
+        await ROUTER_CONTRACT.interimVaultAddresses(SAMPLE_METADATA_CHAIN_ID_1),
+        ZERO_ADDRESS
+      )
       await ROUTER_CONTRACT.addVaultAddress(SAMPLE_METADATA_CHAIN_ID_1, SAMPLE_ETH_ADDRESS_1)
-      assert.strictEqual(await ROUTER_CONTRACT.vaultAddresses(SAMPLE_METADATA_CHAIN_ID_1), SAMPLE_ETH_ADDRESS_1)
+      assert.strictEqual(
+        await ROUTER_CONTRACT.interimVaultAddresses(SAMPLE_METADATA_CHAIN_ID_1),
+        SAMPLE_ETH_ADDRESS_1
+      )
     })
 
     it('Non admin cannot add vault address', async () => {
-      assert.strictEqual(await ROUTER_CONTRACT.vaultAddresses(SAMPLE_METADATA_CHAIN_ID_1), ZERO_ADDRESS)
+      assert.strictEqual(await ROUTER_CONTRACT.interimVaultAddresses(SAMPLE_METADATA_CHAIN_ID_1), ZERO_ADDRESS)
       try {
         await NON_ADMIN_ROUTER_CONTRACT.addVaultAddress(SAMPLE_METADATA_CHAIN_ID_1, SAMPLE_ETH_ADDRESS_1)
         assert.fail('Should not have succeeded!')
@@ -91,16 +104,101 @@ describe('pTokens Router Contract', () => {
 
     it('Admin can remove vault address', async () => {
       await ROUTER_CONTRACT.addVaultAddress(SAMPLE_METADATA_CHAIN_ID_1, SAMPLE_ETH_ADDRESS_1)
-      assert.strictEqual(await ROUTER_CONTRACT.vaultAddresses(SAMPLE_METADATA_CHAIN_ID_1), SAMPLE_ETH_ADDRESS_1)
+      assert.strictEqual(
+        await ROUTER_CONTRACT.interimVaultAddresses(SAMPLE_METADATA_CHAIN_ID_1),
+        SAMPLE_ETH_ADDRESS_1
+      )
       await ROUTER_CONTRACT.removeVaultAddress(SAMPLE_METADATA_CHAIN_ID_1)
-      assert.strictEqual(await ROUTER_CONTRACT.vaultAddresses(SAMPLE_METADATA_CHAIN_ID_1), ZERO_ADDRESS)
+      assert.strictEqual(
+        await ROUTER_CONTRACT.interimVaultAddresses(SAMPLE_METADATA_CHAIN_ID_1),
+        ZERO_ADDRESS
+      )
     })
 
     it('Non admin cannot remove vault address', async () => {
       await ROUTER_CONTRACT.addVaultAddress(SAMPLE_METADATA_CHAIN_ID_1, SAMPLE_ETH_ADDRESS_1)
-      assert.strictEqual(await ROUTER_CONTRACT.vaultAddresses(SAMPLE_METADATA_CHAIN_ID_1), SAMPLE_ETH_ADDRESS_1)
+      assert.strictEqual(
+        await ROUTER_CONTRACT.interimVaultAddresses(SAMPLE_METADATA_CHAIN_ID_1),
+        SAMPLE_ETH_ADDRESS_1
+      )
       try {
         await NON_ADMIN_ROUTER_CONTRACT.removeVaultAddress(SAMPLE_METADATA_CHAIN_ID_1)
+        assert.fail('Should not have succeeded!')
+      } catch (_err) {
+        assert(_err.message.includes(NON_ADMIN_ERROR))
+      }
+    })
+  })
+
+  describe('Adding & Removing Destination Chain PToken Addresses', () => {
+    const getDestinationChainPTokenAddress = (_destinationChainId, _interimPTokenAddress) =>
+      ROUTER_CONTRACT.destinationChainPTokenAddresses(_destinationChainId, _interimPTokenAddress)
+
+    it('Admin can add destination chain pToken address', async () => {
+      assert.strictEqual(
+        await getDestinationChainPTokenAddress(SAMPLE_METADATA_CHAIN_ID_1, SAMPLE_ETH_ADDRESS_1),
+        ZERO_ADDRESS
+      )
+      await ROUTER_CONTRACT.addDestinationChainPTokenAddress(
+        SAMPLE_METADATA_CHAIN_ID_1,
+        SAMPLE_ETH_ADDRESS_1,
+        SAMPLE_ETH_ADDRESS_2,
+      )
+      assert.strictEqual(
+        await getDestinationChainPTokenAddress(SAMPLE_METADATA_CHAIN_ID_1, SAMPLE_ETH_ADDRESS_1),
+        SAMPLE_ETH_ADDRESS_2,
+      )
+    })
+
+    it('Non admin cannot add destination chain pToken address', async () => {
+      assert.strictEqual(
+        await getDestinationChainPTokenAddress(SAMPLE_METADATA_CHAIN_ID_1, SAMPLE_ETH_ADDRESS_1),
+        ZERO_ADDRESS,
+      )
+      try {
+        await NON_ADMIN_ROUTER_CONTRACT.addDestinationChainPTokenAddress(
+          SAMPLE_METADATA_CHAIN_ID_1,
+          SAMPLE_ETH_ADDRESS_1,
+          SAMPLE_ETH_ADDRESS_2,
+        )
+        assert.fail('Should not have succeeded!')
+      } catch (_err) {
+        assert(_err.message.includes(NON_ADMIN_ERROR))
+      }
+    })
+
+    it('Admin can remove destination chain pToken address', async () => {
+      await ROUTER_CONTRACT.addDestinationChainPTokenAddress(
+        SAMPLE_METADATA_CHAIN_ID_1,
+        SAMPLE_ETH_ADDRESS_1,
+        SAMPLE_ETH_ADDRESS_2,
+      )
+      assert.strictEqual(
+        await getDestinationChainPTokenAddress(SAMPLE_METADATA_CHAIN_ID_1, SAMPLE_ETH_ADDRESS_1),
+        SAMPLE_ETH_ADDRESS_2
+      )
+      await ROUTER_CONTRACT.removeDestinationChainPTokenAddress(SAMPLE_METADATA_CHAIN_ID_1, SAMPLE_ETH_ADDRESS_1)
+      assert.strictEqual(
+        await getDestinationChainPTokenAddress(SAMPLE_METADATA_CHAIN_ID_1, SAMPLE_ETH_ADDRESS_1),
+        ZERO_ADDRESS
+      )
+    })
+
+    it('Non admin cannot remove destination chain pToken address', async () => {
+      await ROUTER_CONTRACT.addDestinationChainPTokenAddress(
+        SAMPLE_METADATA_CHAIN_ID_1,
+        SAMPLE_ETH_ADDRESS_1,
+        SAMPLE_ETH_ADDRESS_2,
+      )
+      assert.strictEqual(
+        await ROUTER_CONTRACT.destinationChainPTokenAddresses(SAMPLE_METADATA_CHAIN_ID_1, SAMPLE_ETH_ADDRESS_1),
+        SAMPLE_ETH_ADDRESS_2
+      )
+      try {
+        await NON_ADMIN_ROUTER_CONTRACT.removeDestinationChainPTokenAddress(
+          SAMPLE_METADATA_CHAIN_ID_1,
+          SAMPLE_ETH_ADDRESS_1,
+        )
         assert.fail('Should not have succeeded!')
       } catch (_err) {
         assert(_err.message.includes(NON_ADMIN_ERROR))
@@ -182,20 +280,53 @@ describe('pTokens Router Contract', () => {
     })
   })
 
-  describe('Vault Address Getter Tests', () => {
-    it('Should get vault address correctly', async () => {
+  describe('Interim Vault Address Getter Tests', () => {
+    it('Should safely get interim vault address correctly', async () => {
       await ROUTER_CONTRACT.addVaultAddress(SAMPLE_METADATA_CHAIN_ID_1, SAMPLE_ETH_ADDRESS_1)
-      const result = await ROUTER_CONTRACT.getVaultAddressFromChainId(SAMPLE_METADATA_CHAIN_ID_1)
+      const result = await ROUTER_CONTRACT.safelyGetInterimVaultAddress(SAMPLE_METADATA_CHAIN_ID_1)
       assert.strictEqual(result, SAMPLE_ETH_ADDRESS_1)
     })
 
     it('Should revert if vault address does not exist', async () => {
-      assert.strictEqual(await ROUTER_CONTRACT.vaultAddresses(SAMPLE_METADATA_CHAIN_ID_1), ZERO_ADDRESS)
+      assert.strictEqual(await ROUTER_CONTRACT.interimVaultAddresses(SAMPLE_METADATA_CHAIN_ID_1), ZERO_ADDRESS)
       try {
-        await ROUTER_CONTRACT.getVaultAddressFromChainId(SAMPLE_METADATA_CHAIN_ID_1)
+        await ROUTER_CONTRACT.safelyGetInterimVaultAddress(SAMPLE_METADATA_CHAIN_ID_1)
         assert.fail('Should not have succeeded!')
       } catch (_err) {
-        assert(_err.message.includes('No vault address set for that chain ID'))
+        const expectedError = 'No vault address set for that chain ID'
+        assert(_err.message.includes(expectedError))
+      }
+    })
+  })
+
+  describe('Destination PToken Address Getter Tests', () => {
+    it('Should safely get destination chain pToken address correctly', async () => {
+      await ROUTER_CONTRACT.addDestinationChainPTokenAddress(
+        SAMPLE_METADATA_CHAIN_ID_1,
+        SAMPLE_ETH_ADDRESS_1,
+        SAMPLE_ETH_ADDRESS_2,
+      )
+      const result = await ROUTER_CONTRACT.safelyGetDestinationChainPTokenAddress(
+        SAMPLE_METADATA_CHAIN_ID_1,
+        SAMPLE_ETH_ADDRESS_1,
+      )
+      assert.strictEqual(result, SAMPLE_ETH_ADDRESS_2)
+    })
+
+    it('Should revert if destination chain pToken address does not exist', async () => {
+      assert.strictEqual(
+        await ROUTER_CONTRACT.destinationChainPTokenAddresses(SAMPLE_METADATA_CHAIN_ID_1, SAMPLE_ETH_ADDRESS_1),
+        ZERO_ADDRESS,
+      )
+      try {
+        await ROUTER_CONTRACT.safelyGetDestinationChainPTokenAddress(
+          SAMPLE_METADATA_CHAIN_ID_1,
+          SAMPLE_ETH_ADDRESS_1,
+        )
+        assert.fail('Should not have succeeded!')
+      } catch (_err) {
+        const expectedError = 'No destination chain token token address set!'
+        assert(_err.message.includes(expectedError))
       }
     })
   })
