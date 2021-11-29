@@ -1,5 +1,6 @@
 const {
   deployRouterContract,
+  SAMPLE_SAFE_VAULT_ADDRESS,
   deployNonUpgradeableContract,
 } = require('./test-utils')
 const assert = require('assert')
@@ -8,7 +9,7 @@ describe('Mock Contacts', () => {
   let ROUTER_CONTRACT
 
   beforeEach(async () => {
-    ROUTER_CONTRACT = await deployRouterContract()
+    ROUTER_CONTRACT = await deployRouterContract([ SAMPLE_SAFE_VAULT_ADDRESS ])
   })
 
   const getMockErc777Contract = _ =>

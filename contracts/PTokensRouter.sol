@@ -2,12 +2,10 @@
 
 pragma solidity ^0.8.0;
 
-import "hardhat/console.sol"; // FIXME rm!
-
 import "./interfaces/IVault.sol";
 import "./interfaces/IPToken.sol";
 import "./PTokensMetadataDecoder.sol";
-import "./ConvertStringToAddress.sol";
+import "./ConvertAddressToString.sol";
 import "./interfaces/IOriginChainIdGetter.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/interfaces/IERC20Upgradeable.sol";
@@ -18,16 +16,19 @@ import "@openzeppelin/contracts-upgradeable/access/AccessControlEnumerableUpgrad
 contract PTokensRouter is
     Initializable,
     PTokensMetadataDecoder,
-    ConvertStringToAddress,
+    ConvertAddressToString,
     IERC777RecipientUpgradeable,
     AccessControlEnumerableUpgradeable
 {
+    address public SAFE_VAULT_ADDRESS;
     bytes4 public constant ORIGIN_CHAIN_ID = 0xff000000;
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
     bytes32 public constant TOKENS_RECIPIENT_INTERFACE_HASH = keccak256("ERC777TokensRecipient");
     mapping(bytes4 => address) public interimVaultAddresses;
 
-    function initialize ()
+    function initialize (
+        address safeVaultAddress
+    )
         public initializer
     {
         IERC1820RegistryUpgradeable(0x1820a4B7618BdE71Dce8cdc73aAB6C95905faD24).setInterfaceImplementer(
@@ -37,6 +38,7 @@ contract PTokensRouter is
         );
         _setupRole(ADMIN_ROLE, _msgSender());
         _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
+        SAFE_VAULT_ADDRESS = safeVaultAddress;
     }
 
     modifier onlyAdmin() {
@@ -45,6 +47,17 @@ contract PTokensRouter is
             "Caller is not an admin!"
         );
         _;
+    }
+
+    function updateSafeVaultAddress(
+        address newSafeVaultAddress
+    )
+        external
+        onlyAdmin
+        returns (bool success)
+    {
+        SAFE_VAULT_ADDRESS = newSafeVaultAddress;
+        return true;
     }
 
     function addVaultAddress(
@@ -96,6 +109,21 @@ contract PTokensRouter is
         returns (bool)
     {
         return !callerIsInterimVault(_caller);
+    }
+
+    function safelyGetVaultAddress(
+        bytes4 chainId
+    )
+        view
+        public
+        returns (address vaultAddress)
+    {
+        address vaultAddress = interimVaultAddresses[chainId];
+        if (vaultAddress == address(0)) {
+            return SAFE_VAULT_ADDRESS;
+        } else {
+            return vaultAddress;
+        }
     }
 
     function tokensReceived(
