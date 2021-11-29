@@ -3,7 +3,7 @@
 pragma solidity ^0.8.0;
 
 contract PTokensMetadataDecoder {
-    function decodeMetadata(
+    function decodeMetadataV1(
         bytes memory metadata
     )
         public
@@ -18,16 +18,19 @@ contract PTokensMetadataDecoder {
         return abi.decode(metadata, (bytes1, bytes, bytes4, address));
     }
 
-    function decodeUserDataToDestinationChainAndAddress(
-        bytes memory userData
+    function decodeMetadataV2(
+        bytes memory metadata
     )
         public
         pure
         returns(
-            bytes4 destinationChain,
-            address destinationAddress
+            bytes1 metadataVersion,
+            bytes memory userData,
+            bytes4 originChainId,
+            address originAddress,
+            bytes4 destinationChainId
         )
     {
-        return abi.decode(userData, (bytes4, address));
+        return abi.decode(metadata, (bytes1, bytes, bytes4, address, bytes4));
     }
 }

@@ -1,11 +1,26 @@
 const {
   SAMPLE_USER_DATA,
-  getSampleV1Metadata,
   SAMPLE_ETH_ADDRESS_1,
-  SAMPLE_METADATA_VERSION,
   SAMPLE_METADATA_CHAIN_ID_1,
+  SAMPLE_METADATA_CHAIN_ID_2,
 } = require('./test-utils')
 const assert = require('assert')
+const { encodeCoreMetadata } = require('../lib/metadata-encoder')
+
+const getSampleCoreMetadataV1 = _ =>
+  encodeCoreMetadata(
+    SAMPLE_USER_DATA,
+    SAMPLE_METADATA_CHAIN_ID_1,
+    SAMPLE_ETH_ADDRESS_1
+  )
+
+const getSampleCoreMetadataV2 = _ =>
+  encodeCoreMetadata(
+    SAMPLE_USER_DATA,
+    SAMPLE_METADATA_CHAIN_ID_1,
+    SAMPLE_ETH_ADDRESS_1,
+    SAMPLE_METADATA_CHAIN_ID_2
+  )
 
 describe('Metadata Decoder Contract', () => {
   let CONTRACT
@@ -17,12 +32,19 @@ describe('Metadata Decoder Contract', () => {
   })
 
   it('Should decode v1 metadata', async () => {
-    const result = await CONTRACT.decodeMetadataV1(getSampleV1Metadata())
+    const result = await CONTRACT.decodeMetadataV1(getSampleCoreMetadataV1())
     assert.strictEqual(result.userData, SAMPLE_USER_DATA)
     assert.strictEqual(result.originAddress, SAMPLE_ETH_ADDRESS_1)
-    assert.strictEqual(result.metadataVersion, SAMPLE_METADATA_VERSION)
+    assert.strictEqual(result.metadataVersion, '0x01')
     assert.strictEqual(result.originChainId, SAMPLE_METADATA_CHAIN_ID_1)
   })
 
-  it('Should decode v2 metadata')
+  it('Should decode v2 metadata', async () => {
+    const result = await CONTRACT.decodeMetadataV2(getSampleCoreMetadataV2())
+    assert.strictEqual(result.userData, SAMPLE_USER_DATA)
+    assert.strictEqual(result.originAddress, SAMPLE_ETH_ADDRESS_1)
+    assert.strictEqual(result.metadataVersion, '0x02')
+    assert.strictEqual(result.originChainId, SAMPLE_METADATA_CHAIN_ID_1)
+    assert.strictEqual(result.destinationChainId, SAMPLE_METADATA_CHAIN_ID_2)
+  })
 })
