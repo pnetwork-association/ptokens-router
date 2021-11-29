@@ -1,6 +1,8 @@
 const {
+  EMPTY_DATA,
   SAMPLE_USER_DATA,
   SAMPLE_ETH_ADDRESS_1,
+  SAMPLE_ETH_ADDRESS_2,
   SAMPLE_METADATA_CHAIN_ID_1,
   SAMPLE_METADATA_CHAIN_ID_2,
 } = require('./test-utils')
@@ -19,7 +21,8 @@ const getSampleCoreMetadataV2 = _ =>
     SAMPLE_USER_DATA,
     SAMPLE_METADATA_CHAIN_ID_1,
     SAMPLE_ETH_ADDRESS_1,
-    SAMPLE_METADATA_CHAIN_ID_2
+    SAMPLE_METADATA_CHAIN_ID_2,
+    SAMPLE_ETH_ADDRESS_2,
   )
 
 describe('Metadata Decoder Contract', () => {
@@ -46,5 +49,8 @@ describe('Metadata Decoder Contract', () => {
     assert.strictEqual(result.metadataVersion, '0x02')
     assert.strictEqual(result.originChainId, SAMPLE_METADATA_CHAIN_ID_1)
     assert.strictEqual(result.destinationChainId, SAMPLE_METADATA_CHAIN_ID_2)
+    assert.strictEqual(result.destinationAddress, SAMPLE_ETH_ADDRESS_2)
+    assert.strictEqual(result.protocolOptions, EMPTY_DATA)
+    assert.strictEqual(result.protocolReceipt, EMPTY_DATA)
   })
 })

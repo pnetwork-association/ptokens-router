@@ -1,8 +1,10 @@
+const EMPTY_DATA = '0x'
 const SAMPLE_USER_DATA = '0xd3caff'
 const SAMPLE_METADATA_CHAIN_ID_1 = '0x00f34368' // NOTE: Rinkeby
 const SAMPLE_METADATA_CHAIN_ID_2 = '0x0069c322' // NOTE: Ropsten
 const SAMPLE_ETH_ADDRESS_1 = '0xfEDFe2616EB3661CB8FEd2782F5F0cC91D59DCaC'
 const SAMPLE_ETH_ADDRESS_2 = '0xedB86cd455ef3ca43f0e227e00469C3bDFA40628'
+const SAMPLE_SAFE_VAULT_ADDRESS = '0xd757fd54b273BB1234d4d9993f27699d28d0EDD2'
 
 const deployRouterContract = async (_deployArgs = []) =>
   upgrades.deployProxy(
@@ -21,8 +23,10 @@ module.exports = {
   deployNonUpgradeableContract,
   SAMPLE_METADATA_CHAIN_ID_1,
   SAMPLE_METADATA_CHAIN_ID_2,
+  SAMPLE_SAFE_VAULT_ADDRESS,
   deployRouterContract,
   SAMPLE_ETH_ADDRESS_1,
   SAMPLE_ETH_ADDRESS_2,
   SAMPLE_USER_DATA,
+  EMPTY_DATA,
 }

@@ -28,9 +28,12 @@ contract PTokensMetadataDecoder {
             bytes memory userData,
             bytes4 originChainId,
             address originAddress,
-            bytes4 destinationChainId
+            bytes4 destinationChainId,
+            address destinationAddress,
+            bytes memory protocolOptions,
+            bytes memory protocolReceipt
         )
     {
-        return abi.decode(metadata, (bytes1, bytes, bytes4, address, bytes4));
+        return abi.decode(metadata, (bytes1, bytes, bytes4, address, bytes4, address, bytes, bytes));
     }
 }
