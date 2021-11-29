@@ -1,7 +1,6 @@
 const {
   SAMPLE_USER_DATA,
-  getSampleMetadata,
-  getSampleUserData,
+  getSampleV1Metadata,
   SAMPLE_ETH_ADDRESS_1,
   SAMPLE_METADATA_VERSION,
   SAMPLE_METADATA_CHAIN_ID_1,
@@ -17,17 +16,13 @@ describe('Metadata Decoder Contract', () => {
     CONTRACT = await upgrades.deployProxy(contractFactory, [])
   })
 
-  it('Should decode metadata...', async () => {
-    const result = await CONTRACT.decodeMetadata(getSampleMetadata())
+  it('Should decode v1 metadata', async () => {
+    const result = await CONTRACT.decodeMetadataV1(getSampleV1Metadata())
     assert.strictEqual(result.userData, SAMPLE_USER_DATA)
     assert.strictEqual(result.originAddress, SAMPLE_ETH_ADDRESS_1)
     assert.strictEqual(result.metadataVersion, SAMPLE_METADATA_VERSION)
     assert.strictEqual(result.originChainId, SAMPLE_METADATA_CHAIN_ID_1)
   })
 
-  it('Should decode userdata to destination chain and address...', async () => {
-    const result = await CONTRACT.decodeUserDataToDestinationChainAndAddress(getSampleUserData())
-    assert.strictEqual(result.destinationAddress, SAMPLE_ETH_ADDRESS_1)
-    assert.strictEqual(result.destinationChain, SAMPLE_METADATA_CHAIN_ID_1)
-  })
+  it('Should decode v2 metadata')
 })

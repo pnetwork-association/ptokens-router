@@ -1,19 +1,13 @@
-const {
-  encodeUserData,
-  encodeCoreMetadata,
-} = require('../lib/metadata-encoder')
 const SAMPLE_USER_DATA = '0xd3caff'
 const SAMPLE_METADATA_VERSION = '0x01'
 const SAMPLE_METADATA_CHAIN_ID_1 = '0x00f34368' // NOTE: Rinkeby
 const SAMPLE_METADATA_CHAIN_ID_2 = '0x0069c322' // NOTE: Ropstennini
+const { encodeCoreMetadata } = require('../lib/metadata-encoder')
 const SAMPLE_ETH_ADDRESS_1 = '0xfEDFe2616EB3661CB8FEd2782F5F0cC91D59DCaC'
 const SAMPLE_ETH_ADDRESS_2 = '0xedB86cd455ef3ca43f0e227e00469C3bDFA40628'
 
-const getSampleMetadata = _ =>
+const getSampleV1Metadata = _ =>
   encodeCoreMetadata('0x01', '0xd3caff', SAMPLE_METADATA_CHAIN_ID_1, SAMPLE_ETH_ADDRESS_1)
-
-const getSampleUserData = _ =>
-  encodeUserData(SAMPLE_METADATA_CHAIN_ID_1, SAMPLE_ETH_ADDRESS_1)
 
 const deployRouterContract = async (_deployArgs = []) =>
   upgrades.deployProxy(
@@ -36,7 +30,6 @@ module.exports = {
   deployRouterContract,
   SAMPLE_ETH_ADDRESS_1,
   SAMPLE_ETH_ADDRESS_2,
-  getSampleMetadata,
-  getSampleUserData,
+  getSampleV1Metadata,
   SAMPLE_USER_DATA,
 }

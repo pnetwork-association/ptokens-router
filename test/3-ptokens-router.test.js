@@ -1,6 +1,5 @@
 const {
   SAMPLE_ETH_ADDRESS_1,
-  SAMPLE_ETH_ADDRESS_2,
   deployRouterContract,
   SAMPLE_METADATA_CHAIN_ID_1,
 } = require('./test-utils')

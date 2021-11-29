@@ -1,17 +1,11 @@
 const {
-  encodeUserData,
-  encodeCoreMetadata,
-  encodeUserDataInMetadata,
-} = require('../lib/metadata-encoder')
-const {
   SAMPLE_USER_DATA,
   SAMPLE_ETH_ADDRESS_1,
-  SAMPLE_ETH_ADDRESS_2,
   SAMPLE_METADATA_VERSION,
   SAMPLE_METADATA_CHAIN_ID_1,
-  SAMPLE_METADATA_CHAIN_ID_2,
 } = require('./test-utils')
 const assert = require('assert')
+const { encodeCoreMetadata } = require('../lib/metadata-encoder')
 
 describe('Metadata Encoder Contract', () => {
   it('Should encode metadata', () => {
@@ -23,27 +17,6 @@ describe('Metadata Encoder Contract', () => {
     )
     /* eslint-disable-next-line max-len */
     const expectedResult = '0x0100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000008000f3436800000000000000000000000000000000000000000000000000000000000000000000000000000000fedfe2616eb3661cb8fed2782f5f0cc91d59dcac0000000000000000000000000000000000000000000000000000000000000003d3caff0000000000000000000000000000000000000000000000000000000000'
-    assert.strictEqual(result, expectedResult)
-  })
-
-  it('Should encode user data', () => {
-    const result = encodeUserData(SAMPLE_METADATA_CHAIN_ID_1, SAMPLE_ETH_ADDRESS_1)
-    /* eslint-disable-next-line max-len */
-    const expectedResult = '0x00f3436800000000000000000000000000000000000000000000000000000000000000000000000000000000fedfe2616eb3661cb8fed2782f5f0cc91d59dcac'
-    assert.strictEqual(result, expectedResult)
-  })
-
-  it('Should encode user data in metadata', () => {
-    const result = encodeUserDataInMetadata(
-      SAMPLE_METADATA_VERSION,
-      SAMPLE_USER_DATA,
-      SAMPLE_METADATA_CHAIN_ID_1,
-      SAMPLE_ETH_ADDRESS_1,
-      SAMPLE_ETH_ADDRESS_2,
-      SAMPLE_METADATA_CHAIN_ID_2,
-    )
-    /* eslint-disable-next-line max-len */
-    let expectedResult = '0x0100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000008000f3436800000000000000000000000000000000000000000000000000000000000000000000000000000000fedfe2616eb3661cb8fed2782f5f0cc91d59dcac00000000000000000000000000000000000000000000000000000000000000400069c32200000000000000000000000000000000000000000000000000000000000000000000000000000000edb86cd455ef3ca43f0e227e00469c3bdfa40628'
     assert.strictEqual(result, expectedResult)
   })
 })
