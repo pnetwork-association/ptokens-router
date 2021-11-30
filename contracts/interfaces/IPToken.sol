@@ -15,12 +15,10 @@ interface IPToken {
         bytes memory operatorData
     ) external returns (bool);
 
-    function operatorRedeem(
-        address account,
+    function redeem(
         uint256 amount,
-        bytes calldata userData,
-        bytes calldata operatorData,
-        string calldata underlyingAssetRecipient,
+        bytes memory userData,
+        string memory underlyingAssetRecipient,
         bytes4 destinationChainId
     ) external;
 }
