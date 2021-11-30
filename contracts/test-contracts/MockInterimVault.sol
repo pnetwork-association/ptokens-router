@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
 
+import "@openzeppelin/contracts/token/ERC777/IERC777.sol";
 import "@openzeppelin/contracts/token/ERC777/IERC777Recipient.sol";
 import "@openzeppelin/contracts/utils/introspection/IERC1820Registry.sol";
 
@@ -33,6 +34,19 @@ contract MockInterimVault is IERC777Recipient {
         returns (bool)
     {
         emit PegInCalled(_tokenAmount, _tokenAddress, _destinationAddress, _userData, _destinationChainId);
+        return true;
+    }
+
+    function pegOut(
+        address payable _tokenRecipient,
+        address _tokenAddress,
+        uint256 _tokenAmount,
+        bytes calldata _userData
+    )
+        external
+        returns (bool success)
+    {
+        IERC777(_tokenAddress).send(_tokenRecipient, _tokenAmount, _userData);
         return true;
     }
 
