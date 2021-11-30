@@ -7,7 +7,7 @@ interface IVault {
         uint256 _tokenAmount,
         address _tokenAddress,
         string memory _destinationAddress,
-        bytes4 _destinationChainId,
-        bytes memory _userData
+        bytes memory _userData,
+        bytes4 _destinationChainId
     ) external returns (bool);
 }
