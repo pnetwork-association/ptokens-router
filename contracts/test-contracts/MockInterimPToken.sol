@@ -11,4 +11,22 @@ contract MockInterimPToken is ERC777 {
         _mint(msg.sender, 1000000, "", "");
         ORIGIN_CHAIN_ID = originChainId;
     }
+
+    event RedeemCalled(
+        uint256 amount,
+        bytes userData,
+        string underlyingAssetRecipient,
+        bytes4 destinationChainId
+    );
+
+    function redeem(
+        uint256 amount,
+        bytes memory userData,
+        string memory underlyingAssetRecipient,
+        bytes4 destinationChainId
+    )
+        public
+    {
+        emit RedeemCalled(amount, userData, underlyingAssetRecipient, destinationChainId);
+    }
 }
