@@ -1,34 +1,24 @@
 const {
-  deployRouterContract,
-  SAMPLE_SAFE_VAULT_ADDRESS,
-  deployNonUpgradeableContract,
+  getMockVaultContract,
+  getMockErc777Contract,
+  SAMPLE_METADATA_CHAIN_ID_1,
 } = require('./test-utils')
 const assert = require('assert')
 
 describe('Mock Contacts', () => {
-  let ROUTER_CONTRACT
-
-  beforeEach(async () => {
-    ROUTER_CONTRACT = await deployRouterContract([ SAMPLE_SAFE_VAULT_ADDRESS ])
+  describe('Mock Interim Vault Tests', () => {
+    it('Mock vault origin chain ID should match router origin chain id', async () => {
+      const vaultContract = await getMockVaultContract(SAMPLE_METADATA_CHAIN_ID_1)
+      const result = await vaultContract.ORIGIN_CHAIN_ID()
+      assert.strictEqual(result, SAMPLE_METADATA_CHAIN_ID_1)
+    })
   })
 
-  const getMockErc777Contract = _ =>
-    deployNonUpgradeableContract('contracts/test-contracts/MockInterimPToken.sol:MockInterimPToken')
-
-  const getMockVaultContract = _ =>
-    deployNonUpgradeableContract('contracts/test-contracts/MockInterimVault.sol:MockInterimVault')
-
-  it('Mock vault origin chain ID should match router origin chain id', async () => {
-    const vaultContract = await getMockVaultContract()
-    const result = await vaultContract.ORIGIN_CHAIN_ID()
-    const expectedResult = await ROUTER_CONTRACT.ORIGIN_CHAIN_ID()
-    assert.strictEqual(result, expectedResult)
-  })
-
-  it('Mock ERC777 origin chain ID should not match router origin chain id', async () => {
-    const erc777Contract = await getMockErc777Contract()
-    const routerOriginChainId = await ROUTER_CONTRACT.ORIGIN_CHAIN_ID()
-    const result = await erc777Contract.ORIGIN_CHAIN_ID()
-    assert.notStrictEqual(result, routerOriginChainId)
+  describe('Mock ERC777 Tests', () => {
+    it('Mock ERC777 origin chain ID should be set on contract creation', async () => {
+      const erc777Contract = await getMockErc777Contract(SAMPLE_METADATA_CHAIN_ID_1)
+      const result = await erc777Contract.ORIGIN_CHAIN_ID()
+      assert.strictEqual(result, SAMPLE_METADATA_CHAIN_ID_1)
+    })
   })
 })

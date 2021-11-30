@@ -3,7 +3,9 @@
 pragma solidity ^0.8.0;
 
 contract MockInterimVault {
-    bytes4 public constant ORIGIN_CHAIN_ID = 0xff000000;
+    bytes4 public  ORIGIN_CHAIN_ID;
 
-    constructor() {}
+    constructor(bytes4 originChainId) {
+        ORIGIN_CHAIN_ID = originChainId;
+    }
 }

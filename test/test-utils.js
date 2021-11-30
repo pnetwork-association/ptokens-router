@@ -19,11 +19,25 @@ const deployNonUpgradeableContract = (_contractPath, _deployArgs = []) =>
     .then(_contract => Promise.all([ _contract, _contract.deployTransaction.wait() ]))
     .then(([ _contract ]) => _contract)
 
+const getMockErc777Contract = _originChainId =>
+  deployNonUpgradeableContract(
+    'contracts/test-contracts/MockInterimPToken.sol:MockInterimPToken',
+    [ _originChainId ],
+  )
+
+const getMockVaultContract = _originChainId =>
+  deployNonUpgradeableContract(
+    'contracts/test-contracts/MockInterimVault.sol:MockInterimVault',
+    [ _originChainId ],
+  )
+
 module.exports = {
   deployNonUpgradeableContract,
   SAMPLE_METADATA_CHAIN_ID_1,
   SAMPLE_METADATA_CHAIN_ID_2,
   SAMPLE_SAFE_VAULT_ADDRESS,
+  getMockErc777Contract,
+  getMockVaultContract,
   deployRouterContract,
   SAMPLE_ETH_ADDRESS_1,
   SAMPLE_ETH_ADDRESS_2,
