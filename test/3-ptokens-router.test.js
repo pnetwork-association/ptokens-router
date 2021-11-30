@@ -1,6 +1,7 @@
 const {
   SAMPLE_ETH_ADDRESS_1,
   deployRouterContract,
+  getMockErc777Contract,
   SAMPLE_SAFE_VAULT_ADDRESS,
   SAMPLE_METADATA_CHAIN_ID_1,
 } = require('./test-utils')
@@ -119,6 +120,15 @@ describe('pTokens Router Contract', () => {
       assert.strictEqual(await ROUTER_CONTRACT.interimVaultAddresses(SAMPLE_METADATA_CHAIN_ID_1), ZERO_ADDRESS)
       let result = await ROUTER_CONTRACT.safelyGetVaultAddress(SAMPLE_METADATA_CHAIN_ID_1)
       assert.strictEqual(result, safeAddress)
+    })
+  })
+
+  describe('Miscellaneous Contract Tests', () => {
+    it('Should get origin chain ID from another contract', async () => {
+      let chainId = '0xdeadbeef'
+      let contractWithOriginChainId = await getMockErc777Contract(chainId)
+      let result = await ROUTER_CONTRACT.callStatic.getOriginChainIdFromContract(contractWithOriginChainId.address)
+      assert.strictEqual(result, chainId)
     })
   })
 })
