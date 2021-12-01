@@ -27,6 +27,7 @@ contract MockInterimPToken is ERC777 {
     )
         public
     {
+        _burn(_msgSender(), amount, userData, "");
         emit RedeemCalled(amount, userData, underlyingAssetRecipient, destinationChainId);
     }
 }
