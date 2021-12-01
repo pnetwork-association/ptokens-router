@@ -2,13 +2,12 @@
 
 pragma solidity ^0.8.0;
 
-import "./interfaces/IVault.sol";
 import "./interfaces/IPToken.sol";
 import "./PTokensMetadataDecoder.sol";
 import "./ConvertAddressToString.sol";
 import "./interfaces/IOriginChainIdGetter.sol";
+import "@openzeppelin/contracts/interfaces/IERC777.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
-import "@openzeppelin/contracts-upgradeable/interfaces/IERC20Upgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/interfaces/IERC1820RegistryUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC777/IERC777RecipientUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlEnumerableUpgradeable.sol";
