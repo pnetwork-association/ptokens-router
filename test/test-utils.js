@@ -32,6 +32,9 @@ const getMockVaultContract = _originChainId =>
     [ _originChainId ],
   )
 
+const keccakHashString = _s =>
+  ethers.utils.keccak256(ethers.utils.toUtf8Bytes(_s))
+
 module.exports = {
   deployNonUpgradeableContract,
   SAMPLE_METADATA_CHAIN_ID_1,
@@ -42,6 +45,7 @@ module.exports = {
   deployRouterContract,
   SAMPLE_ETH_ADDRESS_1,
   SAMPLE_ETH_ADDRESS_2,
+  keccakHashString,
   SAMPLE_USER_DATA,
   INTERIM_CHAIN_ID,
   EMPTY_DATA,
