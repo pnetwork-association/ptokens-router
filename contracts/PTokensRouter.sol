@@ -91,25 +91,6 @@ contract PTokensRouter is
         return IOriginChainIdGetter(_contractAddress).ORIGIN_CHAIN_ID();
     }
 
-    function callerIsInterimVault(
-        address _caller
-    )
-        public
-        returns (bool)
-    {
-        return getOriginChainIdFromContract(_caller) == ORIGIN_CHAIN_ID;
-    }
-
-
-    function callerIsInterimPToken(
-        address _caller
-    )
-        public
-        returns (bool)
-    {
-        return !callerIsInterimVault(_caller);
-    }
-
     function safelyGetVaultAddress(
         bytes4 chainId
     )
@@ -117,7 +98,7 @@ contract PTokensRouter is
         public
         returns (address vaultAddress)
     {
-        address vaultAddress = interimVaultAddresses[chainId];
+        vaultAddress = interimVaultAddresses[chainId];
         if (vaultAddress == address(0)) {
             return SAFE_VAULT_ADDRESS;
         } else {
@@ -126,22 +107,47 @@ contract PTokensRouter is
     }
 
     function tokensReceived(
-        address /*_operator*/,
-        address _from,
-        address _to,
+        address /* _operator */, // NOTE: Enclave address.
+        address /* _from */, // NOTE: Enclave address.
+        address /* _to */, // NOTE: This contract's address.
         uint256 _amount,
         bytes calldata _userData,
-        bytes calldata /*_operatorData*/
+        bytes calldata /* _operatorData */
     )
         external
         override
     {
-        if (callerIsInterimPToken(msg.sender)) {
-            return;
-        } else if (callerIsInterimVault(msg.sender)) {
-            return;
+        (
+            ,
+            bytes memory userData,
+            ,
+            ,
+            bytes4 destinationChainId,
+            address destinationAddress,
+            ,
+        ) = decodeMetadataV2(_userData);
+        address tokenAddress = msg.sender;
+        string memory destinationAddressString = convertAddressToString(destinationAddress);
+        if (getOriginChainIdFromContract(tokenAddress) == destinationChainId) {
+            // NOTE: This is a full peg-out of tokens back to their native chain.
+            IPToken(tokenAddress).redeem(
+                _amount,
+                userData,
+                destinationAddressString,
+                destinationChainId
+            );
         } else {
-            return; // FIXME What to do in this case?
+            // NOTE: This is either from a peg-in, or a peg-out to a different host chain.
+            IERC777(tokenAddress).send(
+                safelyGetVaultAddress(destinationChainId),
+                _amount,
+                abi.encode(
+                    keccak256("ERC777-pegIn"),
+                    destinationAddressString,
+                    destinationChainId,
+                    userData
+                )
+            );
         }
     }
 }
