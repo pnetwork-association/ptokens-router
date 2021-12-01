@@ -55,12 +55,37 @@ contract MockInterimVault is IERC777Recipient {
     function tokensReceived(
         address /* _operator */,
         address /* _from */,
-        address /* _to */,
-        uint256 /* _amount */,
-        bytes calldata /* _userData */,
-        bytes calldata /* _operatorData */
+        address _to,
+        uint256 _amount,
+        bytes calldata _userData,
+        bytes calldata /* operatorData */
     )
         external
         override
-    {}
+    {
+        require(_to == address(this), "Token receiver is not this contract");
+        if (_userData.length > 0) {
+            require(_amount > 0, "Token amount must be greater than zero!");
+            (
+                bytes32 tag,
+                string memory _destinationAddress,
+                bytes4 _destinationChainId,
+                bytes memory userData
+            ) = abi.decode(
+                _userData,
+                (bytes32, string, bytes4, bytes)
+            );
+            require(
+                tag == keccak256("ERC777-pegIn"),
+                "Invalid tag for automatic pegIn on ERC777 send"
+            );
+            emit PegInCalled(
+                _amount,
+                msg.sender,
+                _destinationAddress,
+                userData,
+                _destinationChainId
+            );
+        }
+    }
 }
