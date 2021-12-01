@@ -10,6 +10,7 @@ const { deployContract } = require('./lib/deploy-contract')
 const { verifyContract } = require('./lib/verify-contract')
 const { addVaultAddress } = require('./lib/add-vault-address')
 const { removeVaultAddress } = require('./lib/remove-vault-address')
+const { getEncodedInitArgs } = require('./lib/get-encoded-init-args')
 
 const TOOL_NAME = 'cli.js'
 const HELP_OPTION = '--help'
@@ -23,6 +24,7 @@ const VERIFY_CONTRACT_CMD = 'verifyContract'
 const DEPLOY_CONTRACT_CMD = 'deployContract'
 const ADD_VAULT_ADDRESS_CMD = 'addVaultAddress'
 const DEPLOYED_ADDRESS_ARG = '<deployedAddress>'
+const GET_ENCODED_INIT_ARGS_CMD = 'encodeInitArgs'
 const REMOVE_VAULT_ADDRESS_CMD = 'removeVaultAddress'
 
 const USAGE_INFO = `
@@ -50,6 +52,7 @@ const USAGE_INFO = `
   ${TOOL_NAME} ${VERSION_OPTION}
   ${TOOL_NAME} ${DEPLOY_CONTRACT_CMD}
   ${TOOL_NAME} ${GET_OWNER_CMD} ${DEPLOYED_ADDRESS_ARG}
+  ${TOOL_NAME} ${GET_ENCODED_INIT_ARGS_CMD} ${ETH_ADDRESS_ARG}
   ${TOOL_NAME} ${VERIFY_CONTRACT_CMD} ${DEPLOYED_ADDRESS_ARG} ${NETWORK_ARG}
   ${TOOL_NAME} ${TRANSFER_OWNER_CMD} ${DEPLOYED_ADDRESS_ARG} ${ETH_ADDRESS_ARG}
   ${TOOL_NAME} ${REMOVE_VAULT_ADDRESS_CMD} ${DEPLOYED_ADDRESS_ARG} ${CHAIN_ID_ARG}
@@ -59,6 +62,7 @@ const USAGE_INFO = `
   ${DEPLOY_CONTRACT_CMD}        ❍ Deploy the logic contract.
   ${VERIFY_CONTRACT_CMD}        ❍ Verify the logic contract.
   ${GET_OWNER_CMD}              ❍ Get the owner of the contract at ${DEPLOYED_ADDRESS_ARG}.
+  ${GET_ENCODED_INIT_ARGS_CMD}    ❍ Calculate the initializer function arguments in ABI encoded format.
   ${REMOVE_VAULT_ADDRESS_CMD}    ❍ Removess vault address with ${CHAIN_ID_ARG} from ${DEPLOYED_ADDRESS_ARG}.
   ${TRANSFER_OWNER_CMD}         ❍ Transfer ownership of contract at ${DEPLOYED_ADDRESS_ARG} to ${ETH_ADDRESS_ARG}.
   ${ADD_VAULT_ADDRESS_CMD}       ❍ Adds ${ETH_ADDRESS_ARG} as vault address with ${CHAIN_ID_ARG} to ${DEPLOYED_ADDRESS_ARG}.
@@ -86,6 +90,8 @@ const main = _ => {
     return addVaultAddress(CLI_ARGS[DEPLOYED_ADDRESS_ARG], CLI_ARGS[CHAIN_ID_ARG], CLI_ARGS[ETH_ADDRESS_ARG])
   if (CLI_ARGS[ADD_VAULT_ADDRESS_CMD])
     return removeVaultAddress(CLI_ARGS[DEPLOYED_ADDRESS_ARG], CLI_ARGS[CHAIN_ID_ARG])
+  if (CLI_ARGS[GET_ENCODED_INIT_ARGS_CMD])
+    return getEncodedInitArgs(CLI_ARGS[ETH_ADDRESS_ARG])
 }
 
 main().catch(_err => console.error('✘', _err.message))
