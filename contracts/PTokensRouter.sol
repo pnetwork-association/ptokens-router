@@ -6,11 +6,22 @@ import "./interfaces/IPToken.sol";
 import "./PTokensMetadataDecoder.sol";
 import "./ConvertAddressToString.sol";
 import "./interfaces/IOriginChainIdGetter.sol";
+import "@openzeppelin/contracts/interfaces/IERC20.sol";
 import "@openzeppelin/contracts/interfaces/IERC777.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/interfaces/IERC1820RegistryUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC777/IERC777RecipientUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlEnumerableUpgradeable.sol";
+
+interface IVault {
+    function pegIn(
+        uint256 _tokenAmount,
+        address _tokenAddress,
+        string memory _destinationAddress,
+        bytes memory _userData,
+        bytes4 _destinationChainId
+    ) external returns (bool);
+}
 
 contract PTokensRouter is
     Initializable,
@@ -138,15 +149,14 @@ contract PTokensRouter is
             );
         } else {
             // NOTE: This is either from a peg-in, or a peg-out to a different host chain.
-            IERC777(tokenAddress).send(
-                safelyGetVaultAddress(destinationChainId),
+            address vaultAddress = safelyGetVaultAddress(destinationChainId);
+            IERC20(tokenAddress).approve(vaultAddress, _amount);
+            IVault(vaultAddress).pegIn(
                 _amount,
-                abi.encode(
-                    keccak256("ERC777-pegIn"),
-                    destinationAddressString,
-                    destinationChainId,
-                    userData
-                )
+                tokenAddress,
+                destinationAddressString,
+                userData,
+                destinationChainId
             );
         }
     }
