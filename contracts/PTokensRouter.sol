@@ -31,7 +31,7 @@ contract PTokensRouter is
     AccessControlEnumerableUpgradeable
 {
     address public SAFE_VAULT_ADDRESS;
-    bytes4 public constant ORIGIN_CHAIN_ID = 0xff000000;
+    bytes4 public constant ORIGIN_CHAIN_ID = 0xffffffff;
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
     bytes32 public constant TOKENS_RECIPIENT_INTERFACE_HASH = keccak256("ERC777TokensRecipient");
     mapping(bytes4 => address) public interimVaultAddresses;
