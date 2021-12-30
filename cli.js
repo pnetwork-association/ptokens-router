@@ -9,6 +9,7 @@ const { transferOwner } = require('./lib/transfer-owner')
 const { deployContract } = require('./lib/deploy-contract')
 const { verifyContract } = require('./lib/verify-contract')
 const { addVaultAddress } = require('./lib/add-vault-address')
+const { getVaultAddress } = require('./lib/get-vault-address')
 const { showWalletDetails } = require('./lib/show-wallet-details')
 const { removeVaultAddress } = require('./lib/remove-vault-address')
 const { getEncodedInitArgs } = require('./lib/get-encoded-init-args')
@@ -25,6 +26,7 @@ const TRANSFER_OWNER_CMD = 'transferOwner'
 const VERIFY_CONTRACT_CMD = 'verifyContract'
 const DEPLOY_CONTRACT_CMD = 'deployContract'
 const ADD_VAULT_ADDRESS_CMD = 'addVaultAddress'
+const GET_VAULT_ADDRESS_CMD = 'getVaultAddress'
 const DEPLOYED_ADDRESS_ARG = '<deployedAddress>'
 const GET_ENCODED_INIT_ARGS_CMD = 'encodeInitArgs'
 const SHOW_WALLET_DETAILS_CMD = 'showWalletDetails'
@@ -60,6 +62,7 @@ const USAGE_INFO = `
   ${TOOL_NAME} ${GET_OWNER_CMD} ${DEPLOYED_ADDRESS_ARG}
   ${TOOL_NAME} ${GET_ENCODED_INIT_ARGS_CMD} ${ETH_ADDRESS_ARG}
   ${TOOL_NAME} ${VERIFY_CONTRACT_CMD} ${NETWORK_ARG} ${DEPLOYED_ADDRESS_ARG}
+  ${TOOL_NAME} ${GET_VAULT_ADDRESS_CMD} ${DEPLOYED_ADDRESS_ARG} ${CHAIN_ID_ARG}
   ${TOOL_NAME} ${TRANSFER_OWNER_CMD} ${DEPLOYED_ADDRESS_ARG} ${ETH_ADDRESS_ARG}
   ${TOOL_NAME} ${REMOVE_VAULT_ADDRESS_CMD} ${DEPLOYED_ADDRESS_ARG} ${CHAIN_ID_ARG}
   ${TOOL_NAME} ${ADD_VAULT_ADDRESS_CMD} ${DEPLOYED_ADDRESS_ARG} ${CHAIN_ID_ARG} ${ETH_ADDRESS_ARG}
@@ -69,6 +72,7 @@ const USAGE_INFO = `
   ${VERIFY_CONTRACT_CMD}        ❍ Verify the logic contract.
   ${GET_OWNER_CMD}              ❍ Get the owner of the contract at ${DEPLOYED_ADDRESS_ARG}.
   ${REMOVE_VAULT_ADDRESS_CMD}    ❍ Removess vault address with ${CHAIN_ID_ARG} from ${DEPLOYED_ADDRESS_ARG}.
+  ${GET_VAULT_ADDRESS_CMD}       ❍ Get vault address from router at ${DEPLOYED_ADDRESS_ARG} via ${CHAIN_ID_ARG}.
   ${SHOW_WALLET_DETAILS_CMD}     ❍ Decrypts the private key and shows address & balance information.
   ${GET_ENCODED_INIT_ARGS_CMD}        ❍ Calculate the initializer function arguments in ABI encoded format.
   ${TRANSFER_OWNER_CMD}         ❍ Transfer ownership of contract at ${DEPLOYED_ADDRESS_ARG} to ${ETH_ADDRESS_ARG}.
@@ -103,6 +107,8 @@ const main = _ => {
     return getEncodedInitArgs(CLI_ARGS[ETH_ADDRESS_ARG])
   if (CLI_ARGS[SHOW_WALLET_DETAILS_CMD])
     return showWalletDetails()
+  if (CLI_ARGS[GET_VAULT_ADDRESS_CMD])
+    return getVaultAddress(CLI_ARGS[DEPLOYED_ADDRESS_ARG], CLI_ARGS[CHAIN_ID_ARG])
   if (CLI_ARGS[SHOW_EXISTING_CONTRACTS_CMD])
     return showExistingContractAddresses()
 }
