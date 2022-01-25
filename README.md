@@ -153,6 +153,37 @@ Test output:
 
 &nbsp;
 
+## :robot: Metadata Chain Ids
+
+Here is a list of the metadata chain IDs currently supported by the core. Additinally, the file definining them can be found in [the pTokens core repository here](https://github.com/provable-things/ptokens-core-private/blob/8f85f85948c8e1ade055a7d29422cc7c079e9016/src/metadata/metadata_chain_id.rs#L17).
+
+```
+pub enum MetadataChainId {
+    EthereumMainnet,  // 0x005fe7f9
+    EthereumRopsten,  // 0x0069c322
+    EthereumRinkeby,  // 0x00f34368
+    BitcoinMainnet,   // 0x01ec97de
+    BitcoinTestnet,   // 0x018afeb2
+    EosMainnet,       // 0x02e7261c
+    TelosMainnet,     // 0x028c7109
+    BscMainnet,       // 0x00e4b170
+    EosJungleTestnet, // 0x0282317f
+    XDaiMainnet,      // 0x00f1918e
+    PolygonMainnet,   // 0x0075dd4c
+    UltraMainnet,     // 0x025d3c68
+    FioMainnet,       // 0x02174f20
+    UltraTestnet,     // 0x02b5a4d6
+    EthUnknown,       // 0x00000000
+    BtcUnknown,       // 0x01000000
+    EosUnknown,       // 0x02000000
+    InterimChain,     // 0xffffffff
+    ArbitrumMainnet,  // 0x00ce98c4
+    LuxochainMainnet, // 0x00d5beb0
+}
+```
+
+&nbsp;
+
 ## :white_medium_square: To Do:
 
 [ ] Allow custom gas prices?
