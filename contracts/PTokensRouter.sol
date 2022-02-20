@@ -117,6 +117,40 @@ contract PTokensRouter is
         }
     }
 
+    function decodeParamsFromUserData(
+        bytes memory _userData
+    )
+        internal
+        pure
+        returns(bytes memory, bytes4, string memory)
+    {
+        if (_userData[0] == 0x02) {
+            (
+                , // NOTE: Metadata Version
+                bytes memory userData,
+                , // NOTE: Origin Chain Id
+                , // NOTE: Origin Address
+                bytes4 destinationChainId,
+                address destinationAddress,
+                ,
+            ) = decodeMetadataV2(_userData);
+            return (userData, destinationChainId, convertAddressToString(destinationAddress));
+        } else if (_userData[0] == 0x03) {
+            (
+                , // NOTE: Metadata Version
+                bytes memory userData,
+                , // NOTE: Origin Chain Id
+                , // NOTE: Origin Address
+                bytes4 destinationChainId,
+                string memory destinationAddress,
+                ,
+            ) = decodeMetadataV3(_userData);
+            return (userData, destinationChainId, destinationAddress);
+        } else {
+            revert("Unrecognized pTokens metadata version!");
+        }
+    }
+
     function tokensReceived(
         address /* _operator */, // NOTE: Enclave address.
         address /* _from */, // NOTE: Enclave address.
@@ -128,23 +162,17 @@ contract PTokensRouter is
         external
         override
     {
-        (
-            , // NOTE: Metadata Version
-            bytes memory userData,
-            , // NOTE: Origin Chain Id
-            , // NOTE: Origin Address
+        (   bytes memory userData,
             bytes4 destinationChainId,
-            address destinationAddress,
-            ,
-        ) = decodeMetadataV2(_userData);
+            string memory destinationAddress
+        ) = decodeParamsFromUserData(_userData);
         address tokenAddress = msg.sender;
-        string memory destinationAddressString = convertAddressToString(destinationAddress);
         if (getOriginChainIdFromContract(tokenAddress) == destinationChainId) {
             // NOTE: This is a full peg-out of tokens back to their native chain.
             IPToken(tokenAddress).redeem(
                 _amount,
                 userData,
-                destinationAddressString,
+                destinationAddress,
                 destinationChainId
             );
         } else {
@@ -154,7 +182,7 @@ contract PTokensRouter is
             IVault(vaultAddress).pegIn(
                 _amount,
                 tokenAddress,
-                destinationAddressString,
+                destinationAddress,
                 userData,
                 destinationChainId
             );
