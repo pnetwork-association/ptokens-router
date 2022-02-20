@@ -129,10 +129,10 @@ contract PTokensRouter is
         override
     {
         (
-            ,
+            , // NOTE: Metadata Version
             bytes memory userData,
-            ,
-            ,
+            , // NOTE: Origin Chain Id
+            , // NOTE: Origin Address
             bytes4 destinationChainId,
             address destinationAddress,
             ,
