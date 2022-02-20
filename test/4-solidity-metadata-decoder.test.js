@@ -9,6 +9,8 @@ const {
 const assert = require('assert')
 const { encodeCoreMetadata } = require('../lib/metadata-encoder')
 
+const METADATA_VERSION_3_BYTE = '0x03'
+
 const getSampleCoreMetadataV1 = _ =>
   encodeCoreMetadata(
     SAMPLE_USER_DATA,
@@ -23,6 +25,16 @@ const getSampleCoreMetadataV2 = _ =>
     SAMPLE_ETH_ADDRESS_1,
     SAMPLE_METADATA_CHAIN_ID_2,
     SAMPLE_ETH_ADDRESS_2,
+  )
+
+const getSampleCoreMetadataV3 = _ =>
+  encodeCoreMetadata(
+    SAMPLE_USER_DATA,
+    SAMPLE_METADATA_CHAIN_ID_1,
+    SAMPLE_ETH_ADDRESS_1,
+    SAMPLE_METADATA_CHAIN_ID_2,
+    SAMPLE_ETH_ADDRESS_2,
+    METADATA_VERSION_3_BYTE,
   )
 
 describe('Metadata Decoder Contract', () => {
@@ -54,5 +66,15 @@ describe('Metadata Decoder Contract', () => {
     assert.strictEqual(result.protocolReceipt, EMPTY_DATA)
   })
 
-  it('Should decode v3 metadata')
+  it('Should decode v3 metadata', async () => {
+    const result = await CONTRACT.decodeMetadataV3(await getSampleCoreMetadataV3())
+    assert.strictEqual(result.userData, SAMPLE_USER_DATA)
+    assert.strictEqual(result.originAddress, SAMPLE_ETH_ADDRESS_1)
+    assert.strictEqual(result.metadataVersion, METADATA_VERSION_3_BYTE)
+    assert.strictEqual(result.originChainId, SAMPLE_METADATA_CHAIN_ID_1)
+    assert.strictEqual(result.destinationChainId, SAMPLE_METADATA_CHAIN_ID_2)
+    assert.strictEqual(result.destinationAddress, SAMPLE_ETH_ADDRESS_2)
+    assert.strictEqual(result.protocolOptions, EMPTY_DATA)
+    assert.strictEqual(result.protocolReceipt, EMPTY_DATA)
+  })
 })

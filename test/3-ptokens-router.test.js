@@ -16,6 +16,7 @@ const { curry } = require('ramda')
 const { BigNumber } = require('ethers')
 const { encodeCoreMetadata } = require('../lib/metadata-encoder')
 
+// FIXME add tests for v3 encoded metatadata!
 describe('pTokens Router Contract', () => {
   let ROUTER_CONTRACT, NON_ADMIN, NON_ADMIN_ROUTER_CONTRACT, OWNER
 
