@@ -35,6 +35,11 @@ const getMockVaultContract = _originChainId =>
 const keccakHashString = _s =>
   ethers.utils.keccak256(ethers.utils.toUtf8Bytes(_s))
 
+/* eslint-disable-next-line no-return-assign */
+const silenceConsoleOutput = _ =>
+  /* eslint-disable-next-line no-empty-function */
+  console.info = () => {}
+
 module.exports = {
   deployNonUpgradeableContract,
   SAMPLE_METADATA_CHAIN_ID_1,
@@ -42,6 +47,7 @@ module.exports = {
   SAMPLE_SAFE_VAULT_ADDRESS,
   getMockErc777Contract,
   getMockVaultContract,
+  silenceConsoleOutput,
   deployRouterContract,
   SAMPLE_ETH_ADDRESS_1,
   SAMPLE_ETH_ADDRESS_2,
