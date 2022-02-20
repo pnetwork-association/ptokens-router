@@ -6,11 +6,14 @@ const {
   SAMPLE_METADATA_CHAIN_ID_2,
 } = require('./test-utils')
 const assert = require('assert')
+const { silenceConsoleOutput } = require('./test-utils')
 const { encodeCoreMetadata } = require('../lib/metadata-encoder')
 
 describe('Metadata Encoder Contract', () => {
-  it('Should encode core metadata v1', () => {
-    const result = encodeCoreMetadata(
+  silenceConsoleOutput()
+
+  it('Should encode core metadata v1', async () => {
+    const result = await encodeCoreMetadata(
       SAMPLE_USER_DATA,
       SAMPLE_METADATA_CHAIN_ID_1,
       SAMPLE_ETH_ADDRESS_1,
@@ -20,8 +23,8 @@ describe('Metadata Encoder Contract', () => {
     assert.strictEqual(result, expectedResult)
   })
 
-  it('Should encode core metadata v2', () => {
-    const result = encodeCoreMetadata(
+  it('Should encode core metadata v2', async () => {
+    const result = await encodeCoreMetadata(
       SAMPLE_USER_DATA,
       SAMPLE_METADATA_CHAIN_ID_1,
       SAMPLE_ETH_ADDRESS_1,

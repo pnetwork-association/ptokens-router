@@ -35,7 +35,7 @@ describe('Metadata Decoder Contract', () => {
   })
 
   it('Should decode v1 metadata', async () => {
-    const result = await CONTRACT.decodeMetadataV1(getSampleCoreMetadataV1())
+    const result = await CONTRACT.decodeMetadataV1(await getSampleCoreMetadataV1())
     assert.strictEqual(result.userData, SAMPLE_USER_DATA)
     assert.strictEqual(result.originAddress, SAMPLE_ETH_ADDRESS_1)
     assert.strictEqual(result.metadataVersion, '0x01')
@@ -43,7 +43,7 @@ describe('Metadata Decoder Contract', () => {
   })
 
   it('Should decode v2 metadata', async () => {
-    const result = await CONTRACT.decodeMetadataV2(getSampleCoreMetadataV2())
+    const result = await CONTRACT.decodeMetadataV2(await getSampleCoreMetadataV2())
     assert.strictEqual(result.userData, SAMPLE_USER_DATA)
     assert.strictEqual(result.originAddress, SAMPLE_ETH_ADDRESS_1)
     assert.strictEqual(result.metadataVersion, '0x02')
@@ -53,4 +53,6 @@ describe('Metadata Decoder Contract', () => {
     assert.strictEqual(result.protocolOptions, EMPTY_DATA)
     assert.strictEqual(result.protocolReceipt, EMPTY_DATA)
   })
+
+  it('Should decode v3 metadata')
 })

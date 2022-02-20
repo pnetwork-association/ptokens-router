@@ -195,7 +195,7 @@ describe('pTokens Router Contract', () => {
         const originAddress = SAMPLE_ETH_ADDRESS_1
         const destinationChainId = SAMPLE_METADATA_CHAIN_ID_2
         const destinationAddress = SAMPLE_ETH_ADDRESS_2
-        const metadata = encodeCoreMetadata(
+        const metadata = await encodeCoreMetadata(
           userData,
           originChainId,
           originAddress,
@@ -232,7 +232,7 @@ describe('pTokens Router Contract', () => {
         const originAddress = SAMPLE_ETH_ADDRESS_1
         const destinationChainId = chainId
         const destinationAddress = SAMPLE_ETH_ADDRESS_2
-        const metadata = encodeCoreMetadata(
+        const metadata = await encodeCoreMetadata(
           userData,
           originChainId,
           originAddress,
@@ -284,7 +284,7 @@ describe('pTokens Router Contract', () => {
         const originAddress = SAMPLE_ETH_ADDRESS_1
         const destinationChainId = chainId2
         const destinationAddress = SAMPLE_ETH_ADDRESS_2
-        const metadata = encodeCoreMetadata(
+        const metadata = await encodeCoreMetadata(
           userData,
           originChainId,
           originAddress,
