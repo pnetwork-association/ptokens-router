@@ -1,0 +1,10 @@
+*.log
+**/node_modules
+**/build
+*flattened*
+*.env
+*.gpg
+!private-key.gpg
+/cache
+/artifacts
+**/.openzeppelin
