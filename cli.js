@@ -4,6 +4,7 @@
 require('dotenv').config()
 const { docopt } = require('docopt')
 const { version } = require('./package.json')
+const { getAdmins } = require('./lib/get-admins')
 const { deployContract } = require('./lib/deploy-contract')
 const { verifyContract } = require('./lib/verify-contract')
 const { addVaultAddress } = require('./lib/add-vault-address')
@@ -18,6 +19,7 @@ const TOOL_NAME = 'cli.js'
 const HELP_OPTION = '--help'
 const NETWORK_ARG = '<network>'
 const CHAIN_ID_ARG = '<chainId>'
+const GET_ADMINS_CMD = 'getAdmins'
 const VERSION_OPTION = '--version'
 const ETH_ADDRESS_ARG = '<ethAddress>'
 const VERIFY_CONTRACT_CMD = 'verifyContract'
@@ -57,6 +59,7 @@ const USAGE_INFO = `
   ${TOOL_NAME} ${DEPLOY_CONTRACT_CMD}
   ${TOOL_NAME} ${SHOW_WALLET_DETAILS_CMD}
   ${TOOL_NAME} ${SHOW_EXISTING_CONTRACTS_CMD}
+  ${TOOL_NAME} ${GET_ADMINS_CMD} ${DEPLOYED_ADDRESS_ARG}
   ${TOOL_NAME} ${GET_ENCODED_INIT_ARGS_CMD} ${ETH_ADDRESS_ARG}
   ${TOOL_NAME} ${GET_SAFE_VAULT_ADDRESS_CMD} ${DEPLOYED_ADDRESS_ARG}
   ${TOOL_NAME} ${VERIFY_CONTRACT_CMD} ${NETWORK_ARG} ${DEPLOYED_ADDRESS_ARG}
@@ -67,6 +70,7 @@ const USAGE_INFO = `
 ❍ Commands:
   ${DEPLOY_CONTRACT_CMD}        ❍ Deploy the logic contract.
   ${VERIFY_CONTRACT_CMD}        ❍ Verify the logic contract.
+  ${GET_ADMINS_CMD}             ❍ Get the admins of the contract at ${DEPLOYED_ADDRESS_ARG}.
   ${REMOVE_VAULT_ADDRESS_CMD}    ❍ Removess vault address with ${CHAIN_ID_ARG} from ${DEPLOYED_ADDRESS_ARG}.
   ${GET_VAULT_ADDRESS_CMD}       ❍ Get vault address from router at ${DEPLOYED_ADDRESS_ARG} via ${CHAIN_ID_ARG}.
   ${SHOW_WALLET_DETAILS_CMD}     ❍ Decrypts the private key and shows address & balance information.
@@ -105,6 +109,8 @@ const main = _ => {
     return showExistingContractAddresses()
   if (CLI_ARGS[GET_SAFE_VAULT_ADDRESS_CMD])
     return getSafeVaultAddress(CLI_ARGS[DEPLOYED_ADDRESS_ARG])
+  if (CLI_ARGS[GET_ADMINS_CMD])
+    return getAdmins(CLI_ARGS[DEPLOYED_ADDRESS_ARG], CLI_ARGS[ETH_ADDRESS_ARG])
 }
 
 main().catch(_err => console.error('✘', _err.message))
