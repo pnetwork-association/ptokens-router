@@ -4,8 +4,6 @@
 require('dotenv').config()
 const { docopt } = require('docopt')
 const { version } = require('./package.json')
-const { getOwner } = require('./lib/get-owner')
-const { transferOwner } = require('./lib/transfer-owner')
 const { deployContract } = require('./lib/deploy-contract')
 const { verifyContract } = require('./lib/verify-contract')
 const { addVaultAddress } = require('./lib/add-vault-address')
@@ -20,10 +18,8 @@ const TOOL_NAME = 'cli.js'
 const HELP_OPTION = '--help'
 const NETWORK_ARG = '<network>'
 const CHAIN_ID_ARG = '<chainId>'
-const GET_OWNER_CMD = 'getOwner'
 const VERSION_OPTION = '--version'
 const ETH_ADDRESS_ARG = '<ethAddress>'
-const TRANSFER_OWNER_CMD = 'transferOwner'
 const VERIFY_CONTRACT_CMD = 'verifyContract'
 const DEPLOY_CONTRACT_CMD = 'deployContract'
 const ADD_VAULT_ADDRESS_CMD = 'addVaultAddress'
@@ -61,25 +57,21 @@ const USAGE_INFO = `
   ${TOOL_NAME} ${DEPLOY_CONTRACT_CMD}
   ${TOOL_NAME} ${SHOW_WALLET_DETAILS_CMD}
   ${TOOL_NAME} ${SHOW_EXISTING_CONTRACTS_CMD}
-  ${TOOL_NAME} ${GET_OWNER_CMD} ${DEPLOYED_ADDRESS_ARG}
   ${TOOL_NAME} ${GET_ENCODED_INIT_ARGS_CMD} ${ETH_ADDRESS_ARG}
   ${TOOL_NAME} ${GET_SAFE_VAULT_ADDRESS_CMD} ${DEPLOYED_ADDRESS_ARG}
   ${TOOL_NAME} ${VERIFY_CONTRACT_CMD} ${NETWORK_ARG} ${DEPLOYED_ADDRESS_ARG}
   ${TOOL_NAME} ${GET_VAULT_ADDRESS_CMD} ${DEPLOYED_ADDRESS_ARG} ${CHAIN_ID_ARG}
-  ${TOOL_NAME} ${TRANSFER_OWNER_CMD} ${DEPLOYED_ADDRESS_ARG} ${ETH_ADDRESS_ARG}
   ${TOOL_NAME} ${REMOVE_VAULT_ADDRESS_CMD} ${DEPLOYED_ADDRESS_ARG} ${CHAIN_ID_ARG}
   ${TOOL_NAME} ${ADD_VAULT_ADDRESS_CMD} ${DEPLOYED_ADDRESS_ARG} ${CHAIN_ID_ARG} ${ETH_ADDRESS_ARG}
 
 ❍ Commands:
   ${DEPLOY_CONTRACT_CMD}        ❍ Deploy the logic contract.
   ${VERIFY_CONTRACT_CMD}        ❍ Verify the logic contract.
-  ${GET_OWNER_CMD}              ❍ Get the owner of the contract at ${DEPLOYED_ADDRESS_ARG}.
   ${REMOVE_VAULT_ADDRESS_CMD}    ❍ Removess vault address with ${CHAIN_ID_ARG} from ${DEPLOYED_ADDRESS_ARG}.
   ${GET_VAULT_ADDRESS_CMD}       ❍ Get vault address from router at ${DEPLOYED_ADDRESS_ARG} via ${CHAIN_ID_ARG}.
   ${SHOW_WALLET_DETAILS_CMD}     ❍ Decrypts the private key and shows address & balance information.
   ${GET_SAFE_VAULT_ADDRESS_CMD}   ❍ Get the safe vault address set in the router at ${DEPLOYED_ADDRESS_ARG}.
   ${GET_ENCODED_INIT_ARGS_CMD}        ❍ Calculate the initializer function arguments in ABI encoded format.
-  ${TRANSFER_OWNER_CMD}         ❍ Transfer ownership of contract at ${DEPLOYED_ADDRESS_ARG} to ${ETH_ADDRESS_ARG}.
   ${ADD_VAULT_ADDRESS_CMD}       ❍ Adds ${ETH_ADDRESS_ARG} as vault address with ${CHAIN_ID_ARG} to ${DEPLOYED_ADDRESS_ARG}.
   ${SHOW_EXISTING_CONTRACTS_CMD} ❍ Show list of existing pToken logic contract addresses on various blockchains.
 
@@ -99,10 +91,6 @@ const main = _ => {
     return deployContract()
   if (CLI_ARGS[VERIFY_CONTRACT_CMD])
     return verifyContract(CLI_ARGS[DEPLOYED_ADDRESS_ARG], CLI_ARGS[NETWORK_ARG])
-  if (CLI_ARGS[GET_OWNER_CMD])
-    return getOwner(CLI_ARGS[DEPLOYED_ADDRESS_ARG])
-  if (CLI_ARGS[TRANSFER_OWNER_CMD])
-    return transferOwner(CLI_ARGS[DEPLOYED_ADDRESS_ARG], CLI_ARGS[ETH_ADDRESS_ARG])
   if (CLI_ARGS[ADD_VAULT_ADDRESS_CMD])
     return addVaultAddress(CLI_ARGS[DEPLOYED_ADDRESS_ARG], CLI_ARGS[CHAIN_ID_ARG], CLI_ARGS[ETH_ADDRESS_ARG])
   if (CLI_ARGS[REMOVE_VAULT_ADDRESS_CMD])
