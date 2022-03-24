@@ -45,19 +45,28 @@ Output:
   cli.js --help
   cli.js --version
   cli.js deployContract
-  cli.js getOwner <deployedAddress>
-  cli.js transferOwner <deployedAddress> <ethAddress>
-  cli.js verifyContract <deployedAddress> <network>
+  cli.js showWalletDetails
+  cli.js showExistingContracts
+  cli.js getAdmins <deployedAddress>
+  cli.js encodeInitArgs <ethAddress>
+  cli.js getSafeVaultAddress <deployedAddress>
+  cli.js verifyContract <network> <deployedAddress>
+  cli.js getVaultAddress <deployedAddress> <chainId>
   cli.js removeVaultAddress <deployedAddress> <chainId>
   cli.js addVaultAddress <deployedAddress> <chainId> <ethAddress>
 
 ❍ Commands:
   deployContract        ❍ Deploy the logic contract.
   verifyContract        ❍ Verify the logic contract.
-  getOwner              ❍ Get the owner of the contract at <deployedAddress>.
-  transferOwner         ❍ Transfer ownership of contract at <deployedAddress> to <ethAddress>.
+  getAdmins             ❍ Get the admins of the contract at <deployedAddress>.
   removeVaultAddress    ❍ Removess vault address with <chainId> from <deployedAddress>.
+  getVaultAddress       ❍ Get vault address from router at <deployedAddress> via <chainId>.
+  showWalletDetails     ❍ Decrypts the private key and shows address & balance information.
+  getSafeVaultAddress   ❍ Get the safe vault address set in the router at <deployedAddress>.
+  encodeInitArgs        ❍ Calculate the initializer function arguments in ABI encoded format.
   addVaultAddress       ❍ Adds <ethAddress> as vault address with <chainId> to <deployedAddress>.
+  showExistingContracts ❍ Show list of existing pToken logic contract addresses on various blockchains.
+
 
 ❍ Options:
   --help                ❍ Show this message.
@@ -66,7 +75,6 @@ Output:
   <deployedAddress>     ❍ The ETH address of the deployed pToken.
   <chainId>             ❍ A pToken metadata chain ID, as a 'bytes4' solidity type.
   <network>             ❍ Network the contract is deployed on. It must exist in the 'hardhat.config.json'.
-
 
 ```
 
