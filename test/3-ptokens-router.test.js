@@ -16,6 +16,7 @@ const { curry } = require('ramda')
 const { BigNumber } = require('ethers')
 const { encodeCoreMetadata } = require('../lib/metadata-encoder')
 
+// FIXME add tests for v3 encoded metatadata!
 describe('pTokens Router Contract', () => {
   let ROUTER_CONTRACT, NON_ADMIN, NON_ADMIN_ROUTER_CONTRACT, OWNER
 
@@ -142,183 +143,192 @@ describe('pTokens Router Contract', () => {
     })
   })
 
-  describe('Routing Tests', () => {
-    const decodePegInCalledEvent = _event =>
-      new Promise((resolve, reject) => {
-        const codec = new ethers.utils.AbiCoder()
-        try {
-          const [ amount, tokenAddress, destinationAddress, userData, destinationChainId ] = codec.decode(
-            [ 'uint256', 'address', 'string', 'bytes', 'bytes4' ],
-            _event.data
+  const METADATA_VERSION_2_BYTE = '0x02'
+  const METADATA_VERSION_3_BYTE = '0x03'
+  const METADATA_VERSIONS = [ METADATA_VERSION_2_BYTE, METADATA_VERSION_3_BYTE ]
+
+  METADATA_VERSIONS.map(_metadataVersion =>
+    describe(`Metadata Version ${_metadataVersion} Routing Tests`, () => {
+      const decodePegInCalledEvent = _event =>
+        new Promise((resolve, reject) => {
+          const codec = new ethers.utils.AbiCoder()
+          try {
+            const [ amount, tokenAddress, destinationAddress, userData, destinationChainId ] = codec.decode(
+              [ 'uint256', 'address', 'string', 'bytes', 'bytes4' ],
+              _event.data
+            )
+            return resolve({ amount, tokenAddress, destinationAddress, userData, destinationChainId })
+          } catch (_err) {
+            return reject(_err)
+          }
+        })
+
+      const decodePegOutCalledEvent = _event =>
+        new Promise((resolve, reject) => {
+          const codec = new ethers.utils.AbiCoder()
+          try {
+            const [ amount, userData, destinationAddress, destinationChainId ] = codec.decode(
+              [ 'uint256', 'bytes', 'string', 'bytes4' ],
+              _event.data
+            )
+            return resolve({ amount, userData, destinationAddress, destinationChainId })
+          } catch (_err) {
+            return reject(_err)
+          }
+        })
+
+      const getEventFromReceipt = curry((_eventSignature, _receipt) =>
+        new Promise((resolve, reject) => {
+          const eventTopic = keccakHashString(_eventSignature)
+          const event = _receipt.events.find(_event => _event.topics[0] === eventTopic)
+          return event === undefined
+            ? reject(new Error(`Could not find event signature '${_eventSignature}' in receipt!`))
+            : resolve(event)
+        })
+      )
+
+      const getRedeemCalledEventFromReceipt = getEventFromReceipt('RedeemCalled(uint256,bytes,string,bytes4)')
+      const getPegInCalledEventFromReceipt = getEventFromReceipt('PegInCalled(uint256,address,string,bytes,bytes4)')
+
+      describe('Peg In Route Tests', () => {
+        it('Should peg in successfully', async () => {
+          const chainId = '0xdeadbeef'
+          assert.notStrictEqual(chainId, INTERIM_CHAIN_ID)
+          const pTokenContract = await getMockErc777Contract(chainId)
+          const vaultContract = await getMockVaultContract(INTERIM_CHAIN_ID)
+          const userData = '0xc0ffee'
+          const originChainId = SAMPLE_METADATA_CHAIN_ID_1
+          const originAddress = SAMPLE_ETH_ADDRESS_1
+          const destinationChainId = SAMPLE_METADATA_CHAIN_ID_2
+          const destinationAddress = SAMPLE_ETH_ADDRESS_2
+          const metadata = await encodeCoreMetadata(
+            userData,
+            originChainId,
+            originAddress,
+            destinationChainId,
+            destinationAddress,
+            _metadataVersion,
           )
-          return resolve({ amount, tokenAddress, destinationAddress, userData, destinationChainId })
-        } catch (_err) {
-          return reject(_err)
-        }
+          const amount = 1337
+          await ROUTER_CONTRACT.addVaultAddress(SAMPLE_METADATA_CHAIN_ID_2, vaultContract.address)
+          const tx = await pTokenContract.send(ROUTER_CONTRACT.address, amount, metadata)
+          const receipt = await tx.wait()
+          const event = await getPegInCalledEventFromReceipt(receipt)
+          const result = await decodePegInCalledEvent(event)
+          assert(BigNumber.from(amount).eq(result.amount))
+          assert.strictEqual(result.tokenAddress.toLowerCase(), pTokenContract.address.toLowerCase())
+          assert.strictEqual(result.destinationAddress.toLowerCase(), SAMPLE_ETH_ADDRESS_2.toLowerCase())
+          assert.strictEqual(result.userData, userData)
+          assert.strictEqual(result.destinationChainId, SAMPLE_METADATA_CHAIN_ID_2)
+          const routerContractBalance = await pTokenContract.balanceOf(ROUTER_CONTRACT.address)
+          const vaultContractBalance = await pTokenContract.balanceOf(vaultContract.address)
+          assert(routerContractBalance.eq(0))
+          assert(vaultContractBalance.eq(amount))
+        })
       })
 
-    const decodePegOutCalledEvent = _event =>
-      new Promise((resolve, reject) => {
-        const codec = new ethers.utils.AbiCoder()
-        try {
-          const [ amount, userData, destinationAddress, destinationChainId ] = codec.decode(
-            [ 'uint256', 'bytes', 'string', 'bytes4' ],
-            _event.data
+      describe('Peg Out Route Tests', () => {
+        it('Should peg out successfully', async () => {
+          const chainId = '0xdeadbeef'
+          assert.notStrictEqual(chainId, INTERIM_CHAIN_ID)
+          const pTokenContract = await getMockErc777Contract(chainId)
+          const vaultContract = await getMockVaultContract(INTERIM_CHAIN_ID)
+          const amount = 1337
+          const userData = '0xc0ffee'
+          const originChainId = SAMPLE_METADATA_CHAIN_ID_1
+          const originAddress = SAMPLE_ETH_ADDRESS_1
+          const destinationChainId = chainId
+          const destinationAddress = SAMPLE_ETH_ADDRESS_2
+          const metadata = await encodeCoreMetadata(
+            userData,
+            originChainId,
+            originAddress,
+            destinationChainId,
+            destinationAddress,
+            _metadataVersion,
           )
-          return resolve({ amount, userData, destinationAddress, destinationChainId })
-        } catch (_err) {
-          return reject(_err)
-        }
-      })
+          await pTokenContract.send(vaultContract.address, amount, EMPTY_DATA)
+          let vaultContractBalance = await pTokenContract.balanceOf(vaultContract.address)
+          let routerContractBalance = await pTokenContract.balanceOf(ROUTER_CONTRACT.address)
+          let pTokenContractBalance = await pTokenContract.balanceOf(pTokenContract.address)
+          assert(vaultContractBalance.eq(amount))
+          assert(routerContractBalance.eq(0))
+          assert(pTokenContractBalance.eq(0))
+          const tx = await vaultContract.pegOut(ROUTER_CONTRACT.address, pTokenContract.address, amount, metadata)
+          const receipt = await tx.wait()
+          const redeemEvent = await getRedeemCalledEventFromReceipt(receipt)
+          const result = await decodePegOutCalledEvent(redeemEvent)
+          assert(result.amount.eq(amount))
+          assert.strictEqual(result.userData, userData)
+          assert.strictEqual(result.destinationAddress.toLowerCase(), destinationAddress.toLowerCase())
+          assert.strictEqual(result.destinationChainId, destinationChainId)
+          vaultContractBalance = await pTokenContract.balanceOf(vaultContract.address)
+          routerContractBalance = await pTokenContract.balanceOf(ROUTER_CONTRACT.address)
+          pTokenContractBalance = await pTokenContract.balanceOf(pTokenContract.address)
+          assert(vaultContractBalance.eq(0))
+          assert(routerContractBalance.eq(0))
+          assert(pTokenContractBalance.eq(0))
+        })
 
-    const getEventFromReceipt = curry((_eventSignature, _receipt) =>
-      new Promise((resolve, reject) => {
-        const eventTopic = keccakHashString(_eventSignature)
-        const event = _receipt.events.find(_event => _event.topics[0] === eventTopic)
-        return event === undefined
-          ? reject(new Error(`Could not find event signature '${_eventSignature}' in receipt!`))
-          : resolve(event)
-      })
-    )
-
-    const getRedeemCalledEventFromReceipt = getEventFromReceipt('RedeemCalled(uint256,bytes,string,bytes4)')
-    const getPegInCalledEventFromReceipt = getEventFromReceipt('PegInCalled(uint256,address,string,bytes,bytes4)')
-
-    describe('Peg In Route Tests', () => {
-      it('Should peg in successfully', async () => {
-        const chainId = '0xdeadbeef'
-        assert.notStrictEqual(chainId, INTERIM_CHAIN_ID)
-        const pTokenContract = await getMockErc777Contract(chainId)
-        const vaultContract = await getMockVaultContract(INTERIM_CHAIN_ID)
-        const userData = '0xc0ffee'
-        const originChainId = SAMPLE_METADATA_CHAIN_ID_1
-        const originAddress = SAMPLE_ETH_ADDRESS_1
-        const destinationChainId = SAMPLE_METADATA_CHAIN_ID_2
-        const destinationAddress = SAMPLE_ETH_ADDRESS_2
-        const metadata = encodeCoreMetadata(
-          userData,
-          originChainId,
-          originAddress,
-          destinationChainId,
-          destinationAddress,
-        )
-        const amount = 1337
-        await ROUTER_CONTRACT.addVaultAddress(SAMPLE_METADATA_CHAIN_ID_2, vaultContract.address)
-        const tx = await pTokenContract.send(ROUTER_CONTRACT.address, amount, metadata)
-        const receipt = await tx.wait()
-        const event = await getPegInCalledEventFromReceipt(receipt)
-        const result = await decodePegInCalledEvent(event)
-        assert(BigNumber.from(amount).eq(result.amount))
-        assert.strictEqual(result.tokenAddress.toLowerCase(), pTokenContract.address.toLowerCase())
-        assert.strictEqual(result.destinationAddress.toLowerCase(), SAMPLE_ETH_ADDRESS_2.toLowerCase())
-        assert.strictEqual(result.userData, userData)
-        assert.strictEqual(result.destinationChainId, SAMPLE_METADATA_CHAIN_ID_2)
-        const routerContractBalance = await pTokenContract.balanceOf(ROUTER_CONTRACT.address)
-        const vaultContractBalance = await pTokenContract.balanceOf(vaultContract.address)
-        assert(routerContractBalance.eq(0))
-        assert(vaultContractBalance.eq(amount))
+        it('Should peg out from one vault to another successfully', async () => {
+          const chainId1 = '0xdeadbeef'
+          const chainId2 = '0xdecaffff'
+          assert.notStrictEqual(chainId1, chainId2)
+          assert.notStrictEqual(chainId1, INTERIM_CHAIN_ID)
+          assert.notStrictEqual(chainId2, INTERIM_CHAIN_ID)
+          const pTokenContract = await getMockErc777Contract(chainId1)
+          const mockVaultContract1 = await getMockVaultContract(INTERIM_CHAIN_ID)
+          const mockVaultContract2 = await getMockVaultContract(INTERIM_CHAIN_ID)
+          let mockVaultContract1Balance = await pTokenContract.balanceOf(mockVaultContract1.address)
+          let mockVaultContract2Balance = await pTokenContract.balanceOf(mockVaultContract2.address)
+          let routerContractBalance = await pTokenContract.balanceOf(ROUTER_CONTRACT.address)
+          assert(routerContractBalance.eq(0))
+          assert(mockVaultContract1Balance.eq(0))
+          assert(mockVaultContract1Balance.eq(0))
+          await ROUTER_CONTRACT.addVaultAddress(chainId2, mockVaultContract2.address)
+          const amount = 1337
+          const userData = '0xc0ffee'
+          const originChainId = SAMPLE_METADATA_CHAIN_ID_1
+          const originAddress = SAMPLE_ETH_ADDRESS_1
+          const destinationChainId = chainId2
+          const destinationAddress = SAMPLE_ETH_ADDRESS_2
+          const metadata = await encodeCoreMetadata(
+            userData,
+            originChainId,
+            originAddress,
+            destinationChainId,
+            destinationAddress,
+            _metadataVersion,
+          )
+          await pTokenContract.send(mockVaultContract1.address, amount, EMPTY_DATA)
+          routerContractBalance = await pTokenContract.balanceOf(ROUTER_CONTRACT.address)
+          mockVaultContract1Balance = await pTokenContract.balanceOf(mockVaultContract1.address)
+          mockVaultContract2Balance = await pTokenContract.balanceOf(mockVaultContract2.address)
+          assert(routerContractBalance.eq(0))
+          assert(mockVaultContract1Balance.eq(amount))
+          assert(mockVaultContract2Balance.eq(0))
+          const tx = await mockVaultContract1.pegOut(
+            ROUTER_CONTRACT.address,
+            pTokenContract.address,
+            amount,
+            metadata
+          )
+          const receipt = await tx.wait()
+          const pegInCalledEvent = await getPegInCalledEventFromReceipt(receipt)
+          const result = await decodePegInCalledEvent(pegInCalledEvent)
+          assert(BigNumber.from(amount).eq(result.amount))
+          assert.strictEqual(result.tokenAddress.toLowerCase(), pTokenContract.address.toLowerCase())
+          assert.strictEqual(result.destinationAddress.toLowerCase(), SAMPLE_ETH_ADDRESS_2.toLowerCase())
+          assert.strictEqual(result.userData, userData)
+          assert.strictEqual(result.destinationChainId, destinationChainId)
+          routerContractBalance = await pTokenContract.balanceOf(ROUTER_CONTRACT.address)
+          mockVaultContract1Balance = await pTokenContract.balanceOf(mockVaultContract1.address)
+          mockVaultContract2Balance = await pTokenContract.balanceOf(mockVaultContract2.address)
+          assert(routerContractBalance.eq(0))
+          assert(mockVaultContract1Balance.eq(0))
+          assert(mockVaultContract2Balance.eq(amount))
+        })
       })
     })
-
-    describe('Peg Out Route Tests', () => {
-      it('Should peg out successfully', async () => {
-        const chainId = '0xdeadbeef'
-        assert.notStrictEqual(chainId, INTERIM_CHAIN_ID)
-        const pTokenContract = await getMockErc777Contract(chainId)
-        const vaultContract = await getMockVaultContract(INTERIM_CHAIN_ID)
-        const amount = 1337
-        const userData = '0xc0ffee'
-        const originChainId = SAMPLE_METADATA_CHAIN_ID_1
-        const originAddress = SAMPLE_ETH_ADDRESS_1
-        const destinationChainId = chainId
-        const destinationAddress = SAMPLE_ETH_ADDRESS_2
-        const metadata = encodeCoreMetadata(
-          userData,
-          originChainId,
-          originAddress,
-          destinationChainId,
-          destinationAddress,
-        )
-        await pTokenContract.send(vaultContract.address, amount, EMPTY_DATA)
-        let vaultContractBalance = await pTokenContract.balanceOf(vaultContract.address)
-        let routerContractBalance = await pTokenContract.balanceOf(ROUTER_CONTRACT.address)
-        let pTokenContractBalance = await pTokenContract.balanceOf(pTokenContract.address)
-        assert(vaultContractBalance.eq(amount))
-        assert(routerContractBalance.eq(0))
-        assert(pTokenContractBalance.eq(0))
-        const tx = await vaultContract.pegOut(ROUTER_CONTRACT.address, pTokenContract.address, amount, metadata)
-        const receipt = await tx.wait()
-        const redeemEvent = await getRedeemCalledEventFromReceipt(receipt)
-        const result = await decodePegOutCalledEvent(redeemEvent)
-        assert(result.amount.eq(amount))
-        assert.strictEqual(result.userData, userData)
-        assert.strictEqual(result.destinationAddress.toLowerCase(), destinationAddress.toLowerCase())
-        assert.strictEqual(result.destinationChainId, destinationChainId)
-        vaultContractBalance = await pTokenContract.balanceOf(vaultContract.address)
-        routerContractBalance = await pTokenContract.balanceOf(ROUTER_CONTRACT.address)
-        pTokenContractBalance = await pTokenContract.balanceOf(pTokenContract.address)
-        assert(vaultContractBalance.eq(0))
-        assert(routerContractBalance.eq(0))
-        assert(pTokenContractBalance.eq(0))
-      })
-
-      it('Should peg out from one vault to another successfully', async () => {
-        const chainId1 = '0xdeadbeef'
-        const chainId2 = '0xdecaffff'
-        assert.notStrictEqual(chainId1, chainId2)
-        assert.notStrictEqual(chainId1, INTERIM_CHAIN_ID)
-        assert.notStrictEqual(chainId2, INTERIM_CHAIN_ID)
-        const pTokenContract = await getMockErc777Contract(chainId1)
-        const mockVaultContract1 = await getMockVaultContract(INTERIM_CHAIN_ID)
-        const mockVaultContract2 = await getMockVaultContract(INTERIM_CHAIN_ID)
-        let mockVaultContract1Balance = await pTokenContract.balanceOf(mockVaultContract1.address)
-        let mockVaultContract2Balance = await pTokenContract.balanceOf(mockVaultContract2.address)
-        let routerContractBalance = await pTokenContract.balanceOf(ROUTER_CONTRACT.address)
-        assert(routerContractBalance.eq(0))
-        assert(mockVaultContract1Balance.eq(0))
-        assert(mockVaultContract1Balance.eq(0))
-        await ROUTER_CONTRACT.addVaultAddress(chainId2, mockVaultContract2.address)
-        const amount = 1337
-        const userData = '0xc0ffee'
-        const originChainId = SAMPLE_METADATA_CHAIN_ID_1
-        const originAddress = SAMPLE_ETH_ADDRESS_1
-        const destinationChainId = chainId2
-        const destinationAddress = SAMPLE_ETH_ADDRESS_2
-        const metadata = encodeCoreMetadata(
-          userData,
-          originChainId,
-          originAddress,
-          destinationChainId,
-          destinationAddress,
-        )
-        await pTokenContract.send(mockVaultContract1.address, amount, EMPTY_DATA)
-        routerContractBalance = await pTokenContract.balanceOf(ROUTER_CONTRACT.address)
-        mockVaultContract1Balance = await pTokenContract.balanceOf(mockVaultContract1.address)
-        mockVaultContract2Balance = await pTokenContract.balanceOf(mockVaultContract2.address)
-        assert(routerContractBalance.eq(0))
-        assert(mockVaultContract1Balance.eq(amount))
-        assert(mockVaultContract2Balance.eq(0))
-        const tx = await mockVaultContract1.pegOut(
-          ROUTER_CONTRACT.address,
-          pTokenContract.address,
-          amount,
-          metadata
-        )
-        const receipt = await tx.wait()
-        const pegInCalledEvent = await getPegInCalledEventFromReceipt(receipt)
-        const result = await decodePegInCalledEvent(pegInCalledEvent)
-        assert(BigNumber.from(amount).eq(result.amount))
-        assert.strictEqual(result.tokenAddress.toLowerCase(), pTokenContract.address.toLowerCase())
-        assert.strictEqual(result.destinationAddress.toLowerCase(), SAMPLE_ETH_ADDRESS_2.toLowerCase())
-        assert.strictEqual(result.userData, userData)
-        assert.strictEqual(result.destinationChainId, destinationChainId)
-        routerContractBalance = await pTokenContract.balanceOf(ROUTER_CONTRACT.address)
-        mockVaultContract1Balance = await pTokenContract.balanceOf(mockVaultContract1.address)
-        mockVaultContract2Balance = await pTokenContract.balanceOf(mockVaultContract2.address)
-        assert(routerContractBalance.eq(0))
-        assert(mockVaultContract1Balance.eq(0))
-        assert(mockVaultContract2Balance.eq(amount))
-      })
-    })
-  })
+  )
 })

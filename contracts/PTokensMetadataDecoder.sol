@@ -36,4 +36,24 @@ contract PTokensMetadataDecoder {
     {
         return abi.decode(metadata, (bytes1, bytes, bytes4, address, bytes4, address, bytes, bytes));
     }
+
+    function decodeMetadataV3(
+        bytes memory metadata
+    )
+        public
+        pure
+        returns(
+            bytes1 metadataVersion,
+            bytes memory userData,
+            bytes4 originChainId,
+            string memory originAddress,
+            bytes4 destinationChainId,
+            string memory destinationAddress,
+            bytes memory protocolOptions,
+            bytes memory protocolReceipt
+        )
+    {
+        return abi.decode(metadata, (bytes1, bytes, bytes4, string, bytes4, string, bytes, bytes));
+    }
+
 }
