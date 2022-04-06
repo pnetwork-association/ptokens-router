@@ -185,6 +185,7 @@ pub enum MetadataChainId {
     BtcUnknown,       // 0x01000000
     EosUnknown,       // 0x02000000
     InterimChain,     // 0xffffffff
+    FantomMainnet,    // 0x0022af98
     ArbitrumMainnet,  // 0x00ce98c4
     LuxochainMainnet, // 0x00d5beb0
 }
