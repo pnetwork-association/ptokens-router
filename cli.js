@@ -1,7 +1,5 @@
 #!/usr/bin/env node
 /* eslint-disable max-len */
-
-require('dotenv').config()
 const { docopt } = require('docopt')
 const { version } = require('./package.json')
 const { getAdmins } = require('./lib/get-admins')

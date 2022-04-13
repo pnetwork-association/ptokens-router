@@ -4,8 +4,8 @@
   "description": "The pTokens interim-chain router contract & CLI",
   "main": "cli.js",
   "scripts": {
-    "test": "npx hardhat test",
-    "tests": "npx hardhat test",
+    "test": "ENDPOINT=http://localhost:8545 npx hardhat test",
+    "tests": "ENDPOINT=http://localhost:8545 npx hardhat test",
     "compile": "npx hardhat compile"
   },
   "keywords": [
