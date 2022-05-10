@@ -1,3 +1,5 @@
+const assert = require('assert')
+
 const EMPTY_DATA = '0x'
 const SAMPLE_USER_DATA = '0xd3caff'
 const INTERIM_CHAIN_ID = '0xffffffff'
@@ -45,10 +47,16 @@ const silenceConsoleOutput = _ =>
 const getRandomAddress = _ethers =>
   _ethers.Wallet.createRandom().address
 
+const setFeeSinkAddressInRouter = (_router, _address) =>
+  _router.setFeeSinkAddress(_address)
+    .then(_ => _router.FEE_SINK_ADDRESS())
+    .then(_addressInContract => assert.strictEqual(_addressInContract, _address))
+
 module.exports = {
   deployNonUpgradeableContract,
   SAMPLE_METADATA_CHAIN_ID_1,
   SAMPLE_METADATA_CHAIN_ID_2,
+  setFeeSinkAddressInRouter,
   SAMPLE_SAFE_VAULT_ADDRESS,
   getMockErc777Contract,
   getMockVaultContract,
