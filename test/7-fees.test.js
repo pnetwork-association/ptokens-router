@@ -4,23 +4,19 @@ const {
   getRandomAddress,
   deployRouterContract,
   SAMPLE_SAFE_VAULT_ADDRESS,
-  SAMPLE_METADATA_CHAIN_ID_1,
-  SAMPLE_METADATA_CHAIN_ID_2,
 } = require('./test-utils')
 const assert = require('assert')
 
 describe('Fees Tests', () => {
-  let ROUTER_CONTRACT, NON_ADMIN, NON_ADMIN_ROUTER_CONTRACT, OWNER
+  let ROUTER_CONTRACT, NON_ADMIN, NON_ADMIN_ROUTER_CONTRACT
 
-  const PEG_IN_BASIS_POINTS = 666
-  const PEG_OUT_BASIS_POINTS = 1337
-  const FEE_BASIS_POINTS_DIVISOR = 10000
+  const PEG_IN_BASIS_POINTS = 10
+  const PEG_OUT_BASIS_POINTS = 25
+  const FEE_BASIS_POINTS_DIVISOR = 1e4
   const TOKEN_ADDRESS = getRandomAddress(ethers)
-  const DEFAULT_ADMIN_ROLE = '0x0000000000000000000000000000000000000000000000000000000000000000'
 
   beforeEach(async () => {
     const signers = await ethers.getSigners()
-    OWNER = signers[0]
     NON_ADMIN = signers[1]
     ROUTER_CONTRACT = await deployRouterContract([ SAMPLE_SAFE_VAULT_ADDRESS ])
     NON_ADMIN_ROUTER_CONTRACT = ROUTER_CONTRACT.connect(NON_ADMIN)
@@ -48,7 +44,7 @@ describe('Fees Tests', () => {
 
   it('Non admin cannot set fees', async () => {
     try {
-      await ROUTER_CONTRACT.connect(NON_ADMIN).setFees(TOKEN_ADDRESS, PEG_IN_BASIS_POINTS, PEG_OUT_BASIS_POINTS)
+      await NON_ADMIN_ROUTER_CONTRACT.setFees(TOKEN_ADDRESS, PEG_IN_BASIS_POINTS, PEG_OUT_BASIS_POINTS)
       assert.fail('Should not have resolved!')
     } catch (_err) {
       assert(_err.message.includes(NON_ADMIN_ERROR))
@@ -56,22 +52,71 @@ describe('Fees Tests', () => {
   })
 
   it('Admin can change fee sink address', async () => {
-    const feeSinkBefore = await ROUTER_CONTRACT.FEE_SINK()
+    const feeSinkBefore = await ROUTER_CONTRACT.FEE_SINK_ADDRESS()
     assert.strictEqual(feeSinkBefore, ZERO_ADDRESS)
     await ROUTER_CONTRACT.setFeeSinkAddress(TOKEN_ADDRESS)
-    const feeSinkAfter = await ROUTER_CONTRACT.FEE_SINK()
+    const feeSinkAfter = await ROUTER_CONTRACT.FEE_SINK_ADDRESS()
     assert.strictEqual(feeSinkAfter, TOKEN_ADDRESS)
   })
 
   it('Non admin cannot change fee sink address', async () => {
     try {
-      await ROUTER_CONTRACT
-        .connect(NON_ADMIN)
+      await NON_ADMIN_ROUTER_CONTRACT
         .setFeeSinkAddress(TOKEN_ADDRESS)
       assert.fail('Should not have resolved!')
     } catch (_err) {
       assert(_err.message.includes(NON_ADMIN_ERROR))
     }
+  })
+
+  it('Admin can change max fee basis points', async () => {
+    const maxBasisPointsBefore = await ROUTER_CONTRACT.MAX_FEE_BASIS_POINTS()
+    assert(maxBasisPointsBefore.eq(ethers.BigNumber.from(0)))
+    await ROUTER_CONTRACT.setMaxFeeBasisPoints(PEG_IN_BASIS_POINTS)
+    const maxBasisPointsAfter = await ROUTER_CONTRACT.MAX_FEE_BASIS_POINTS()
+    assert(maxBasisPointsAfter.eq(ethers.BigNumber.from(PEG_IN_BASIS_POINTS)))
+  })
+
+  it('Non admin cannot change max fee basis points', async () => {
+    try {
+      await NON_ADMIN_ROUTER_CONTRACT
+        .setMaxFeeBasisPoints(PEG_IN_BASIS_POINTS)
+      assert.fail('Should not have resolved!')
+    } catch (_err) {
+      assert(_err.message.includes(NON_ADMIN_ERROR))
+    }
+  })
+
+  it('Should calculate peg in fee', async () => {
+    await ROUTER_CONTRACT.setFees(TOKEN_ADDRESS, PEG_IN_BASIS_POINTS, PEG_OUT_BASIS_POINTS)
+    const isPegIn = true
+    const amount = 1e6
+    const result = await ROUTER_CONTRACT.calculateFee(TOKEN_ADDRESS, amount, isPegIn)
+    const expectedFee = amount * PEG_IN_BASIS_POINTS / FEE_BASIS_POINTS_DIVISOR
+    const expectedAmountMinusFee = amount - expectedFee
+    assert(result.fee.eq(ethers.BigNumber.from(expectedFee)))
+    assert(result.amountMinusFee.eq(ethers.BigNumber.from(expectedAmountMinusFee)))
+  })
+
+  it('Should calculate peg out fee', async () => {
+    await ROUTER_CONTRACT.setFees(TOKEN_ADDRESS, PEG_IN_BASIS_POINTS, PEG_OUT_BASIS_POINTS)
+    const isPegIn = false
+    const amount = 1e6
+    const result = await ROUTER_CONTRACT.calculateFee(TOKEN_ADDRESS, amount, isPegIn)
+    const expectedFee = amount * PEG_OUT_BASIS_POINTS / FEE_BASIS_POINTS_DIVISOR
+    const expectedAmountMinusFee = amount - expectedFee
+    assert(result.fee.eq(ethers.BigNumber.from(expectedFee)))
+    assert(result.amountMinusFee.eq(ethers.BigNumber.from(expectedAmountMinusFee)))
+  })
+
+  it('Should calculate fee correctly if basis points are zero or not set', async () => {
+    const isPegIn = false
+    const amount = 1e6
+    const result = await ROUTER_CONTRACT.calculateFee(TOKEN_ADDRESS, amount, isPegIn)
+    const expectedFee = 0
+    const expectedAmountMinusFee = amount
+    assert(result.fee.eq(ethers.BigNumber.from(expectedFee)))
+    assert(result.amountMinusFee.eq(ethers.BigNumber.from(expectedAmountMinusFee)))
   })
 
   it('Acceptable value should pass basis points sanity check')

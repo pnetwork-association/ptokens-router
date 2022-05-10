@@ -178,8 +178,9 @@ contract PTokensRouter is
         address tokenAddress = msg.sender;
         if (getOriginChainIdFromContract(tokenAddress) == destinationChainId) {
             // NOTE: This is a full peg-out of tokens back to their native chain.
+            (uint256 fee, uint256 amountMinusFee) = calculateFee(tokenAddress, _amount, false);
             IPToken(tokenAddress).redeem(
-                _amount,
+                amountMinusFee,
                 userData,
                 destinationAddress,
                 destinationChainId
@@ -187,9 +188,10 @@ contract PTokensRouter is
         } else {
             // NOTE: This is either from a peg-in, or a peg-out to a different host chain.
             address vaultAddress = safelyGetVaultAddress(destinationChainId);
+            (uint256 fee, uint256 amountMinusFee) = calculateFee(tokenAddress, _amount, true);
             IERC20(tokenAddress).approve(vaultAddress, _amount);
             IVault(vaultAddress).pegIn(
-                _amount,
+                amountMinusFee,
                 tokenAddress,
                 destinationAddress,
                 userData,
@@ -217,6 +219,8 @@ contract PTokensRouter is
         onlyAdmin
     {
         FEE_SINK_ADDRESS = _newFeeSinkAddress;
+    }
+
     function setMaxFeeBasisPoints(
         uint256 _newMaxFeeBasisPoints
     )
@@ -224,5 +228,25 @@ contract PTokensRouter is
         onlyAdmin
     {
         MAX_FEE_BASIS_POINTS = _newMaxFeeBasisPoints;
+    }
+
+    function calculateFee(
+        address _tokenAddress,
+        uint256 _amount,
+        bool _isPegIn
+    )
+        public
+        view
+        returns(uint256 fee, uint256 amountMinusFee)
+    {
+        uint256 basisPoints = _isPegIn
+            ? tokenFees[_tokenAddress].pegInBasisPoints
+            : tokenFees[_tokenAddress].pegOutBasisPoints;
+        if (basisPoints == 0) {
+            return (0, _amount);
+        }
+        fee = _amount * basisPoints / FEE_BASIS_POINTS_DIVISOR;
+        amountMinusFee = _amount - fee;
+        return (fee, amountMinusFee);
     }
 }
