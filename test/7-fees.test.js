@@ -12,8 +12,15 @@ describe('Fees Tests', () => {
 
   const PEG_IN_BASIS_POINTS = 10
   const PEG_OUT_BASIS_POINTS = 25
+  const MAX_FEE_BASIS_POINTS = 100
   const FEE_BASIS_POINTS_DIVISOR = 1e4
   const TOKEN_ADDRESS = getRandomAddress(ethers)
+
+  const setMaxFeeBasisPointsInRouter = _routerContract =>
+    _routerContract
+      .setMaxFeeBasisPoints(MAX_FEE_BASIS_POINTS)
+      .then(_ => ROUTER_CONTRACT.MAX_FEE_BASIS_POINTS())
+      .then(_feeFromContract => assert(_feeFromContract.eq(ethers.BigNumber.from(MAX_FEE_BASIS_POINTS))))
 
   beforeEach(async () => {
     const signers = await ethers.getSigners()
@@ -36,6 +43,7 @@ describe('Fees Tests', () => {
   })
 
   it('Admin can set fees', async () => {
+    await setMaxFeeBasisPointsInRouter(ROUTER_CONTRACT)
     await ROUTER_CONTRACT.setFees(TOKEN_ADDRESS, PEG_IN_BASIS_POINTS, PEG_OUT_BASIS_POINTS)
     const result = await ROUTER_CONTRACT.tokenFees(TOKEN_ADDRESS)
     assert(ethers.BigNumber.from(PEG_IN_BASIS_POINTS).eq(result.pegInBasisPoints))
@@ -43,6 +51,7 @@ describe('Fees Tests', () => {
   })
 
   it('Non admin cannot set fees', async () => {
+    await setMaxFeeBasisPointsInRouter(ROUTER_CONTRACT)
     try {
       await NON_ADMIN_ROUTER_CONTRACT.setFees(TOKEN_ADDRESS, PEG_IN_BASIS_POINTS, PEG_OUT_BASIS_POINTS)
       assert.fail('Should not have resolved!')
@@ -88,6 +97,7 @@ describe('Fees Tests', () => {
   })
 
   it('Should calculate peg in fee', async () => {
+    await setMaxFeeBasisPointsInRouter(ROUTER_CONTRACT)
     await ROUTER_CONTRACT.setFees(TOKEN_ADDRESS, PEG_IN_BASIS_POINTS, PEG_OUT_BASIS_POINTS)
     const isPegIn = true
     const amount = 1e6
@@ -99,6 +109,7 @@ describe('Fees Tests', () => {
   })
 
   it('Should calculate peg out fee', async () => {
+    await setMaxFeeBasisPointsInRouter(ROUTER_CONTRACT)
     await ROUTER_CONTRACT.setFees(TOKEN_ADDRESS, PEG_IN_BASIS_POINTS, PEG_OUT_BASIS_POINTS)
     const isPegIn = false
     const amount = 1e6
@@ -119,6 +130,22 @@ describe('Fees Tests', () => {
     assert(result.amountMinusFee.eq(ethers.BigNumber.from(expectedAmountMinusFee)))
   })
 
-  it('Acceptable value should pass basis points sanity check')
-  it('Unacceptable value should fail basis points sanity check')
+  it('Acceptable value should pass basis points sanity check', async () => {
+    await setMaxFeeBasisPointsInRouter(ROUTER_CONTRACT)
+    const amount = MAX_FEE_BASIS_POINTS - 1
+    const result = await ROUTER_CONTRACT.sanityCheckBasisPoints(amount)
+    assert(result.eq(ethers.BigNumber.from(amount)))
+  })
+
+  it('Unacceptable value should fail basis points sanity check', async () => {
+    await setMaxFeeBasisPointsInRouter(ROUTER_CONTRACT)
+    const amount = MAX_FEE_BASIS_POINTS + 1
+    try {
+      await ROUTER_CONTRACT.sanityCheckBasisPoints(amount)
+      assert.fail('Should not have resolved!')
+    } catch (_err) {
+      const expectedErr = 'Basis points value exceeds maximum!'
+      assert(_err.message.includes(expectedErr))
+    }
+  })
 })

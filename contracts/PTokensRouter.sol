@@ -208,7 +208,10 @@ contract PTokensRouter is
         external
         onlyAdmin
     {
-        TokenFees memory fees = TokenFees(_pegInBasisPoints, _pegOutBasisPoints);
+        TokenFees memory fees = TokenFees(
+            sanityCheckBasisPoints(_pegInBasisPoints),
+            sanityCheckBasisPoints(_pegOutBasisPoints)
+        );
         tokenFees[_tokenAddress] = fees;
     }
 
@@ -228,6 +231,17 @@ contract PTokensRouter is
         onlyAdmin
     {
         MAX_FEE_BASIS_POINTS = _newMaxFeeBasisPoints;
+    }
+
+    function sanityCheckBasisPoints(
+        uint256 _basisPoints
+    )
+        public
+        view
+        returns (uint256)
+    {
+        require(_basisPoints <= MAX_FEE_BASIS_POINTS, "Basis points value exceeds maximum!");
+        return _basisPoints;
     }
 
     function calculateFee(
