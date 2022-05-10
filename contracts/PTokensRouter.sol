@@ -37,7 +37,8 @@ contract PTokensRouter is
     mapping(bytes4 => address) public interimVaultAddresses;
     mapping(address => TokenFees) public tokenFees;
     uint256 public constant FEE_BASIS_POINTS_DIVISOR = 10000;
-    address public FEE_SINK;
+    address public FEE_SINK_ADDRESS;
+    uint256 public MAX_FEE_BASIS_POINTS;
 
     struct TokenFees {
         uint256 pegInBasisPoints;
@@ -202,7 +203,7 @@ contract PTokensRouter is
         uint256 _pegInBasisPoints,
         uint256 _pegOutBasisPoints
     )
-        public
+        external
         onlyAdmin
     {
         TokenFees memory fees = TokenFees(_pegInBasisPoints, _pegOutBasisPoints);
@@ -212,9 +213,16 @@ contract PTokensRouter is
     function setFeeSinkAddress(
         address _newFeeSinkAddress
     )
-        public
+        external
         onlyAdmin
     {
-        FEE_SINK = _newFeeSinkAddress;
+        FEE_SINK_ADDRESS = _newFeeSinkAddress;
+    function setMaxFeeBasisPoints(
+        uint256 _newMaxFeeBasisPoints
+    )
+        external
+        onlyAdmin
+    {
+        MAX_FEE_BASIS_POINTS = _newMaxFeeBasisPoints;
     }
 }
