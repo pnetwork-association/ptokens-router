@@ -55,5 +55,25 @@ describe('Fees Tests', () => {
     }
   })
 
-  it('Should sanity check basis points value')
+  it('Admin can change fee sink address', async () => {
+    const feeSinkBefore = await ROUTER_CONTRACT.FEE_SINK()
+    assert.strictEqual(feeSinkBefore, ZERO_ADDRESS)
+    await ROUTER_CONTRACT.setFeeSinkAddress(TOKEN_ADDRESS)
+    const feeSinkAfter = await ROUTER_CONTRACT.FEE_SINK()
+    assert.strictEqual(feeSinkAfter, TOKEN_ADDRESS)
+  })
+
+  it('Non admin cannot change fee sink address', async () => {
+    try {
+      await ROUTER_CONTRACT
+        .connect(NON_ADMIN)
+        .setFeeSinkAddress(TOKEN_ADDRESS)
+      assert.fail('Should not have resolved!')
+    } catch (_err) {
+      assert(_err.message.includes(NON_ADMIN_ERROR))
+    }
+  })
+
+  it('Acceptable value should pass basis points sanity check')
+  it('Unacceptable value should fail basis points sanity check')
 })
