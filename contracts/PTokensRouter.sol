@@ -35,6 +35,13 @@ contract PTokensRouter is
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
     bytes32 public constant TOKENS_RECIPIENT_INTERFACE_HASH = keccak256("ERC777TokensRecipient");
     mapping(bytes4 => address) public interimVaultAddresses;
+    mapping(address => TokenFees) public tokenFees;
+    uint256 public constant FEE_BASIS_POINTS_DIVISOR = 10000;
+
+    struct TokenFees {
+        uint256 pegInBasisPoints;
+        uint256 pegOutBasisPoints;
+    }
 
     function initialize (
         address safeVaultAddress
@@ -187,5 +194,17 @@ contract PTokensRouter is
                 destinationChainId
             );
         }
+    }
+
+    function setFees(
+        address _tokenAddress,
+        uint256 _pegInBasisPoints,
+        uint256 _pegOutBasisPoints
+    )
+        public
+        onlyAdmin
+    {
+        TokenFees memory fees = TokenFees(_pegInBasisPoints, _pegOutBasisPoints);
+        tokenFees[_tokenAddress] = fees;
     }
 }
