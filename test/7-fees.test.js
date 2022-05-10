@@ -104,7 +104,7 @@ describe('Fees Tests', () => {
     const result = await ROUTER_CONTRACT.calculateFee(TOKEN_ADDRESS, amount, isPegIn)
     const expectedFee = amount * PEG_IN_BASIS_POINTS / FEE_BASIS_POINTS_DIVISOR
     const expectedAmountMinusFee = amount - expectedFee
-    assert(result.fee.eq(ethers.BigNumber.from(expectedFee)))
+    assert(result.feeAmount.eq(ethers.BigNumber.from(expectedFee)))
     assert(result.amountMinusFee.eq(ethers.BigNumber.from(expectedAmountMinusFee)))
   })
 
@@ -116,7 +116,7 @@ describe('Fees Tests', () => {
     const result = await ROUTER_CONTRACT.calculateFee(TOKEN_ADDRESS, amount, isPegIn)
     const expectedFee = amount * PEG_OUT_BASIS_POINTS / FEE_BASIS_POINTS_DIVISOR
     const expectedAmountMinusFee = amount - expectedFee
-    assert(result.fee.eq(ethers.BigNumber.from(expectedFee)))
+    assert(result.feeAmount.eq(ethers.BigNumber.from(expectedFee)))
     assert(result.amountMinusFee.eq(ethers.BigNumber.from(expectedAmountMinusFee)))
   })
 
@@ -126,7 +126,7 @@ describe('Fees Tests', () => {
     const result = await ROUTER_CONTRACT.calculateFee(TOKEN_ADDRESS, amount, isPegIn)
     const expectedFee = 0
     const expectedAmountMinusFee = amount
-    assert(result.fee.eq(ethers.BigNumber.from(expectedFee)))
+    assert(result.feeAmount.eq(ethers.BigNumber.from(expectedFee)))
     assert(result.amountMinusFee.eq(ethers.BigNumber.from(expectedAmountMinusFee)))
   })
 

@@ -175,10 +175,12 @@ contract PTokensRouter is
             bytes4 destinationChainId,
             string memory destinationAddress
         ) = decodeParamsFromUserData(_userData);
+        uint256 feeAmount;
+        uint256 amountMinusFee;
         address tokenAddress = msg.sender;
         if (getOriginChainIdFromContract(tokenAddress) == destinationChainId) {
             // NOTE: This is a full peg-out of tokens back to their native chain.
-            (uint256 fee, uint256 amountMinusFee) = calculateFee(tokenAddress, _amount, false);
+            (feeAmount, amountMinusFee) = calculateFee(tokenAddress, _amount, false);
             IPToken(tokenAddress).redeem(
                 amountMinusFee,
                 userData,
@@ -188,7 +190,7 @@ contract PTokensRouter is
         } else {
             // NOTE: This is either from a peg-in, or a peg-out to a different host chain.
             address vaultAddress = safelyGetVaultAddress(destinationChainId);
-            (uint256 fee, uint256 amountMinusFee) = calculateFee(tokenAddress, _amount, true);
+            (feeAmount, amountMinusFee) = calculateFee(tokenAddress, _amount, true);
             IERC20(tokenAddress).approve(vaultAddress, _amount);
             IVault(vaultAddress).pegIn(
                 amountMinusFee,
@@ -198,6 +200,8 @@ contract PTokensRouter is
                 destinationChainId
             );
         }
+        // NOTE: Finally, we deliver the fee amount to the fee sink address
+        IERC20(tokenAddress).transfer(FEE_SINK_ADDRESS, feeAmount);
     }
 
     function setFees(
@@ -251,7 +255,7 @@ contract PTokensRouter is
     )
         public
         view
-        returns(uint256 fee, uint256 amountMinusFee)
+        returns(uint256 feeAmount, uint256 amountMinusFee)
     {
         uint256 basisPoints = _isPegIn
             ? tokenFees[_tokenAddress].pegInBasisPoints
@@ -259,8 +263,8 @@ contract PTokensRouter is
         if (basisPoints == 0) {
             return (0, _amount);
         }
-        fee = _amount * basisPoints / FEE_BASIS_POINTS_DIVISOR;
-        amountMinusFee = _amount - fee;
-        return (fee, amountMinusFee);
+        feeAmount = _amount * basisPoints / FEE_BASIS_POINTS_DIVISOR;
+        amountMinusFee = _amount - feeAmount;
+        return (feeAmount, amountMinusFee);
     }
 }
