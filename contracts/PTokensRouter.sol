@@ -200,8 +200,10 @@ contract PTokensRouter is
                 destinationChainId
             );
         }
-        // NOTE: Finally, we deliver the fee amount to the fee sink address
-        IERC20(tokenAddress).transfer(FEE_SINK_ADDRESS, feeAmount);
+        // NOTE: Finally, if there are any, we deliver the fee amount to the fee sink address
+        if (feeAmount > 0) {
+            IERC20(tokenAddress).transfer(FEE_SINK_ADDRESS, feeAmount);
+        }
     }
 
     function setFees(
