@@ -1,5 +1,6 @@
 const {
   EMPTY_DATA,
+  NON_ADMIN_ERROR,
   keccakHashString,
   INTERIM_CHAIN_ID,
   SAMPLE_ETH_ADDRESS_1,
@@ -20,7 +21,6 @@ const { encodeCoreMetadata } = require('../lib/metadata-encoder')
 describe('pTokens Router Contract', () => {
   let ROUTER_CONTRACT, NON_ADMIN, NON_ADMIN_ROUTER_CONTRACT, OWNER
 
-  const NON_ADMIN_ERROR = 'Caller is not an admin'
   const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
   const DEFAULT_ADMIN_ROLE = '0x0000000000000000000000000000000000000000000000000000000000000000'
 
