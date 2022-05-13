@@ -3,6 +3,7 @@
 pragma solidity ^0.8.0;
 
 import "./interfaces/IPToken.sol";
+import "./PTokensRouterStorage.sol";
 import "./PTokensMetadataDecoder.sol";
 import "./ConvertAddressToString.sol";
 import "./interfaces/IOriginChainIdGetter.sol";
@@ -28,23 +29,9 @@ contract PTokensRouter is
     PTokensMetadataDecoder,
     ConvertAddressToString,
     IERC777RecipientUpgradeable,
-    AccessControlEnumerableUpgradeable
+    AccessControlEnumerableUpgradeable,
+    PTokensRouterStorage
 {
-    address public SAFE_VAULT_ADDRESS;
-    bytes4 public constant ORIGIN_CHAIN_ID = 0xffffffff;
-    bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
-    bytes32 public constant TOKENS_RECIPIENT_INTERFACE_HASH = keccak256("ERC777TokensRecipient");
-    mapping(bytes4 => address) public interimVaultAddresses;
-    mapping(address => TokenFees) public tokenFees;
-    uint256 public constant FEE_BASIS_POINTS_DIVISOR = 10000;
-    address public FEE_SINK_ADDRESS;
-    uint256 public MAX_FEE_BASIS_POINTS;
-
-    struct TokenFees {
-        uint256 pegInBasisPoints;
-        uint256 pegOutBasisPoints;
-    }
-
     function initialize (
         address safeVaultAddress
     )
