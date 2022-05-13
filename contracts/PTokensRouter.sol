@@ -6,6 +6,7 @@ import "./interfaces/IPToken.sol";
 import "./PTokensRouterStorage.sol";
 import "./PTokensMetadataDecoder.sol";
 import "./ConvertAddressToString.sol";
+import "./interfaces/IPTokensVault.sol";
 import "./interfaces/IOriginChainIdGetter.sol";
 import "@openzeppelin/contracts/interfaces/IERC20.sol";
 import "@openzeppelin/contracts/interfaces/IERC777.sol";
@@ -13,16 +14,6 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/interfaces/IERC1820RegistryUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC777/IERC777RecipientUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlEnumerableUpgradeable.sol";
-
-interface IVault {
-    function pegIn(
-        uint256 _tokenAmount,
-        address _tokenAddress,
-        string memory _destinationAddress,
-        bytes memory _userData,
-        bytes4 _destinationChainId
-    ) external returns (bool);
-}
 
 contract PTokensRouter is
     Initializable,
@@ -179,7 +170,7 @@ contract PTokensRouter is
             address vaultAddress = safelyGetVaultAddress(destinationChainId);
             (feeAmount, amountMinusFee) = calculateFee(tokenAddress, _amount, true);
             IERC20(tokenAddress).approve(vaultAddress, _amount);
-            IVault(vaultAddress).pegIn(
+            IPTokensVault(vaultAddress).pegIn(
                 amountMinusFee,
                 tokenAddress,
                 destinationAddress,
