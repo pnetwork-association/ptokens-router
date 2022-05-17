@@ -148,4 +148,29 @@ describe('Fees Tests', () => {
       assert(_err.message.includes(expectedErr))
     }
   })
+
+  it('Admin can set token fee contract address', async () => {
+    const tokenAddress = getRandomAddress(ethers)
+    const feeContractAddress = getRandomAddress(ethers)
+    const addressBefore = await ROUTER_CONTRACT.tokenFeeContracts(tokenAddress)
+    assert.strictEqual(addressBefore, ZERO_ADDRESS)
+    await ROUTER_CONTRACT.setFeeContractAddress(tokenAddress, feeContractAddress)
+    const addressAfter = await ROUTER_CONTRACT.tokenFeeContracts(tokenAddress)
+    assert.strictEqual(addressAfter, feeContractAddress)
+  })
+
+  it('Non Admin cannot set token fee contract address', async () => {
+    const tokenAddress = getRandomAddress(ethers)
+    const feeContractAddress = getRandomAddress(ethers)
+    const addressBefore = await ROUTER_CONTRACT.tokenFeeContracts(tokenAddress)
+    assert.strictEqual(addressBefore, ZERO_ADDRESS)
+    try {
+      await NON_ADMIN_ROUTER_CONTRACT.setFeeContractAddress(tokenAddress, feeContractAddress)
+      assert.fail('Should not have resolved!')
+    } catch (_err) {
+      assert(_err.message.includes(NON_ADMIN_ERROR))
+      const addressAfter = await ROUTER_CONTRACT.tokenFeeContracts(tokenAddress)
+      assert.strictEqual(addressAfter, ZERO_ADDRESS)
+    }
+  })
 })
