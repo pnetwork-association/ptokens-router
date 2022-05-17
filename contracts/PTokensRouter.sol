@@ -6,6 +6,7 @@ import "./interfaces/IPToken.sol";
 import "./PTokensRouterStorage.sol";
 import "./PTokensMetadataDecoder.sol";
 import "./ConvertAddressToString.sol";
+import "./interfaces/IPTokensFees.sol";
 import "./interfaces/IPTokensVault.sol";
 import "./interfaces/IOriginChainIdGetter.sol";
 import "@openzeppelin/contracts/interfaces/IERC20.sol";
@@ -158,9 +159,10 @@ contract PTokensRouter is
         address tokenAddress = msg.sender;
         if (getOriginChainIdFromContract(tokenAddress) == destinationChainId) {
             // NOTE: This is a full peg-out of tokens back to their native chain.
-            (feeAmount, amountMinusFee) = calculateFee(tokenAddress, _amount, false);
+            // FIXME Will this call to calculateFee fail if no contract set?
+            (feeAmount, amountMinusFee) = safelyCalculateFees(tokenAddress, _amount, false);
             IPToken(tokenAddress).redeem(
-                amountMinusFee,
+                feeAmount == 0 ? _amount : amountMinusFee,
                 userData,
                 destinationAddress,
                 destinationChainId
@@ -168,22 +170,44 @@ contract PTokensRouter is
         } else {
             // NOTE: This is either from a peg-in, or a peg-out to a different host chain.
             address vaultAddress = safelyGetVaultAddress(destinationChainId);
-            (feeAmount, amountMinusFee) = calculateFee(tokenAddress, _amount, true);
+            (feeAmount, amountMinusFee) = safelyCalculateFees(tokenAddress, _amount, true);
             IERC20(tokenAddress).approve(vaultAddress, _amount);
             IPTokensVault(vaultAddress).pegIn(
-                amountMinusFee,
+                feeAmount == 0 ? _amount : amountMinusFee,
                 tokenAddress,
                 destinationAddress,
                 userData,
                 destinationChainId
             );
         }
-        // NOTE: Finally, if there are any, we deliver the fee amount to the fee sink address
+        // NOTE: Finally, if there are any, we instruct the fee contract to transfer them.
         if (feeAmount > 0) {
-            IERC20(tokenAddress).transfer(FEE_SINK_ADDRESS, feeAmount);
+            IPTokensFees(tokenAddress).transferFees(feeAmount, tokenAddress);
         }
     }
 
+    /**
+     * @notice This function wrapper allows us to have no fee contract set for a given token address,
+     * and thus avoid calls to that non-existent contract which would otherwise error. Instead, we simply
+     * return 0 for the fee and the full amount with nothing subtracted.
+     */
+    function safelyCalculateFees(
+        address _tokenAddress,
+        uint256 _amount,
+        bool _isPegIn
+    )
+        view
+        internal
+        returns (uint256 _feeAmount, uint256 _amountMinusFee)
+    {
+        address feeContractAddress = tokenFeeContracts[_tokenAddress];
+        if (feeContractAddress == address(0)) {
+            return (0, _amount);
+        }
+        return IPTokensFees(feeContractAddress).calculateFee(_amount, _isPegIn);
+    }
+
+    /*
     function setFees(
         address _tokenAddress,
         uint256 _pegInBasisPoints,
@@ -193,11 +217,12 @@ contract PTokensRouter is
         onlyAdmin
     {
         TokenFees memory fees = TokenFees(
-            sanityCheckBasisPoints(_pegInBasisPoints),
-            sanityCheckBasisPoints(_pegOutBasisPoints)
+            _pegInBasisPoints,
+            _pegOutBasisPoints
         );
         tokenFees[_tokenAddress] = fees;
     }
+    */
 
     function setFeeContractAddress(
         address _tokenAddress,
@@ -207,54 +232,5 @@ contract PTokensRouter is
         onlyAdmin
     {
         tokenFeeContracts[_tokenAddress] = _feeContractAddress;
-    }
-
-    function setFeeSinkAddress(
-        address _newFeeSinkAddress
-    )
-        external
-        onlyAdmin
-    {
-        FEE_SINK_ADDRESS = _newFeeSinkAddress;
-    }
-
-    function setMaxFeeBasisPoints(
-        uint256 _newMaxFeeBasisPoints
-    )
-        external
-        onlyAdmin
-    {
-        MAX_FEE_BASIS_POINTS = _newMaxFeeBasisPoints;
-    }
-
-    function sanityCheckBasisPoints(
-        uint256 _basisPoints
-    )
-        public
-        view
-        returns (uint256)
-    {
-        require(_basisPoints <= MAX_FEE_BASIS_POINTS, "Basis points value exceeds maximum!");
-        return _basisPoints;
-    }
-
-    function calculateFee(
-        address _tokenAddress,
-        uint256 _amount,
-        bool _isPegIn
-    )
-        public
-        view
-        returns(uint256 feeAmount, uint256 amountMinusFee)
-    {
-        uint256 basisPoints = _isPegIn
-            ? tokenFees[_tokenAddress].pegInBasisPoints
-            : tokenFees[_tokenAddress].pegOutBasisPoints;
-        if (basisPoints == 0) {
-            return (0, _amount);
-        }
-        feeAmount = _amount * basisPoints / FEE_BASIS_POINTS_DIVISOR;
-        amountMinusFee = _amount - feeAmount;
-        return (feeAmount, amountMinusFee);
     }
 }
