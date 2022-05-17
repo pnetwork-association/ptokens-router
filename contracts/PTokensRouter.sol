@@ -10,7 +10,6 @@ import "./interfaces/IPTokensFees.sol";
 import "./interfaces/IPTokensVault.sol";
 import "./interfaces/IOriginChainIdGetter.sol";
 import "@openzeppelin/contracts/interfaces/IERC20.sol";
-import "@openzeppelin/contracts/interfaces/IERC777.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/interfaces/IERC1820RegistryUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC777/IERC777RecipientUpgradeable.sol";
@@ -154,15 +153,14 @@ contract PTokensRouter is
             bytes4 destinationChainId,
             string memory destinationAddress
         ) = decodeParamsFromUserData(_userData);
-        uint256 feeAmount;
-        uint256 amountMinusFee;
         address tokenAddress = msg.sender;
+        address feeContractAddress = feeContracts[tokenAddress];
         if (getOriginChainIdFromContract(tokenAddress) == destinationChainId) {
             // NOTE: This is a full peg-out of tokens back to their native chain.
-            // FIXME Will this call to calculateFee fail if no contract set?
-            (feeAmount, amountMinusFee) = safelyCalculateFees(tokenAddress, _amount, false);
             IPToken(tokenAddress).redeem(
-                feeAmount == 0 ? _amount : amountMinusFee,
+                feeContractAddress == address(0)
+                    ? _amount
+                    : IPTokensFees(feeContractAddress).calculateAndTransferFee(tokenAddress, _amount, false),
                 userData,
                 destinationAddress,
                 destinationChainId
@@ -170,59 +168,18 @@ contract PTokensRouter is
         } else {
             // NOTE: This is either from a peg-in, or a peg-out to a different host chain.
             address vaultAddress = safelyGetVaultAddress(destinationChainId);
-            (feeAmount, amountMinusFee) = safelyCalculateFees(tokenAddress, _amount, true);
             IERC20(tokenAddress).approve(vaultAddress, _amount);
             IPTokensVault(vaultAddress).pegIn(
-                feeAmount == 0 ? _amount : amountMinusFee,
+                feeContractAddress == address(0)
+                    ? _amount
+                    : IPTokensFees(feeContractAddress).calculateAndTransferFee(tokenAddress, _amount, true),
                 tokenAddress,
                 destinationAddress,
                 userData,
                 destinationChainId
             );
         }
-        // NOTE: Finally, if there are any, we instruct the fee contract to transfer them.
-        if (feeAmount > 0) {
-            IPTokensFees(tokenAddress).transferFees(feeAmount, tokenAddress);
-        }
     }
-
-    /**
-     * @notice This function wrapper allows us to have no fee contract set for a given token address,
-     * and thus avoid calls to that non-existent contract which would otherwise error. Instead, we simply
-     * return 0 for the fee and the full amount with nothing subtracted.
-     */
-    function safelyCalculateFees(
-        address _tokenAddress,
-        uint256 _amount,
-        bool _isPegIn
-    )
-        view
-        internal
-        returns (uint256 _feeAmount, uint256 _amountMinusFee)
-    {
-        address feeContractAddress = tokenFeeContracts[_tokenAddress];
-        if (feeContractAddress == address(0)) {
-            return (0, _amount);
-        }
-        return IPTokensFees(feeContractAddress).calculateFee(_amount, _isPegIn);
-    }
-
-    /*
-    function setFees(
-        address _tokenAddress,
-        uint256 _pegInBasisPoints,
-        uint256 _pegOutBasisPoints
-    )
-        external
-        onlyAdmin
-    {
-        TokenFees memory fees = TokenFees(
-            _pegInBasisPoints,
-            _pegOutBasisPoints
-        );
-        tokenFees[_tokenAddress] = fees;
-    }
-    */
 
     function setFeeContractAddress(
         address _tokenAddress,
@@ -231,6 +188,6 @@ contract PTokensRouter is
         external
         onlyAdmin
     {
-        tokenFeeContracts[_tokenAddress] = _feeContractAddress;
+        feeContracts[_tokenAddress] = _feeContractAddress;
     }
 }
