@@ -48,7 +48,7 @@ contract PTokensFees is AccessControlEnumerable {
     {
         uint256 feeAmount;
         (feeAmount, amountMinusFee) = calculateFee(_amount, _isPegIn);
-        transferFees(feeAmount, _tokenAddress);
+        transferAmount(feeAmount, _tokenAddress);
         return amountMinusFee;
     }
 
@@ -70,14 +70,14 @@ contract PTokensFees is AccessControlEnumerable {
     }
 
     // TODO test
-    function transferFees(
+    function    transferAmount(
         uint256 _tokenAmount,
         address _tokenAddress
     )
         public
         returns (bool success)
     {
-        IERC20(_tokenAddress).transfer(FEE_SINK_ADDRESS, _tokenAmount);
+        IERC20(_tokenAddress).transferFrom(msg.sender, FEE_SINK_ADDRESS, _tokenAmount);
         return true;
     }
 
