@@ -33,7 +33,7 @@ dependencies:
   ethers: 5.6.6
   hardhat: 2.9.6
   hardhat-erc1820: 0.1.0_hardhat@2.9.6
-  ptokens-utils: github.com/provable-things/ptokens-utils.js/a5ed73d7d75651422489670747cf3dc92f7b7f79
+  ptokens-utils: github.com/provable-things/ptokens-utils.js/366f515830ad6d1cc21b100d36929171039eb918
   ramda: 0.27.1
   truffle-flattener: 1.6.0
 
@@ -4448,10 +4448,10 @@ packages:
     resolution: {integrity: sha512-rVksvsnNCdJ/ohGc6xgPwyN8eheCxsiLM8mxuE/t/mOVqJewPuO1miLpTHQiRgTKCLexL4MeAFVagts7HmNZ2Q==}
     engines: {node: '>=10'}
 
-  github.com/provable-things/ptokens-utils.js/a5ed73d7d75651422489670747cf3dc92f7b7f79:
-    resolution: {commit: a5ed73d7d75651422489670747cf3dc92f7b7f79, repo: git+ssh://git@github.com/provable-things/ptokens-utils.js.git, type: git}
+  github.com/provable-things/ptokens-utils.js/366f515830ad6d1cc21b100d36929171039eb918:
+    resolution: {commit: 366f515830ad6d1cc21b100d36929171039eb918, repo: git+ssh://git@github.com/provable-things/ptokens-utils.js.git, type: git}
     name: ptokens-utils
-    version: 2.2.1
+    version: 2.3.0
     dependencies:
       '@log4js-node/log4js-api': 1.0.2
       ajv: 8.11.0
