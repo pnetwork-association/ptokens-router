@@ -155,30 +155,79 @@ contract PTokensRouter is
         ) = decodeParamsFromUserData(_userData);
         address tokenAddress = msg.sender;
         address feeContractAddress = feeContracts[tokenAddress];
-        if (getOriginChainIdFromContract(tokenAddress) == destinationChainId) {
-            // NOTE: This is a full peg-out of tokens back to their native chain.
-            IPToken(tokenAddress).redeem(
-                feeContractAddress == address(0)
-                    ? _amount
-                    : IPTokensFees(feeContractAddress).calculateAndTransferFee(tokenAddress, _amount, false),
-                userData,
-                destinationAddress,
-                destinationChainId
-            );
-        } else {
-            // NOTE: This is either from a peg-in, or a peg-out to a different host chain.
-            address vaultAddress = safelyGetVaultAddress(destinationChainId);
-            IERC20(tokenAddress).approve(vaultAddress, _amount);
-            IPTokensVault(vaultAddress).pegIn(
-                feeContractAddress == address(0)
-                    ? _amount
-                    : IPTokensFees(feeContractAddress).calculateAndTransferFee(tokenAddress, _amount, true),
-                tokenAddress,
-                destinationAddress,
-                userData,
-                destinationChainId
-            );
+        bool feeContractExists = feeContractAddress != address(0);
+        if (feeContractExists) {
+            // NOTE: We give the fee contract an allowance up to the total amount so that it can transfer fees...
+            IERC20(tokenAddress).approve(feeContractAddress, _amount);
         }
+        getOriginChainIdFromContract(tokenAddress) == destinationChainId
+            ? pegOut( // NOTE: This is a full peg-out of tokens back to their native chain.
+                _amount,
+                tokenAddress,
+                userData,
+                destinationAddress,
+                destinationChainId,
+                feeContractExists,
+                feeContractAddress
+            )
+            : pegIn( // NOTE: This is either from a peg-in, or a peg-out to a different host chain.
+                _amount,
+                tokenAddress,
+                userData,
+                destinationChainId,
+                destinationAddress,
+                feeContractExists,
+                feeContractAddress
+            );
+        if (feeContractExists) {
+            // NOTE: Finally, we revoke the fee contract's allowance.
+            IERC20(tokenAddress).approve(feeContractAddress, 0);
+        }
+    }
+
+    function pegOut(
+        uint256 _amount,
+        address _tokenAddress,
+        bytes memory _userData,
+        string memory _destinationAddress,
+        bytes4 _destinationChainId,
+        bool _feeContractExists,
+        address _feeContractAddress
+    )
+        internal
+    {
+        IPToken(_tokenAddress).redeem(
+            _feeContractExists
+                ? IPTokensFees(_feeContractAddress).calculateAndTransferFee(_tokenAddress, _amount, false)
+                : _amount,
+            _userData,
+            _destinationAddress,
+            _destinationChainId
+        );
+    }
+
+    function pegIn(
+        uint256 _amount,
+        address _tokenAddress,
+        bytes memory _userData,
+        bytes4 _destinationChainId,
+        string memory _destinationAddress,
+        bool _feeContractExists,
+        address _feeContractAddress
+    )
+        internal
+    {
+        address vaultAddress = safelyGetVaultAddress(_destinationChainId);
+        IERC20(_tokenAddress).approve(vaultAddress, _amount);
+        IPTokensVault(vaultAddress).pegIn(
+            _feeContractExists
+                ? IPTokensFees(_feeContractAddress).calculateAndTransferFee(_tokenAddress, _amount, true)
+                : _amount,
+            _tokenAddress,
+            _destinationAddress,
+            _userData,
+            _destinationChainId
+        );
     }
 
     function setFeeContractAddress(
