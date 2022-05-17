@@ -16,12 +16,12 @@ module.exports = {
   },
   // ADD ANY GLOBALS HERE!
   globals: {
-    "ethers": false,
-    "artifacts": false,
-    "upgrades": false,
+    'ethers': false,
+    'artifacts': false,
+    'upgrades': false,
   },
   rules: {
-    "max-len": ["error", 120, 2, {
+    'max-len': ['error', 120, 2, {
       ignoreUrls: true,
       ignoreComments: false,
       ignoreRegExpLiterals: true,
@@ -83,13 +83,17 @@ module.exports = {
     'no-useless-concat': 2,
     'no-useless-escape': 2,
     'no-useless-return': 0,
-    'no-console': ["error", {
+    'no-console': ['error', {
       allow: [
         "warn",
         "error",
         "dir",
         "info",
         "table",
+        'warn',
+        'error',
+        'info',
+        'table',
       ]
     }],
     'no-warning-comments': [1, {
