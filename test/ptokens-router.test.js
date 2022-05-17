@@ -4,6 +4,7 @@ const {
   keccakHashString,
   INTERIM_CHAIN_ID,
   getRandomAddress,
+  deployFeesContract,
   SAMPLE_ETH_ADDRESS_1,
   SAMPLE_ETH_ADDRESS_2,
   getMockVaultContract,
@@ -151,7 +152,6 @@ describe('pTokens Router Contract', () => {
     describe(`Metadata Version ${_metadataVersion} Routing Tests`, () => {
       const PEG_IN_BASIS_POINTS = 10
       const PEG_OUT_BASIS_POINTS = 25
-      const MAX_FEE_BASIS_POINTS = 100
       const FEE_SINK_ADDRESS = getRandomAddress(ethers)
 
       const decodePegInCalledEvent = _event =>
@@ -232,15 +232,16 @@ describe('pTokens Router Contract', () => {
         })
 
         it('Should take correct peg in fees', async () => {
+          // Deploy a fee contract...
+          const feeContract = await deployFeesContract(FEE_SINK_ADDRESS, PEG_IN_BASIS_POINTS, PEG_OUT_BASIS_POINTS)
+
           // Set the chain ID in the ptoken contract...
           const chainId = '0xdeadbeef'
           assert.notStrictEqual(chainId, INTERIM_CHAIN_ID)
           const pTokenContract = await getMockErc777Contract(chainId)
 
-          // Set up the fee related constants
-          await ROUTER_CONTRACT.setMaxFeeBasisPoints(MAX_FEE_BASIS_POINTS)
-          await ROUTER_CONTRACT.setFeeSinkAddress(FEE_SINK_ADDRESS)
-          await ROUTER_CONTRACT.setFees(pTokenContract.address, PEG_IN_BASIS_POINTS, PEG_OUT_BASIS_POINTS)
+          // Add the fee contract to the mapping in the router...
+          ROUTER_CONTRACT.setFeeContractAddress(pTokenContract.address, feeContract.address)
 
           // Set up the vault contract...
           const vaultContract = await getMockVaultContract(INTERIM_CHAIN_ID)
@@ -275,8 +276,9 @@ describe('pTokens Router Contract', () => {
           const result = await decodePegInCalledEvent(event)
 
           // Calculate the expected fee and expected final amount
-          const basisPointsDivisor = await ROUTER_CONTRACT.FEE_BASIS_POINTS_DIVISOR()
-          const expectedFee = Math.floor(amount * PEG_IN_BASIS_POINTS / basisPointsDivisor)
+          const basisPointsDivisor = await feeContract.FEE_BASIS_POINTS_DIVISOR()
+          const pegInBasisPoints = await feeContract.PEG_IN_BASIS_POINTS()
+          const expectedFee = Math.floor(amount * pegInBasisPoints / basisPointsDivisor)
           const expectedAmountMinusFee = BigNumber.from(amount - expectedFee)
           assert(result.amount.eq(expectedAmountMinusFee))
 
@@ -340,16 +342,17 @@ describe('pTokens Router Contract', () => {
         })
 
         it('Should take correct peg out fees', async () => {
+          // Deploy a fee contract...
+          const feeContract = await deployFeesContract(FEE_SINK_ADDRESS, PEG_IN_BASIS_POINTS, PEG_OUT_BASIS_POINTS)
+
           // Deploy the ptoken & vault contracts...
           const chainId = '0xdeadbeef'
           assert.notStrictEqual(chainId, INTERIM_CHAIN_ID)
           const pTokenContract = await getMockErc777Contract(chainId)
           const vaultContract = await getMockVaultContract(INTERIM_CHAIN_ID)
 
-          // Set up the fee related constants
-          await ROUTER_CONTRACT.setMaxFeeBasisPoints(MAX_FEE_BASIS_POINTS)
-          await ROUTER_CONTRACT.setFeeSinkAddress(FEE_SINK_ADDRESS)
-          await ROUTER_CONTRACT.setFees(pTokenContract.address, PEG_IN_BASIS_POINTS, PEG_OUT_BASIS_POINTS)
+          // Add the fee contract to the mapping in the router...
+          ROUTER_CONTRACT.setFeeContractAddress(pTokenContract.address, feeContract.address)
 
           // Create the tx params...
           const amount = 1337
@@ -387,8 +390,9 @@ describe('pTokens Router Contract', () => {
           const result = await decodePegOutCalledEvent(redeemEvent)
 
           // Calculate the expected fee and expected final amount
-          const basisPointsDivisor = await ROUTER_CONTRACT.FEE_BASIS_POINTS_DIVISOR()
-          const expectedFee = Math.floor(amount * PEG_OUT_BASIS_POINTS / basisPointsDivisor)
+          const basisPointsDivisor = await feeContract.FEE_BASIS_POINTS_DIVISOR()
+          const pegOutBasisPoints = await feeContract.PEG_OUT_BASIS_POINTS()
+          const expectedFee = Math.floor(amount * pegOutBasisPoints / basisPointsDivisor)
           const expectedAmountMinusFee = BigNumber.from(amount - expectedFee)
           assert(result.amount.eq(expectedAmountMinusFee))
 
