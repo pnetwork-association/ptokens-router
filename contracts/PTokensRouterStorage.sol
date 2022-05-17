@@ -17,16 +17,18 @@ contract PTokensRouterStorage {
 
     mapping(bytes4 => address) public interimVaultAddresses;
 
-    mapping(address => TokenFees) public tokenFees;
+    mapping(address => TokenFees) public tokenFees; // FIXME rm!
 
-    uint256 public constant FEE_BASIS_POINTS_DIVISOR = 10000;
+    uint256 public constant FEE_BASIS_POINTS_DIVISOR = 10000; // FIXME rm!
 
-    address public FEE_SINK_ADDRESS;
+    address public FEE_SINK_ADDRESS; // FIXME rm!
 
-    uint256 public MAX_FEE_BASIS_POINTS;
+    uint256 public MAX_FEE_BASIS_POINTS; // FIXME rm!
 
-    struct TokenFees {
+    struct TokenFees { // FIXME rm!
         uint256 pegInBasisPoints;
         uint256 pegOutBasisPoints;
     }
+
+    mapping(address => address) public tokenFeeContracts;
 }

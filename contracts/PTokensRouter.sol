@@ -199,6 +199,16 @@ contract PTokensRouter is
         tokenFees[_tokenAddress] = fees;
     }
 
+    function setFeeContractAddress(
+        address _tokenAddress,
+        address _feeContractAddress
+    )
+        external
+        onlyAdmin
+    {
+        tokenFeeContracts[_tokenAddress] = _feeContractAddress;
+    }
+
     function setFeeSinkAddress(
         address _newFeeSinkAddress
     )
