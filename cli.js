@@ -8,6 +8,7 @@ const { deployContract } = require('./lib/deploy-contract')
 const { verifyContract } = require('./lib/verify-contract')
 const { addVaultAddress } = require('./lib/add-vault-address')
 const { getVaultAddress } = require('./lib/get-vault-address')
+const { getVaultAddresses } = require('./lib/get-vault-addresses')
 const { showWalletDetails } = require('./lib/show-wallet-details')
 const { removeVaultAddress } = require('./lib/remove-vault-address')
 const { getEncodedInitArgs } = require('./lib/get-encoded-init-args')
@@ -30,6 +31,7 @@ const DEPLOYED_ADDRESS_ARG = '<deployedAddress>'
 const GET_ENCODED_INIT_ARGS_CMD = 'encodeInitArgs'
 const SHOW_WALLET_DETAILS_CMD = 'showWalletDetails'
 const REMOVE_VAULT_ADDRESS_CMD = 'removeVaultAddress'
+const GET_SET_VAULT_ADDRESSES = 'getVaultAddresses'
 const GET_SAFE_VAULT_ADDRESS_CMD = 'getSafeVaultAddress'
 const SHOW_EXISTING_CONTRACTS_CMD = 'showExistingContracts'
 
@@ -63,6 +65,7 @@ const USAGE_INFO = `
   ${TOOL_NAME} ${GET_ADMINS_CMD} ${DEPLOYED_ADDRESS_ARG}
   ${TOOL_NAME} ${GET_ENCODED_INIT_ARGS_CMD} ${ETH_ADDRESS_ARG}
   ${TOOL_NAME} ${GET_SAFE_VAULT_ADDRESS_CMD} ${DEPLOYED_ADDRESS_ARG}
+  ${TOOL_NAME} ${GET_SET_VAULT_ADDRESSES} ${DEPLOYED_ADDRESS_ARG}
   ${TOOL_NAME} ${VERIFY_CONTRACT_CMD} ${NETWORK_ARG} ${DEPLOYED_ADDRESS_ARG}
   ${TOOL_NAME} ${GET_VAULT_ADDRESS_CMD} ${DEPLOYED_ADDRESS_ARG} ${CHAIN_ID_ARG}
   ${TOOL_NAME} ${REMOVE_VAULT_ADDRESS_CMD} ${DEPLOYED_ADDRESS_ARG} ${CHAIN_ID_ARG}
@@ -71,6 +74,7 @@ const USAGE_INFO = `
 ❍ Commands:
   ${DEPLOY_CONTRACT_CMD}        ❍ Deploy the logic contract.
   ${VERIFY_CONTRACT_CMD}        ❍ Verify the logic contract.
+  ${GET_SET_VAULT_ADDRESSES}  ❍ Gets all set vault addresses at ${DEPLOYED_ADDRESS_ARG}.
   ${GET_ADMINS_CMD}             ❍ Get the admins of the contract at ${DEPLOYED_ADDRESS_ARG}.
   ${REMOVE_VAULT_ADDRESS_CMD}    ❍ Removess vault address with ${CHAIN_ID_ARG} from ${DEPLOYED_ADDRESS_ARG}.
   ${GET_VAULT_ADDRESS_CMD}       ❍ Get vault address from router at ${DEPLOYED_ADDRESS_ARG} via ${CHAIN_ID_ARG}.
@@ -115,6 +119,8 @@ const main = _ => {
     return getAdmins(CLI_ARGS[DEPLOYED_ADDRESS_ARG], CLI_ARGS[ETH_ADDRESS_ARG])
   if (CLI_ARGS[SHOW_CHAIN_IDS_CMD])
     return showChainIds()
+  if (CLI_ARGS[GET_SET_VAULT_ADDRESSES])
+    return getVaultAddresses(CLI_ARGS[DEPLOYED_ADDRESS_ARG])
 }
 
 main().catch(_err => console.error('✘', _err.message))
