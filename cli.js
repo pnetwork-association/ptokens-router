@@ -3,6 +3,7 @@
 const { docopt } = require('docopt')
 const { version } = require('./package.json')
 const { getAdmins } = require('./lib/get-admins')
+const { showChainIds } = require('./lib/show-chain-ids')
 const { deployContract } = require('./lib/deploy-contract')
 const { verifyContract } = require('./lib/verify-contract')
 const { addVaultAddress } = require('./lib/add-vault-address')
@@ -20,6 +21,7 @@ const CHAIN_ID_ARG = '<chainId>'
 const GET_ADMINS_CMD = 'getAdmins'
 const VERSION_OPTION = '--version'
 const ETH_ADDRESS_ARG = '<ethAddress>'
+const SHOW_CHAIN_IDS_CMD = 'showChainIds'
 const VERIFY_CONTRACT_CMD = 'verifyContract'
 const DEPLOY_CONTRACT_CMD = 'deployContract'
 const ADD_VAULT_ADDRESS_CMD = 'addVaultAddress'
@@ -54,6 +56,7 @@ const USAGE_INFO = `
 ❍ Usage:
   ${TOOL_NAME} ${HELP_OPTION}
   ${TOOL_NAME} ${VERSION_OPTION}
+  ${TOOL_NAME} ${SHOW_CHAIN_IDS_CMD}
   ${TOOL_NAME} ${DEPLOY_CONTRACT_CMD}
   ${TOOL_NAME} ${SHOW_WALLET_DETAILS_CMD}
   ${TOOL_NAME} ${SHOW_EXISTING_CONTRACTS_CMD}
@@ -75,6 +78,7 @@ const USAGE_INFO = `
   ${GET_SAFE_VAULT_ADDRESS_CMD}   ❍ Get the safe vault address set in the router at ${DEPLOYED_ADDRESS_ARG}.
   ${GET_ENCODED_INIT_ARGS_CMD}        ❍ Calculate the initializer function arguments in ABI encoded format.
   ${ADD_VAULT_ADDRESS_CMD}       ❍ Adds ${ETH_ADDRESS_ARG} as vault address with ${CHAIN_ID_ARG} to ${DEPLOYED_ADDRESS_ARG}.
+  ${SHOW_CHAIN_IDS_CMD}          ❍ Shows a list of the metadata chain IDs for supported pNetwork blockchains.
   ${SHOW_EXISTING_CONTRACTS_CMD} ❍ Show list of existing pToken logic contract addresses on various blockchains.
 
 
@@ -109,6 +113,8 @@ const main = _ => {
     return getSafeVaultAddress(CLI_ARGS[DEPLOYED_ADDRESS_ARG])
   if (CLI_ARGS[GET_ADMINS_CMD])
     return getAdmins(CLI_ARGS[DEPLOYED_ADDRESS_ARG], CLI_ARGS[ETH_ADDRESS_ARG])
+  if (CLI_ARGS[SHOW_CHAIN_IDS_CMD])
+    return showChainIds()
 }
 
 main().catch(_err => console.error('✘', _err.message))
