@@ -11,6 +11,7 @@ const { getVaultAddress } = require('./lib/get-vault-address')
 const { getVaultAddresses } = require('./lib/get-vault-addresses')
 const { showWalletDetails } = require('./lib/show-wallet-details')
 const { removeVaultAddress } = require('./lib/remove-vault-address')
+const { getSupportedTokens } = require('./lib/get-supported-tokens')
 const { getEncodedInitArgs } = require('./lib/get-encoded-init-args')
 const { getSafeVaultAddress } = require('./lib/get-safe-vault-address')
 const { showExistingContractAddresses } = require('./lib/show-existing-contracts')
@@ -30,8 +31,9 @@ const GET_VAULT_ADDRESS_CMD = 'getVaultAddress'
 const DEPLOYED_ADDRESS_ARG = '<deployedAddress>'
 const GET_ENCODED_INIT_ARGS_CMD = 'encodeInitArgs'
 const SHOW_WALLET_DETAILS_CMD = 'showWalletDetails'
+const GET_VAULT_ADDRESSES_CMD = 'getVaultAddresses'
 const REMOVE_VAULT_ADDRESS_CMD = 'removeVaultAddress'
-const GET_SET_VAULT_ADDRESSES = 'getVaultAddresses'
+const GET_SUPPORTED_TOKENS_CMD = 'getSupportedTokens'
 const GET_SAFE_VAULT_ADDRESS_CMD = 'getSafeVaultAddress'
 const SHOW_EXISTING_CONTRACTS_CMD = 'showExistingContracts'
 
@@ -64,8 +66,9 @@ const USAGE_INFO = `
   ${TOOL_NAME} ${SHOW_EXISTING_CONTRACTS_CMD}
   ${TOOL_NAME} ${GET_ADMINS_CMD} ${DEPLOYED_ADDRESS_ARG}
   ${TOOL_NAME} ${GET_ENCODED_INIT_ARGS_CMD} ${ETH_ADDRESS_ARG}
+  ${TOOL_NAME} ${GET_VAULT_ADDRESSES_CMD} ${DEPLOYED_ADDRESS_ARG}
+  ${TOOL_NAME} ${GET_SUPPORTED_TOKENS_CMD} ${DEPLOYED_ADDRESS_ARG}
   ${TOOL_NAME} ${GET_SAFE_VAULT_ADDRESS_CMD} ${DEPLOYED_ADDRESS_ARG}
-  ${TOOL_NAME} ${GET_SET_VAULT_ADDRESSES} ${DEPLOYED_ADDRESS_ARG}
   ${TOOL_NAME} ${VERIFY_CONTRACT_CMD} ${NETWORK_ARG} ${DEPLOYED_ADDRESS_ARG}
   ${TOOL_NAME} ${GET_VAULT_ADDRESS_CMD} ${DEPLOYED_ADDRESS_ARG} ${CHAIN_ID_ARG}
   ${TOOL_NAME} ${REMOVE_VAULT_ADDRESS_CMD} ${DEPLOYED_ADDRESS_ARG} ${CHAIN_ID_ARG}
@@ -74,12 +77,13 @@ const USAGE_INFO = `
 ❍ Commands:
   ${DEPLOY_CONTRACT_CMD}        ❍ Deploy the logic contract.
   ${VERIFY_CONTRACT_CMD}        ❍ Verify the logic contract.
-  ${GET_SET_VAULT_ADDRESSES}  ❍ Gets all set vault addresses at ${DEPLOYED_ADDRESS_ARG}.
+  ${GET_VAULT_ADDRESSES_CMD}     ❍ Gets all set vault addresses at ${DEPLOYED_ADDRESS_ARG}.
   ${GET_ADMINS_CMD}             ❍ Get the admins of the contract at ${DEPLOYED_ADDRESS_ARG}.
   ${REMOVE_VAULT_ADDRESS_CMD}    ❍ Removess vault address with ${CHAIN_ID_ARG} from ${DEPLOYED_ADDRESS_ARG}.
   ${GET_VAULT_ADDRESS_CMD}       ❍ Get vault address from router at ${DEPLOYED_ADDRESS_ARG} via ${CHAIN_ID_ARG}.
   ${SHOW_WALLET_DETAILS_CMD}     ❍ Decrypts the private key and shows address & balance information.
   ${GET_SAFE_VAULT_ADDRESS_CMD}   ❍ Get the safe vault address set in the router at ${DEPLOYED_ADDRESS_ARG}.
+  ${GET_SUPPORTED_TOKENS_CMD}    ❍ Gets all supported tokens from all vaults set in ${DEPLOYED_ADDRESS_ARG}.
   ${GET_ENCODED_INIT_ARGS_CMD}        ❍ Calculate the initializer function arguments in ABI encoded format.
   ${ADD_VAULT_ADDRESS_CMD}       ❍ Adds ${ETH_ADDRESS_ARG} as vault address with ${CHAIN_ID_ARG} to ${DEPLOYED_ADDRESS_ARG}.
   ${SHOW_CHAIN_IDS_CMD}          ❍ Shows a list of the metadata chain IDs for supported pNetwork blockchains.
@@ -119,8 +123,10 @@ const main = _ => {
     return getAdmins(CLI_ARGS[DEPLOYED_ADDRESS_ARG], CLI_ARGS[ETH_ADDRESS_ARG])
   if (CLI_ARGS[SHOW_CHAIN_IDS_CMD])
     return showChainIds()
-  if (CLI_ARGS[GET_SET_VAULT_ADDRESSES])
+  if (CLI_ARGS[GET_VAULT_ADDRESSES_CMD])
     return getVaultAddresses(CLI_ARGS[DEPLOYED_ADDRESS_ARG])
+  if (CLI_ARGS[GET_SUPPORTED_TOKENS_CMD])
+    return getSupportedTokens(CLI_ARGS[DEPLOYED_ADDRESS_ARG])
 }
 
 main().catch(_err => console.error('✘', _err.message))
