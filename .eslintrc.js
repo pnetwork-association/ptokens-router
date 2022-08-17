@@ -90,10 +90,6 @@ module.exports = {
         "dir",
         "info",
         "table",
-        'warn',
-        'error',
-        'info',
-        'table',
       ]
     }],
     'no-warning-comments': [1, {
