@@ -14,6 +14,9 @@ contract PTokensFees is AccessControlEnumerable {
     uint256 public FEE_BASIS_POINTS_DIVISOR = 10000;
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
 
+    mapping(address => bool) public FEE_EXPCEPTIONS;
+    mapping(address => address) public CUSTOM_FEE_CONTRACTS;
+
     constructor(
         address _feeSinkAddress,
         uint256 _pegInBasisPoints,
@@ -126,5 +129,31 @@ contract PTokensFees is AccessControlEnumerable {
     {
         require(_basisPoints <= MAX_FEE_BASIS_POINTS, "Basis points value exceeds maximum!");
         return _basisPoints;
+    }
+
+    function addFeeException(
+        address _address
+    )
+        public
+        onlyAdmin
+        returns (bool success)
+    {
+        if (!FEE_EXPCEPTIONS[_address]) {
+            FEE_EXPCEPTIONS[_address] = true;
+        }
+        return true;
+    }
+
+    function removeFeeException(
+        address _address
+    )
+        public
+        onlyAdmin
+        returns (bool success)
+    {
+        if(FEE_EXPCEPTIONS[_address]) {
+            FEE_EXPCEPTIONS[_address] = false;
+        }
+        return true;
     }
 }

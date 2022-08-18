@@ -156,4 +156,54 @@ describe('Fees Contract Tests', () => {
       assert(amountMinusFee.eq(expectedAmountMinusFee))
     })
   })
+
+  describe('Fee exceptions list tests', () => {
+    it('Admin can add address to fee exceptions list', async () => {
+      const address = getRandomAddress(ethers)
+      const boolBefore = await FEES_CONTRACT.FEE_EXPCEPTIONS(address)
+      assert(!boolBefore)
+      await FEES_CONTRACT.addFeeException(address)
+      const boolAfter = await FEES_CONTRACT.FEE_EXPCEPTIONS(address)
+      assert(boolAfter)
+    })
+
+    it('Non admin cannot add address to fee exception list', async () => {
+      const address = getRandomAddress(ethers)
+      const boolBefore = await FEES_CONTRACT.FEE_EXPCEPTIONS(address)
+      assert(!boolBefore)
+      try {
+        await NON_ADMIN_FEES_CONTRACT.addFeeException(address)
+        assert.fail('Should not have resolved!')
+      } catch (_err) {
+        assert(_err.message.includes(NON_ADMIN_ERROR))
+        const boolAfter = await FEES_CONTRACT.FEE_EXPCEPTIONS(address)
+        assert(!boolAfter)
+      }
+    })
+
+    it('Admin can remove address to fee exceptions list', async () => {
+      const address = getRandomAddress(ethers)
+      await FEES_CONTRACT.addFeeException(address)
+      const boolBefore = await FEES_CONTRACT.FEE_EXPCEPTIONS(address)
+      assert(boolBefore)
+      await FEES_CONTRACT.removeFeeException(address)
+      const boolAfter = await FEES_CONTRACT.FEE_EXPCEPTIONS(address)
+      assert(!boolAfter)
+    })
+
+    it('Non admin cannot remove address to fee exception list', async () => {
+      const address = getRandomAddress(ethers)
+      await FEES_CONTRACT.addFeeException(address)
+      const boolBefore = await FEES_CONTRACT.FEE_EXPCEPTIONS(address)
+      assert(boolBefore)
+      try {
+        await NON_ADMIN_FEES_CONTRACT.removeFeeException(address)
+        assert.fail('Should not have resolved!')
+      } catch (_err) {
+        assert(_err.message.includes(NON_ADMIN_ERROR))
+        const boolAfter = await FEES_CONTRACT.FEE_EXPCEPTIONS(address)
+        assert(boolAfter)
+      }
+    })
+  })
 })
