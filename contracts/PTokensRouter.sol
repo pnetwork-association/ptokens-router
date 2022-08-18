@@ -191,22 +191,25 @@ contract PTokensRouter is
     )
         internal
     {
-        IPToken(_tokenAddress).redeem(
-            FEE_CONTRACT_ADDRESS == address(0)
-                ? _amount
-                : IPTokensFees(FEE_CONTRACT_ADDRESS)
-                    .calculateAndTransferFee(
-                        _tokenAddress,
-                        _amount,
-                        false,
-                        _userData,
-                        _originChainId,
-                        _destinationChainId
-                    ),
-            _userData,
-            _destinationAddress,
-            _destinationChainId
-        );
+        uint256 amountToPegOut = FEE_CONTRACT_ADDRESS == address(0)
+            ? _amount
+            : IPTokensFees(FEE_CONTRACT_ADDRESS)
+                .calculateAndTransferFee(
+                    _tokenAddress,
+                    _amount,
+                    false,
+                    _userData,
+                    _originChainId,
+                    _destinationChainId
+                );
+        if (amountToPegOut > 0) {
+            IPToken(_tokenAddress).redeem(
+                amountToPegOut,
+                _userData,
+                _destinationAddress,
+                _destinationChainId
+            );
+        }
     }
 
     function pegIn(
@@ -219,25 +222,27 @@ contract PTokensRouter is
     )
         internal
     {
-        address vaultAddress = safelyGetVaultAddress(_destinationChainId);
-        IERC20(_tokenAddress).approve(vaultAddress, _amount);
-        IPTokensVault(vaultAddress).pegIn(
-            FEE_CONTRACT_ADDRESS == address(0)
-                ? _amount
-                : IPTokensFees(FEE_CONTRACT_ADDRESS)
-                    .calculateAndTransferFee(
-                        _tokenAddress,
-                        _amount,
-                        true,
-                        _userData,
-                        _originChainId,
-                        _destinationChainId
-                    ),
-            _tokenAddress,
-            _destinationAddress,
-            _userData,
-            _destinationChainId
-        );
+        uint256 amountToPegIn = FEE_CONTRACT_ADDRESS == address(0)
+            ? _amount
+            : IPTokensFees(FEE_CONTRACT_ADDRESS).calculateAndTransferFee(
+                _tokenAddress,
+                _amount,
+                true,
+                _userData,
+                _originChainId,
+                _destinationChainId
+            );
+        if (amountToPegIn > 0) {
+            address vaultAddress = safelyGetVaultAddress(_destinationChainId);
+            IERC20(_tokenAddress).approve(vaultAddress, amountToPegIn);
+            IPTokensVault(vaultAddress).pegIn(
+                amountToPegIn,
+                _tokenAddress,
+                _destinationAddress,
+                _userData,
+                _destinationChainId
+            );
+        }
     }
 
     function setFeeContractAddress(
