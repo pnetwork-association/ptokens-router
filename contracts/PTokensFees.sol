@@ -17,6 +17,8 @@ contract PTokensFees is AccessControlEnumerable {
     mapping(address => bool) public FEE_EXPCEPTIONS;
     mapping(address => address) public CUSTOM_FEE_CONTRACTS;
 
+    event LogFees(uint256 indexed feeAmount, uint256 indexed amountMinusFee);
+
     constructor(
         address _feeSinkAddress,
         uint256 _pegInBasisPoints,
@@ -50,6 +52,7 @@ contract PTokensFees is AccessControlEnumerable {
     {
         uint256 feeAmount;
         (feeAmount, amountMinusFee) = calculateFee(_isPegIn, _amount, _tokenAddress);
+        emit LogFees(feeAmount, amountMinusFee);
         feeAmount > 0 && transferFeeToFeeSinkAddress(feeAmount, _tokenAddress);
         return amountMinusFee;
     }
@@ -69,6 +72,7 @@ contract PTokensFees is AccessControlEnumerable {
         }
         feeAmount = _amount * basisPoints / FEE_BASIS_POINTS_DIVISOR;
         amountMinusFee = _amount - feeAmount;
+
         return (feeAmount, amountMinusFee);
     }
 
