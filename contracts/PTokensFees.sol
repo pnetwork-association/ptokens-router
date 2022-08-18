@@ -51,7 +51,7 @@ contract PTokensFees is AccessControlEnumerable {
     {
         uint256 feeAmount;
         (feeAmount, amountMinusFee) = calculateFee(_amount, _isPegIn);
-        transferAmount(feeAmount, _tokenAddress);
+        feeAmount > 0 && transferAmount(feeAmount, _tokenAddress);
         return amountMinusFee;
     }
 
