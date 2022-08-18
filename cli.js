@@ -1,14 +1,18 @@
 #!/usr/bin/env node
 /* eslint-disable max-len */
+const {
+  verifyFeeContract,
+  verifyRouterContract,
+} = require('./lib/verify-contract')
 const { docopt } = require('docopt')
 const { version } = require('./package.json')
 const { getAdmins } = require('./lib/get-admins')
 const { showChainIds } = require('./lib/show-chain-ids')
-const { verifyContract } = require('./lib/verify-contract')
 const { addVaultAddress } = require('./lib/add-vault-address')
 const { getVaultAddress } = require('./lib/get-vault-address')
 const { getVaultAddresses } = require('./lib/get-vault-addresses')
 const { showWalletDetails } = require('./lib/show-wallet-details')
+const { deployFeeContract } = require('./lib/deploy-fee-contract')
 const { removeVaultAddress } = require('./lib/remove-vault-address')
 const { getSupportedTokens } = require('./lib/get-supported-tokens')
 const { getEncodedInitArgs } = require('./lib/get-encoded-init-args')
@@ -24,16 +28,21 @@ const GET_ADMINS_CMD = 'getAdmins'
 const VERSION_OPTION = '--version'
 const ETH_ADDRESS_ARG = '<ethAddress>'
 const SHOW_CHAIN_IDS_CMD = 'showChainIds'
-const VERIFY_CONTRACT_CMD = 'verifyContract'
 const ADD_VAULT_ADDRESS_CMD = 'addVaultAddress'
 const GET_VAULT_ADDRESS_CMD = 'getVaultAddress'
 const DEPLOYED_ADDRESS_ARG = '<deployedAddress>'
+const FEE_SINK_ADDRESS_ARG = '<feeSinkAddress>'
 const GET_ENCODED_INIT_ARGS_CMD = 'encodeInitArgs'
+const VERIFY_FEE_CONTRACT_CMD = 'verifyFeeContract'
 const SHOW_WALLET_DETAILS_CMD = 'showWalletDetails'
 const GET_VAULT_ADDRESSES_CMD = 'getVaultAddresses'
+const DEPLOY_FEE_CONTRACT_CMD = 'deployFeeContract'
+const PEG_IN_BASIS_POINTS_ARG = '<pegInBasisPoints>'
 const REMOVE_VAULT_ADDRESS_CMD = 'removeVaultAddress'
 const GET_SUPPORTED_TOKENS_CMD = 'getSupportedTokens'
+const PEG_OUT_BASIS_POINTS_ARG = '<pegOutBasisPoints>'
 const GET_SAFE_VAULT_ADDRESS_CMD = 'getSafeVaultAddress'
+const VERIFY_ROUTER_CONTRACT_CMD = 'verifyRouterContract'
 const DEPLOY_ROUTER_CONTRACT_CMD = 'deployRouterContract'
 const SHOW_EXISTING_CONTRACTS_CMD = 'showExistingContracts'
 
@@ -54,7 +63,7 @@ const USAGE_INFO = `
   NOTE: The tool requires a '.env' file to exist in the root of the repository with the following info:
     ENDPOINT=<rpc-endpoint-for-blochain-to-interact-with>
 
-  NOTE: To call the '${VERIFY_CONTRACT_CMD}' function, the following extra environment variable is required:
+  NOTE: To call the '${VERIFY_ROUTER_CONTRACT_CMD}' function, this extra environment variable is required:
     ETHERSCAN_API_KEY=<api-key-for-automated-contract-verifications>
 
 ❍ Usage:
@@ -69,14 +78,18 @@ const USAGE_INFO = `
   ${TOOL_NAME} ${GET_VAULT_ADDRESSES_CMD} ${DEPLOYED_ADDRESS_ARG}
   ${TOOL_NAME} ${GET_SUPPORTED_TOKENS_CMD} ${DEPLOYED_ADDRESS_ARG}
   ${TOOL_NAME} ${GET_SAFE_VAULT_ADDRESS_CMD} ${DEPLOYED_ADDRESS_ARG}
-  ${TOOL_NAME} ${VERIFY_CONTRACT_CMD} ${NETWORK_ARG} ${DEPLOYED_ADDRESS_ARG}
   ${TOOL_NAME} ${GET_VAULT_ADDRESS_CMD} ${DEPLOYED_ADDRESS_ARG} ${CHAIN_ID_ARG}
   ${TOOL_NAME} ${REMOVE_VAULT_ADDRESS_CMD} ${DEPLOYED_ADDRESS_ARG} ${CHAIN_ID_ARG}
+  ${TOOL_NAME} ${VERIFY_ROUTER_CONTRACT_CMD} ${NETWORK_ARG} ${DEPLOYED_ADDRESS_ARG}
   ${TOOL_NAME} ${ADD_VAULT_ADDRESS_CMD} ${DEPLOYED_ADDRESS_ARG} ${CHAIN_ID_ARG} ${ETH_ADDRESS_ARG}
+  ${TOOL_NAME} ${DEPLOY_FEE_CONTRACT_CMD} ${FEE_SINK_ADDRESS_ARG} ${PEG_IN_BASIS_POINTS_ARG} ${PEG_OUT_BASIS_POINTS_ARG}
+  ${TOOL_NAME} ${VERIFY_ROUTER_CONTRACT_CMD} ${DEPLOYED_ADDRESS_ARG} ${NETWORK_ARG} ${FEE_SINK_ADDRESS_ARG} ${PEG_IN_BASIS_POINTS_ARG} ${PEG_OUT_BASIS_POINTS_ARG}
 
 ❍ Commands:
+  ${DEPLOY_FEE_CONTRACT_CMD}     ❍ Deploy the fee contract.
+  ${VERIFY_FEE_CONTRACT_CMD}     ❍ Verify the fee contract.
   ${DEPLOY_ROUTER_CONTRACT_CMD}  ❍ Deploy the router logic contract.
-  ${VERIFY_CONTRACT_CMD}        ❍ Verify the logic contract.
+  ${VERIFY_ROUTER_CONTRACT_CMD}  ❍ Verify the router logic contract.
   ${GET_VAULT_ADDRESSES_CMD}     ❍ Gets all set vault addresses at ${DEPLOYED_ADDRESS_ARG}.
   ${GET_ADMINS_CMD}             ❍ Get the admins of the contract at ${DEPLOYED_ADDRESS_ARG}.
   ${REMOVE_VAULT_ADDRESS_CMD}    ❍ Removess vault address with ${CHAIN_ID_ARG} from ${DEPLOYED_ADDRESS_ARG}.
@@ -103,8 +116,8 @@ const main = _ => {
   const CLI_ARGS = docopt(USAGE_INFO, { version })
   if (CLI_ARGS[DEPLOY_ROUTER_CONTRACT_CMD])
     return deployRouterContract()
-  if (CLI_ARGS[VERIFY_CONTRACT_CMD])
-    return verifyContract(CLI_ARGS[DEPLOYED_ADDRESS_ARG], CLI_ARGS[NETWORK_ARG])
+  if (CLI_ARGS[VERIFY_ROUTER_CONTRACT_CMD])
+    return verifyRouterContract(CLI_ARGS[DEPLOYED_ADDRESS_ARG], CLI_ARGS[NETWORK_ARG])
   if (CLI_ARGS[ADD_VAULT_ADDRESS_CMD])
     return addVaultAddress(CLI_ARGS[DEPLOYED_ADDRESS_ARG], CLI_ARGS[CHAIN_ID_ARG], CLI_ARGS[ETH_ADDRESS_ARG])
   if (CLI_ARGS[REMOVE_VAULT_ADDRESS_CMD])
@@ -127,6 +140,20 @@ const main = _ => {
     return getVaultAddresses(CLI_ARGS[DEPLOYED_ADDRESS_ARG])
   if (CLI_ARGS[GET_SUPPORTED_TOKENS_CMD])
     return getSupportedTokens(CLI_ARGS[DEPLOYED_ADDRESS_ARG])
+  if (CLI_ARGS[DEPLOY_FEE_CONTRACT_CMD])
+    return deployFeeContract(
+      CLI_ARGS[FEE_SINK_ADDRESS_ARG],
+      CLI_ARGS[PEG_IN_BASIS_POINTS_ARG],
+      CLI_ARGS[PEG_OUT_BASIS_POINTS_ARG]
+    )
+  if (CLI_ARGS[VERIFY_FEE_CONTRACT])
+    return verifyFeeContract(
+      CLI_ARGS[DEPLOYED_ADDRESS_ARG],
+      CLI_ARGS[NETWORK_ARG],
+      CLI_ARGS[FEE_SINK_ADDRESS_ARG],
+      CLI_ARGS[PEG_IN_BASIS_POINTS_ARG],
+      CLI_ARGS[PEG_OUT_BASIS_POINTS_ARG]
+    )
 }
 
 main().catch(_err => console.error('✘', _err.message))
