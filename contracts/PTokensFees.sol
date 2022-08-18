@@ -50,21 +50,22 @@ contract PTokensFees is AccessControlEnumerable {
         returns (uint256 amountMinusFee)
     {
         uint256 feeAmount;
-        (feeAmount, amountMinusFee) = calculateFee(_amount, _isPegIn);
-        feeAmount > 0 && transferAmount(feeAmount, _tokenAddress);
+        (feeAmount, amountMinusFee) = calculateFee(_isPegIn, _amount, _tokenAddress);
+        feeAmount > 0 && transferFeeToFeeSinkAddress(feeAmount, _tokenAddress);
         return amountMinusFee;
     }
 
     function calculateFee(
+        bool _isPegIn,
         uint256 _amount,
-        bool _isPegIn
+        address _tokenAddress
     )
         public
         view
         returns (uint256 feeAmount, uint256 amountMinusFee)
     {
         uint256 basisPoints = _isPegIn ? PEG_IN_BASIS_POINTS : PEG_OUT_BASIS_POINTS;
-        if (basisPoints == 0) {
+        if (basisPoints == 0 || FEE_EXPCEPTIONS[_tokenAddress]) {
             return (0, _amount);
         }
         feeAmount = _amount * basisPoints / FEE_BASIS_POINTS_DIVISOR;
@@ -72,8 +73,7 @@ contract PTokensFees is AccessControlEnumerable {
         return (feeAmount, amountMinusFee);
     }
 
-    // TODO test
-    function    transferAmount(
+    function    transferFeeToFeeSinkAddress(
         uint256 _tokenAmount,
         address _tokenAddress
     )

@@ -196,6 +196,28 @@ describe('Fees Contract Tests', () => {
           assert(amountMinusFee.eq(expectedAmountMinusFee))
         })
       })
+
+      describe('WITH fee exception set', () => {
+        beforeEach(async () => {
+          await FEES_CONTRACT.addFeeException(TOKEN_ADDRESS)
+          const tokenIsInExceptionList = await FEES_CONTRACT.FEE_EXPCEPTIONS(TOKEN_ADDRESS)
+          assert(tokenIsInExceptionList)
+        })
+
+        it('Should calculate peg in fees correctly', async () => {
+          const isPegin = true
+          const { feeAmount, amountMinusFee } = await FEES_CONTRACT.calculateFee(isPegin, AMOUNT, TOKEN_ADDRESS)
+          assert(feeAmount.eq(0))
+          assert(amountMinusFee.eq(AMOUNT))
+        })
+
+        it('Should calculate peg out fees correctly', async () => {
+          const isPegin = false
+          const { feeAmount, amountMinusFee } = await FEES_CONTRACT.calculateFee(isPegin, AMOUNT, TOKEN_ADDRESS)
+          assert(feeAmount.eq(0))
+          assert(amountMinusFee.eq(AMOUNT))
+        })
+      })
     })
   })
 
