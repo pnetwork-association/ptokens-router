@@ -241,7 +241,7 @@ describe('pTokens Router Contract', () => {
           const pTokenContract = await getMockErc777Contract(chainId)
 
           // Add the fee contract to the mapping in the router...
-          ROUTER_CONTRACT.setFeeContractAddress(pTokenContract.address, feeContract.address)
+          ROUTER_CONTRACT.setFeeContractAddress(feeContract.address)
 
           // Set up the vault contract...
           const vaultContract = await getMockVaultContract(INTERIM_CHAIN_ID)
@@ -352,7 +352,7 @@ describe('pTokens Router Contract', () => {
           const vaultContract = await getMockVaultContract(INTERIM_CHAIN_ID)
 
           // Add the fee contract to the mapping in the router...
-          ROUTER_CONTRACT.setFeeContractAddress(pTokenContract.address, feeContract.address)
+          ROUTER_CONTRACT.setFeeContractAddress(feeContract.address)
 
           // Create the tx params...
           const amount = 1337

@@ -154,33 +154,28 @@ contract PTokensRouter is
             string memory destinationAddress
         ) = decodeParamsFromUserData(_userData);
         address tokenAddress = msg.sender;
-        address feeContractAddress = feeContracts[tokenAddress];
-        bool feeContractExists = feeContractAddress != address(0);
-        if (feeContractExists) {
-            // NOTE: We give the fee contract an allowance up to the total amount so that it can transfer fees...
-            IERC20(tokenAddress).approve(feeContractAddress, _amount);
-        }
+
+        // NOTE: We give the fee contract an allowance up to the total amount so that it can transfer fees...
+        FEE_CONTRACT_ADDRESS != address(0) && IERC20(tokenAddress).approve(FEE_CONTRACT_ADDRESS, _amount);
+
         getOriginChainIdFromContract(tokenAddress) == destinationChainId
             ? pegOut( // NOTE: This is a full peg-out of tokens back to their native chain.
                 _amount,
                 tokenAddress,
                 userData,
                 destinationAddress,
-                destinationChainId,
-                feeContractAddress
+                destinationChainId
             )
             : pegIn( // NOTE: This is either from a peg-in, or a peg-out to a different host chain.
                 _amount,
                 tokenAddress,
                 userData,
                 destinationChainId,
-                destinationAddress,
-                feeContractAddress
+                destinationAddress
             );
-        if (feeContractExists) {
-            // NOTE: Finally, we revoke the fee contract's allowance.
-            IERC20(tokenAddress).approve(feeContractAddress, 0);
-        }
+
+        // NOTE: Finally, we revoke the fee contract's allowance.
+        FEE_CONTRACT_ADDRESS != address(0) && IERC20(tokenAddress).approve(FEE_CONTRACT_ADDRESS, 0);
     }
 
     function pegOut(
@@ -188,14 +183,13 @@ contract PTokensRouter is
         address _tokenAddress,
         bytes memory _userData,
         string memory _destinationAddress,
-        bytes4 _destinationChainId,
-        address _feeContractAddress
+        bytes4 _destinationChainId
     )
         internal
     {
         IPToken(_tokenAddress).redeem(
-            _feeContractAddress != address(0)
-                ? IPTokensFees(_feeContractAddress).calculateAndTransferFee(_tokenAddress, _amount, false)
+            FEE_CONTRACT_ADDRESS != address(0)
+                ? IPTokensFees(FEE_CONTRACT_ADDRESS).calculateAndTransferFee(_tokenAddress, _amount, false)
                 : _amount,
             _userData,
             _destinationAddress,
@@ -208,16 +202,15 @@ contract PTokensRouter is
         address _tokenAddress,
         bytes memory _userData,
         bytes4 _destinationChainId,
-        string memory _destinationAddress,
-        address _feeContractAddress
+        string memory _destinationAddress
     )
         internal
     {
         address vaultAddress = safelyGetVaultAddress(_destinationChainId);
         IERC20(_tokenAddress).approve(vaultAddress, _amount);
         IPTokensVault(vaultAddress).pegIn(
-            _feeContractAddress != address(0)
-                ? IPTokensFees(_feeContractAddress).calculateAndTransferFee(_tokenAddress, _amount, true)
+            FEE_CONTRACT_ADDRESS != address(0)
+                ? IPTokensFees(FEE_CONTRACT_ADDRESS).calculateAndTransferFee(_tokenAddress, _amount, true)
                 : _amount,
             _tokenAddress,
             _destinationAddress,
@@ -227,12 +220,11 @@ contract PTokensRouter is
     }
 
     function setFeeContractAddress(
-        address _tokenAddress,
         address _feeContractAddress
     )
         external
         onlyAdmin
     {
-        feeContracts[_tokenAddress] = _feeContractAddress;
+        FEE_CONTRACT_ADDRESS = _feeContractAddress;
     }
 }

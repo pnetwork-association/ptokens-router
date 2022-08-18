@@ -17,5 +17,5 @@ contract PTokensRouterStorage {
 
     mapping(bytes4 => address) public interimVaultAddresses;
 
-    mapping(address => address) public feeContracts;
+    address public FEE_CONTRACT_ADDRESS;
 }
