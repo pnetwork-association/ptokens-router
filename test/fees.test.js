@@ -134,26 +134,68 @@ describe('Fees Contract Tests', () => {
 
   describe('Fee calculation tests', () => {
     const AMOUNT = 1337e3
-    it('Should calculate peg in fees correctly', async () => {
-      const isPegin = true
-      const { feeAmount, amountMinusFee } = await FEES_CONTRACT.calculateFee(AMOUNT, isPegin)
-      const expectedFeeAmount = ethers
-        .BigNumber
-        .from(Math.floor(AMOUNT * PEG_IN_BASIS_POINTS / FEE_BASIS_POINTS_DIVISOR))
-      const expectedAmountMinusFee = ethers.BigNumber.from(AMOUNT).sub(expectedFeeAmount)
-      assert(feeAmount.eq(expectedFeeAmount))
-      assert(amountMinusFee.eq(expectedAmountMinusFee))
+
+    describe('With peg in and out basis points == 0', () => {
+      beforeEach(async () => {
+        await FEES_CONTRACT.setPegInBasisPoints(0)
+        await FEES_CONTRACT.setPegOutBasisPoints(0)
+        const pegInBasisPoints = await FEES_CONTRACT.PEG_IN_BASIS_POINTS()
+        assert(pegInBasisPoints.eq(0))
+        const pegOutBasisPoints = await FEES_CONTRACT.PEG_OUT_BASIS_POINTS()
+        assert(pegOutBasisPoints.eq(0))
+      })
+
+      it('Should calculate peg in fees correctly', async () => {
+        const isPegin = true
+        const { feeAmount, amountMinusFee } = await FEES_CONTRACT.calculateFee(isPegin, AMOUNT, TOKEN_ADDRESS)
+        assert(feeAmount.eq(0))
+        assert(amountMinusFee.eq(AMOUNT))
+      })
+
+      it('Should calculate peg out fees correctly', async () => {
+        const isPegin = false
+        const { feeAmount, amountMinusFee } = await FEES_CONTRACT.calculateFee(isPegin, AMOUNT, TOKEN_ADDRESS)
+        assert(feeAmount.eq(0))
+        assert(amountMinusFee.eq(AMOUNT))
+      })
     })
 
-    it('Should calculate peg out fees correctly', async () => {
-      const isPegin = false
-      const { feeAmount, amountMinusFee } = await FEES_CONTRACT.calculateFee(AMOUNT, isPegin)
-      const expectedFeeAmount = ethers
-        .BigNumber
-        .from(Math.floor(AMOUNT * PEG_OUT_BASIS_POINTS / FEE_BASIS_POINTS_DIVISOR))
-      const expectedAmountMinusFee = ethers.BigNumber.from(AMOUNT).sub(expectedFeeAmount)
-      assert(feeAmount.eq(expectedFeeAmount))
-      assert(amountMinusFee.eq(expectedAmountMinusFee))
+    describe('With peg in and out basis points > 0', () => {
+      beforeEach(async () => {
+        const pegInBasisPoints = await FEES_CONTRACT.PEG_IN_BASIS_POINTS()
+        assert(pegInBasisPoints.gt(0))
+        const pegOutBasisPoints = await FEES_CONTRACT.PEG_OUT_BASIS_POINTS()
+        assert(pegOutBasisPoints.gt(0))
+      })
+
+      describe('With NO fee exception set', () => {
+        beforeEach(async () => {
+          const tokenIsInExceptionList = await FEES_CONTRACT.FEE_EXPCEPTIONS[TOKEN_ADDRESS]
+          assert(!tokenIsInExceptionList)
+        })
+
+        it('Should calculate peg in fees correctly', async () => {
+          const isPegin = true
+          const { feeAmount, amountMinusFee } = await FEES_CONTRACT.calculateFee(isPegin, AMOUNT, TOKEN_ADDRESS)
+          const expectedFeeAmount = ethers
+            .BigNumber
+            .from(Math.floor(AMOUNT * PEG_IN_BASIS_POINTS / FEE_BASIS_POINTS_DIVISOR))
+          const expectedAmountMinusFee = ethers.BigNumber.from(AMOUNT).sub(expectedFeeAmount)
+          assert(feeAmount.eq(expectedFeeAmount))
+          assert(amountMinusFee.eq(expectedAmountMinusFee))
+        })
+
+        it('Should calculate peg out fees correctly', async () => {
+          const isPegin = false
+          const { feeAmount, amountMinusFee } = await FEES_CONTRACT.calculateFee(isPegin, AMOUNT, TOKEN_ADDRESS)
+          const expectedFeeAmount = ethers
+            .BigNumber
+            .from(Math.floor(AMOUNT * PEG_OUT_BASIS_POINTS / FEE_BASIS_POINTS_DIVISOR))
+          const expectedAmountMinusFee = ethers.BigNumber.from(AMOUNT).sub(expectedFeeAmount)
+          assert(feeAmount.eq(expectedFeeAmount))
+          assert(amountMinusFee.eq(expectedAmountMinusFee))
+        })
+      })
     })
   })
 
