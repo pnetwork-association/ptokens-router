@@ -20,7 +20,11 @@ module.exports = {
     'artifacts': false,
     'upgrades': false,
   },
+  'plugins': [
+    'no-only-tests',
+  ],
   rules: {
+    "no-only-tests/no-only-tests": "error",
     'max-len': ['error', 120, 2, {
       ignoreUrls: true,
       ignoreComments: false,
