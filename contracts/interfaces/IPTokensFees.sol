@@ -6,6 +6,9 @@ interface IPTokensFees {
     function calculateAndTransferFee(
         address _tokenAddress,
         uint256 _amount,
-        bool _isPegIn
+        bool _isPegIn,
+        bytes memory _userData,
+        bytes4 _originChainId,
+        bytes4 _destinationChainId
     ) external returns (uint256 amountMinusFee);
 }

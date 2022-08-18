@@ -109,30 +109,30 @@ contract PTokensRouter is
     )
         internal
         pure
-        returns(bytes memory, bytes4, string memory)
+        returns(bytes memory, bytes4, bytes4, string memory)
     {
         if (_userData[0] == 0x02) {
             (
                 , // NOTE: Metadata Version
                 bytes memory userData,
-                , // NOTE: Origin Chain Id
+                bytes4 originChainId,
                 , // NOTE: Origin Address
                 bytes4 destinationChainId,
                 address destinationAddress,
                 ,
             ) = decodeMetadataV2(_userData);
-            return (userData, destinationChainId, convertAddressToString(destinationAddress));
+            return (userData, originChainId, destinationChainId, convertAddressToString(destinationAddress));
         } else if (_userData[0] == 0x03) {
             (
                 , // NOTE: Metadata Version
                 bytes memory userData,
-                , // NOTE: Origin Chain Id
+                bytes4 originChainId,
                 , // NOTE: Origin Address
                 bytes4 destinationChainId,
                 string memory destinationAddress,
                 ,
             ) = decodeMetadataV3(_userData);
-            return (userData, destinationChainId, destinationAddress);
+            return (userData, originChainId, destinationChainId, destinationAddress);
         } else {
             revert("Unrecognized pTokens metadata version!");
         }
@@ -150,6 +150,7 @@ contract PTokensRouter is
         override
     {
         (   bytes memory userData,
+            bytes4 originChainId,
             bytes4 destinationChainId,
             string memory destinationAddress
         ) = decodeParamsFromUserData(_userData);
@@ -164,14 +165,16 @@ contract PTokensRouter is
                 tokenAddress,
                 userData,
                 destinationAddress,
+                originChainId,
                 destinationChainId
             )
             : pegIn( // NOTE: This is either from a peg-in, or a peg-out to a different host chain.
                 _amount,
                 tokenAddress,
                 userData,
-                destinationChainId,
-                destinationAddress
+                destinationAddress,
+                originChainId,
+                destinationChainId
             );
 
         // NOTE: Finally, we revoke the fee contract's allowance.
@@ -183,14 +186,23 @@ contract PTokensRouter is
         address _tokenAddress,
         bytes memory _userData,
         string memory _destinationAddress,
+        bytes4 _originChainId,
         bytes4 _destinationChainId
     )
         internal
     {
         IPToken(_tokenAddress).redeem(
-            FEE_CONTRACT_ADDRESS != address(0)
-                ? IPTokensFees(FEE_CONTRACT_ADDRESS).calculateAndTransferFee(_tokenAddress, _amount, false)
-                : _amount,
+            FEE_CONTRACT_ADDRESS == address(0)
+                ? _amount
+                : IPTokensFees(FEE_CONTRACT_ADDRESS)
+                    .calculateAndTransferFee(
+                        _tokenAddress,
+                        _amount,
+                        false,
+                        _userData,
+                        _originChainId,
+                        _destinationChainId
+                    ),
             _userData,
             _destinationAddress,
             _destinationChainId
@@ -201,17 +213,26 @@ contract PTokensRouter is
         uint256 _amount,
         address _tokenAddress,
         bytes memory _userData,
-        bytes4 _destinationChainId,
-        string memory _destinationAddress
+        string memory _destinationAddress,
+        bytes4 _originChainId,
+        bytes4 _destinationChainId
     )
         internal
     {
         address vaultAddress = safelyGetVaultAddress(_destinationChainId);
         IERC20(_tokenAddress).approve(vaultAddress, _amount);
         IPTokensVault(vaultAddress).pegIn(
-            FEE_CONTRACT_ADDRESS != address(0)
-                ? IPTokensFees(FEE_CONTRACT_ADDRESS).calculateAndTransferFee(_tokenAddress, _amount, true)
-                : _amount,
+            FEE_CONTRACT_ADDRESS == address(0)
+                ? _amount
+                : IPTokensFees(FEE_CONTRACT_ADDRESS)
+                    .calculateAndTransferFee(
+                        _tokenAddress,
+                        _amount,
+                        true,
+                        _userData,
+                        _originChainId,
+                        _destinationChainId
+                    ),
             _tokenAddress,
             _destinationAddress,
             _userData,

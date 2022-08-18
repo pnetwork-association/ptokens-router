@@ -37,14 +37,13 @@ contract PTokensFees is AccessControlEnumerable {
        _;
     }
 
-    // TODO This should take more information, origin & destination chain IDs, plus size of user data!
-    // This way we can calcualte network fees for the ingress and egress chains, plus extra fees based
-    // on size of user data.
-    // TODO test
     function calculateAndTransferFee(
         address _tokenAddress,
         uint256 _amount,
-        bool _isPegIn
+        bool _isPegIn,
+        bytes memory /* _userData */,
+        bytes4 /* _originChainId*/,
+        bytes4 /* _destinationChainId */
     )
         public
         returns (uint256 amountMinusFee)
