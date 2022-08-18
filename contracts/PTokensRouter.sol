@@ -167,7 +167,6 @@ contract PTokensRouter is
                 userData,
                 destinationAddress,
                 destinationChainId,
-                feeContractExists,
                 feeContractAddress
             )
             : pegIn( // NOTE: This is either from a peg-in, or a peg-out to a different host chain.
@@ -176,7 +175,6 @@ contract PTokensRouter is
                 userData,
                 destinationChainId,
                 destinationAddress,
-                feeContractExists,
                 feeContractAddress
             );
         if (feeContractExists) {
@@ -191,13 +189,12 @@ contract PTokensRouter is
         bytes memory _userData,
         string memory _destinationAddress,
         bytes4 _destinationChainId,
-        bool _feeContractExists,
         address _feeContractAddress
     )
         internal
     {
         IPToken(_tokenAddress).redeem(
-            _feeContractExists
+            _feeContractAddress != address(0)
                 ? IPTokensFees(_feeContractAddress).calculateAndTransferFee(_tokenAddress, _amount, false)
                 : _amount,
             _userData,
@@ -212,7 +209,6 @@ contract PTokensRouter is
         bytes memory _userData,
         bytes4 _destinationChainId,
         string memory _destinationAddress,
-        bool _feeContractExists,
         address _feeContractAddress
     )
         internal
@@ -220,7 +216,7 @@ contract PTokensRouter is
         address vaultAddress = safelyGetVaultAddress(_destinationChainId);
         IERC20(_tokenAddress).approve(vaultAddress, _amount);
         IPTokensVault(vaultAddress).pegIn(
-            _feeContractExists
+            _feeContractAddress != address(0)
                 ? IPTokensFees(_feeContractAddress).calculateAndTransferFee(_tokenAddress, _amount, true)
                 : _amount,
             _tokenAddress,
