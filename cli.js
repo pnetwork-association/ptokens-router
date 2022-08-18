@@ -4,7 +4,6 @@ const { docopt } = require('docopt')
 const { version } = require('./package.json')
 const { getAdmins } = require('./lib/get-admins')
 const { showChainIds } = require('./lib/show-chain-ids')
-const { deployContract } = require('./lib/deploy-contract')
 const { verifyContract } = require('./lib/verify-contract')
 const { addVaultAddress } = require('./lib/add-vault-address')
 const { getVaultAddress } = require('./lib/get-vault-address')
@@ -14,6 +13,7 @@ const { removeVaultAddress } = require('./lib/remove-vault-address')
 const { getSupportedTokens } = require('./lib/get-supported-tokens')
 const { getEncodedInitArgs } = require('./lib/get-encoded-init-args')
 const { getSafeVaultAddress } = require('./lib/get-safe-vault-address')
+const { deployRouterContract } = require('./lib/deploy-router-contract')
 const { showExistingContractAddresses } = require('./lib/show-existing-contracts')
 
 const TOOL_NAME = 'cli.js'
@@ -25,7 +25,6 @@ const VERSION_OPTION = '--version'
 const ETH_ADDRESS_ARG = '<ethAddress>'
 const SHOW_CHAIN_IDS_CMD = 'showChainIds'
 const VERIFY_CONTRACT_CMD = 'verifyContract'
-const DEPLOY_CONTRACT_CMD = 'deployContract'
 const ADD_VAULT_ADDRESS_CMD = 'addVaultAddress'
 const GET_VAULT_ADDRESS_CMD = 'getVaultAddress'
 const DEPLOYED_ADDRESS_ARG = '<deployedAddress>'
@@ -35,6 +34,7 @@ const GET_VAULT_ADDRESSES_CMD = 'getVaultAddresses'
 const REMOVE_VAULT_ADDRESS_CMD = 'removeVaultAddress'
 const GET_SUPPORTED_TOKENS_CMD = 'getSupportedTokens'
 const GET_SAFE_VAULT_ADDRESS_CMD = 'getSafeVaultAddress'
+const DEPLOY_ROUTER_CONTRACT_CMD = 'deployRouterContract'
 const SHOW_EXISTING_CONTRACTS_CMD = 'showExistingContracts'
 
 const USAGE_INFO = `
@@ -61,8 +61,8 @@ const USAGE_INFO = `
   ${TOOL_NAME} ${HELP_OPTION}
   ${TOOL_NAME} ${VERSION_OPTION}
   ${TOOL_NAME} ${SHOW_CHAIN_IDS_CMD}
-  ${TOOL_NAME} ${DEPLOY_CONTRACT_CMD}
   ${TOOL_NAME} ${SHOW_WALLET_DETAILS_CMD}
+  ${TOOL_NAME} ${DEPLOY_ROUTER_CONTRACT_CMD}
   ${TOOL_NAME} ${SHOW_EXISTING_CONTRACTS_CMD}
   ${TOOL_NAME} ${GET_ADMINS_CMD} ${DEPLOYED_ADDRESS_ARG}
   ${TOOL_NAME} ${GET_ENCODED_INIT_ARGS_CMD} ${ETH_ADDRESS_ARG}
@@ -75,7 +75,7 @@ const USAGE_INFO = `
   ${TOOL_NAME} ${ADD_VAULT_ADDRESS_CMD} ${DEPLOYED_ADDRESS_ARG} ${CHAIN_ID_ARG} ${ETH_ADDRESS_ARG}
 
 ❍ Commands:
-  ${DEPLOY_CONTRACT_CMD}        ❍ Deploy the logic contract.
+  ${DEPLOY_ROUTER_CONTRACT_CMD}  ❍ Deploy the router logic contract.
   ${VERIFY_CONTRACT_CMD}        ❍ Verify the logic contract.
   ${GET_VAULT_ADDRESSES_CMD}     ❍ Gets all set vault addresses at ${DEPLOYED_ADDRESS_ARG}.
   ${GET_ADMINS_CMD}             ❍ Get the admins of the contract at ${DEPLOYED_ADDRESS_ARG}.
@@ -101,8 +101,8 @@ const USAGE_INFO = `
 
 const main = _ => {
   const CLI_ARGS = docopt(USAGE_INFO, { version })
-  if (CLI_ARGS[DEPLOY_CONTRACT_CMD])
-    return deployContract()
+  if (CLI_ARGS[DEPLOY_ROUTER_CONTRACT_CMD])
+    return deployRouterContract()
   if (CLI_ARGS[VERIFY_CONTRACT_CMD])
     return verifyContract(CLI_ARGS[DEPLOYED_ADDRESS_ARG], CLI_ARGS[NETWORK_ARG])
   if (CLI_ARGS[ADD_VAULT_ADDRESS_CMD])

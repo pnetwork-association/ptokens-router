@@ -44,8 +44,8 @@ Output:
 ❍ Usage:
   cli.js --help
   cli.js --version
-  cli.js deployContract
   cli.js showWalletDetails
+  cli.js deployRouterContract
   cli.js showExistingContracts
   cli.js getAdmins <deployedAddress>
   cli.js encodeInitArgs <ethAddress>
@@ -56,7 +56,7 @@ Output:
   cli.js addVaultAddress <deployedAddress> <chainId> <ethAddress>
 
 ❍ Commands:
-  deployContract        ❍ Deploy the logic contract.
+  deployRouterContract        ❍ Deploy the logic contract.
   verifyContract        ❍ Verify the logic contract.
   getAdmins             ❍ Get the admins of the contract at <deployedAddress>.
   removeVaultAddress    ❍ Removess vault address with <chainId> from <deployedAddress>.
