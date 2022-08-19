@@ -18,6 +18,7 @@ const { getSupportedTokens } = require('./lib/get-supported-tokens')
 const { getEncodedInitArgs } = require('./lib/get-encoded-init-args')
 const { getSafeVaultAddress } = require('./lib/get-safe-vault-address')
 const { deployRouterContract } = require('./lib/deploy-router-contract')
+const { setFeeContractAddress } = require('./lib/set-fee-contract-address')
 const { showExistingContractAddresses } = require('./lib/show-existing-contracts')
 
 const TOOL_NAME = 'cli.js'
@@ -37,6 +38,7 @@ const VERIFY_FEE_CONTRACT_CMD = 'verifyFeeContract'
 const SHOW_WALLET_DETAILS_CMD = 'showWalletDetails'
 const GET_VAULT_ADDRESSES_CMD = 'getVaultAddresses'
 const DEPLOY_FEE_CONTRACT_CMD = 'deployFeeContract'
+const SET_FEE_CONTRACT_ADDRESS_CMD = 'setFeeAddress'
 const PEG_IN_BASIS_POINTS_ARG = '<pegInBasisPoints>'
 const REMOVE_VAULT_ADDRESS_CMD = 'removeVaultAddress'
 const GET_SUPPORTED_TOKENS_CMD = 'getSupportedTokens'
@@ -81,6 +83,7 @@ const USAGE_INFO = `
   ${TOOL_NAME} ${GET_VAULT_ADDRESS_CMD} ${DEPLOYED_ADDRESS_ARG} ${CHAIN_ID_ARG}
   ${TOOL_NAME} ${REMOVE_VAULT_ADDRESS_CMD} ${DEPLOYED_ADDRESS_ARG} ${CHAIN_ID_ARG}
   ${TOOL_NAME} ${VERIFY_ROUTER_CONTRACT_CMD} ${NETWORK_ARG} ${DEPLOYED_ADDRESS_ARG}
+  ${TOOL_NAME} ${SET_FEE_CONTRACT_ADDRESS_CMD} ${DEPLOYED_ADDRESS_ARG} ${ETH_ADDRESS_ARG}
   ${TOOL_NAME} ${ADD_VAULT_ADDRESS_CMD} ${DEPLOYED_ADDRESS_ARG} ${CHAIN_ID_ARG} ${ETH_ADDRESS_ARG}
   ${TOOL_NAME} ${DEPLOY_FEE_CONTRACT_CMD} ${FEE_SINK_ADDRESS_ARG} ${PEG_IN_BASIS_POINTS_ARG} ${PEG_OUT_BASIS_POINTS_ARG}
   ${TOOL_NAME} ${VERIFY_FEE_CONTRACT_CMD} ${DEPLOYED_ADDRESS_ARG} ${NETWORK_ARG} ${FEE_SINK_ADDRESS_ARG} ${PEG_IN_BASIS_POINTS_ARG} ${PEG_OUT_BASIS_POINTS_ARG}
@@ -92,6 +95,7 @@ const USAGE_INFO = `
   ${VERIFY_ROUTER_CONTRACT_CMD}  ❍ Verify the router logic contract.
   ${GET_VAULT_ADDRESSES_CMD}     ❍ Gets all set vault addresses at ${DEPLOYED_ADDRESS_ARG}.
   ${GET_ADMINS_CMD}             ❍ Get the admins of the contract at ${DEPLOYED_ADDRESS_ARG}.
+  ${SET_FEE_CONTRACT_ADDRESS_CMD}         ❍ Set the fee contract stored in the router to ${ETH_ADDRESS_ARG}.
   ${REMOVE_VAULT_ADDRESS_CMD}    ❍ Removess vault address with ${CHAIN_ID_ARG} from ${DEPLOYED_ADDRESS_ARG}.
   ${GET_VAULT_ADDRESS_CMD}       ❍ Get vault address from router at ${DEPLOYED_ADDRESS_ARG} via ${CHAIN_ID_ARG}.
   ${SHOW_WALLET_DETAILS_CMD}     ❍ Decrypts the private key and shows address & balance information.
@@ -140,6 +144,8 @@ const main = _ => {
     return getVaultAddresses(CLI_ARGS[DEPLOYED_ADDRESS_ARG])
   if (CLI_ARGS[GET_SUPPORTED_TOKENS_CMD])
     return getSupportedTokens(CLI_ARGS[DEPLOYED_ADDRESS_ARG])
+  if (CLI_ARGS[SET_FEE_CONTRACT_ADDRESS_CMD])
+    return setFeeContractAddress(CLI_ARGS[DEPLOYED_ADDRESS_ARG], CLI_ARGS[ETH_ADDRESS_ARG])
   if (CLI_ARGS[DEPLOY_FEE_CONTRACT_CMD]) {
     return deployFeeContract(
       CLI_ARGS[FEE_SINK_ADDRESS_ARG],
