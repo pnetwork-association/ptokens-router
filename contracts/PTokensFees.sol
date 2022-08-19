@@ -45,7 +45,9 @@ contract PTokensFees is AccessControlEnumerable {
         bool _isPegIn,
         bytes memory /* _userData */,
         bytes4 /* _originChainId*/,
-        bytes4 /* _destinationChainId */
+        bytes4 /* _destinationChainId */,
+        string memory /* _originAddress */,
+        string memory /* _destinationAddress */
     )
         public
         returns (uint256 amountMinusFee)

@@ -109,30 +109,42 @@ contract PTokensRouter is
     )
         internal
         pure
-        returns(bytes memory, bytes4, bytes4, string memory)
+        returns(bytes memory, bytes4, bytes4, string memory, string memory)
     {
         if (_userData[0] == 0x02) {
             (
                 , // NOTE: Metadata Version
                 bytes memory userData,
                 bytes4 originChainId,
-                , // NOTE: Origin Address
+                address originAddress,
                 bytes4 destinationChainId,
                 address destinationAddress,
                 ,
             ) = decodeMetadataV2(_userData);
-            return (userData, originChainId, destinationChainId, convertAddressToString(destinationAddress));
+            return (
+                userData,
+                originChainId,
+                destinationChainId,
+                convertAddressToString(originAddress),
+                convertAddressToString(destinationAddress)
+            );
         } else if (_userData[0] == 0x03) {
             (
                 , // NOTE: Metadata Version
                 bytes memory userData,
                 bytes4 originChainId,
-                , // NOTE: Origin Address
+                string memory originAddress,
                 bytes4 destinationChainId,
                 string memory destinationAddress,
                 ,
             ) = decodeMetadataV3(_userData);
-            return (userData, originChainId, destinationChainId, destinationAddress);
+            return (
+                userData,
+                originChainId,
+                destinationChainId,
+                originAddress,
+                destinationAddress
+            );
         } else {
             revert("Unrecognized pTokens metadata version!");
         }
@@ -152,6 +164,7 @@ contract PTokensRouter is
         (   bytes memory userData,
             bytes4 originChainId,
             bytes4 destinationChainId,
+            string memory originAddress,
             string memory destinationAddress
         ) = decodeParamsFromUserData(_userData);
         address tokenAddress = msg.sender;
@@ -166,7 +179,8 @@ contract PTokensRouter is
                 userData,
                 destinationAddress,
                 originChainId,
-                destinationChainId
+                destinationChainId,
+                originAddress
             )
             : pegIn( // NOTE: This is either from a peg-in, or a peg-out to a different host chain.
                 _amount,
@@ -174,7 +188,8 @@ contract PTokensRouter is
                 userData,
                 destinationAddress,
                 originChainId,
-                destinationChainId
+                destinationChainId,
+                originAddress
             );
 
         // NOTE: Finally, we revoke the fee contract's allowance.
@@ -187,7 +202,8 @@ contract PTokensRouter is
         bytes memory _userData,
         string memory _destinationAddress,
         bytes4 _originChainId,
-        bytes4 _destinationChainId
+        bytes4 _destinationChainId,
+        string memory _originAddress
     )
         internal
     {
@@ -200,7 +216,9 @@ contract PTokensRouter is
                     false,
                     _userData,
                     _originChainId,
-                    _destinationChainId
+                    _destinationChainId,
+                    _originAddress,
+                    _destinationAddress
                 );
         if (amountToPegOut > 0) {
             IPToken(_tokenAddress).redeem(
@@ -218,7 +236,8 @@ contract PTokensRouter is
         bytes memory _userData,
         string memory _destinationAddress,
         bytes4 _originChainId,
-        bytes4 _destinationChainId
+        bytes4 _destinationChainId,
+        string memory _originAddress
     )
         internal
     {
@@ -230,7 +249,9 @@ contract PTokensRouter is
                 true,
                 _userData,
                 _originChainId,
-                _destinationChainId
+                _destinationChainId,
+                _originAddress,
+                _destinationAddress
             );
         if (amountToPegIn > 0) {
             address vaultAddress = safelyGetVaultAddress(_destinationChainId);
