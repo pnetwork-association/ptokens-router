@@ -4,6 +4,10 @@ const {
   verifyFeeContract,
   verifyRouterContract,
 } = require('./lib/verify-contract')
+const {
+  setPegInBasisPoints,
+  setPegOutBasisPoints,
+} = require('./lib/set-basis-points.js')
 const { docopt } = require('docopt')
 const { version } = require('./package.json')
 const { getAdmins } = require('./lib/get-admins')
@@ -45,7 +49,9 @@ const GET_SUPPORTED_TOKENS_CMD = 'getSupportedTokens'
 const PEG_OUT_BASIS_POINTS_ARG = '<pegOutBasisPoints>'
 const GET_SAFE_VAULT_ADDRESS_CMD = 'getSafeVaultAddress'
 const VERIFY_ROUTER_CONTRACT_CMD = 'verifyRouterContract'
+const SET_PEG_IN_BASIS_POINTS_CMD = 'setPegInBasisPoints'
 const DEPLOY_ROUTER_CONTRACT_CMD = 'deployRouterContract'
+const SET_PEG_OUT_BASIS_POINTS_CMD = 'setPegOutBasisPoints'
 const SHOW_EXISTING_CONTRACTS_CMD = 'showExistingContracts'
 
 const USAGE_INFO = `
@@ -81,9 +87,11 @@ const USAGE_INFO = `
   ${TOOL_NAME} ${GET_SUPPORTED_TOKENS_CMD} ${DEPLOYED_ADDRESS_ARG}
   ${TOOL_NAME} ${GET_SAFE_VAULT_ADDRESS_CMD} ${DEPLOYED_ADDRESS_ARG}
   ${TOOL_NAME} ${GET_VAULT_ADDRESS_CMD} ${DEPLOYED_ADDRESS_ARG} ${CHAIN_ID_ARG}
+  ${TOOL_NAME} ${SET_FEE_CONTRACT_ADDRESS_CMD} ${DEPLOYED_ADDRESS_ARG} ${ETH_ADDRESS_ARG}
   ${TOOL_NAME} ${REMOVE_VAULT_ADDRESS_CMD} ${DEPLOYED_ADDRESS_ARG} ${CHAIN_ID_ARG}
   ${TOOL_NAME} ${VERIFY_ROUTER_CONTRACT_CMD} ${NETWORK_ARG} ${DEPLOYED_ADDRESS_ARG}
-  ${TOOL_NAME} ${SET_FEE_CONTRACT_ADDRESS_CMD} ${DEPLOYED_ADDRESS_ARG} ${ETH_ADDRESS_ARG}
+  ${TOOL_NAME} ${SET_PEG_IN_BASIS_POINTS_CMD} ${DEPLOYED_ADDRESS_ARG} ${PEG_IN_BASIS_POINTS_ARG}
+  ${TOOL_NAME} ${SET_PEG_OUT_BASIS_POINTS_CMD} ${DEPLOYED_ADDRESS_ARG} ${PEG_OUT_BASIS_POINTS_ARG}
   ${TOOL_NAME} ${ADD_VAULT_ADDRESS_CMD} ${DEPLOYED_ADDRESS_ARG} ${CHAIN_ID_ARG} ${ETH_ADDRESS_ARG}
   ${TOOL_NAME} ${DEPLOY_FEE_CONTRACT_CMD} ${FEE_SINK_ADDRESS_ARG} ${PEG_IN_BASIS_POINTS_ARG} ${PEG_OUT_BASIS_POINTS_ARG}
   ${TOOL_NAME} ${VERIFY_FEE_CONTRACT_CMD} ${DEPLOYED_ADDRESS_ARG} ${NETWORK_ARG} ${FEE_SINK_ADDRESS_ARG} ${PEG_IN_BASIS_POINTS_ARG} ${PEG_OUT_BASIS_POINTS_ARG}
@@ -105,6 +113,8 @@ const USAGE_INFO = `
   ${ADD_VAULT_ADDRESS_CMD}       ❍ Adds ${ETH_ADDRESS_ARG} as vault address with ${CHAIN_ID_ARG} to ${DEPLOYED_ADDRESS_ARG}.
   ${SHOW_CHAIN_IDS_CMD}          ❍ Shows a list of the metadata chain IDs for supported pNetwork blockchains.
   ${SHOW_EXISTING_CONTRACTS_CMD} ❍ Show list of existing pToken logic contract addresses on various blockchains.
+  ${SET_PEG_IN_BASIS_POINTS_CMD}   ❍ Sets the peg-in basis points in the fee contract @ ${DEPLOYED_ADDRESS_ARG} to ${PEG_IN_BASIS_POINTS_ARG}.
+  ${SET_PEG_OUT_BASIS_POINTS_CMD}  ❍ Sets the peg-out basis points in the fee contract @ ${DEPLOYED_ADDRESS_ARG} to ${PEG_OUT_BASIS_POINTS_ARG}.
 
 
 ❍ Options:
@@ -113,6 +123,9 @@ const USAGE_INFO = `
   ${ETH_ADDRESS_ARG}          ❍ A valid ETH address.
   ${DEPLOYED_ADDRESS_ARG}     ❍ The ETH address of the deployed pToken.
   ${CHAIN_ID_ARG}             ❍ A pToken metadata chain ID, as a 'bytes4' solidity type.
+  ${PEG_IN_BASIS_POINTS_ARG}    ❍ The basis points used to calculate a fee during a peg in.
+  ${PEG_OUT_BASIS_POINTS_ARG}   ❍ The basis points used to calculate a fee during a peg out.
+  ${FEE_SINK_ADDRESS_ARG}      ❍ The address set in the fee contract where fees are accrued.
   ${NETWORK_ARG}             ❍ Network the contract is deployed on. It must exist in the 'hardhat.config.json'.
 `
 
@@ -146,6 +159,10 @@ const main = _ => {
     return getSupportedTokens(CLI_ARGS[DEPLOYED_ADDRESS_ARG])
   if (CLI_ARGS[SET_FEE_CONTRACT_ADDRESS_CMD])
     return setFeeContractAddress(CLI_ARGS[DEPLOYED_ADDRESS_ARG], CLI_ARGS[ETH_ADDRESS_ARG])
+  if (CLI_ARGS[SET_PEG_IN_BASIS_POINTS_CMD])
+    return setPegInBasisPoints(CLI_ARGS[DEPLOYED_ADDRESS_ARG], CLI_ARGS[PEG_IN_BASIS_POINTS_ARG])
+  if (CLI_ARGS[SET_PEG_OUT_BASIS_POINTS_CMD])
+    return setPegOutBasisPoints(CLI_ARGS[DEPLOYED_ADDRESS_ARG], CLI_ARGS[PEG_OUT_BASIS_POINTS_ARG])
   if (CLI_ARGS[DEPLOY_FEE_CONTRACT_CMD]) {
     return deployFeeContract(
       CLI_ARGS[FEE_SINK_ADDRESS_ARG],
