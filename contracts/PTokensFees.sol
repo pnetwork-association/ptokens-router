@@ -14,8 +14,8 @@ contract PTokensFees is AccessControlEnumerable {
     uint256 public FEE_BASIS_POINTS_DIVISOR = 10000;
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
 
+    mapping(address => bool) public CUSTOM_FEES;
     mapping(address => bool) public FEE_EXPCEPTIONS;
-    mapping(address => address) public CUSTOM_FEE_CONTRACTS;
 
     event LogFees(uint256 indexed feeAmount, uint256 indexed amountMinusFee);
 
