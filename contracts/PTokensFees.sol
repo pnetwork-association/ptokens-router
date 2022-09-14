@@ -14,6 +14,7 @@ contract PTokensFees is AccessControlEnumerable {
     uint256 public FEE_BASIS_POINTS_DIVISOR = 10000;
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
 
+    // TODO We ought to keep a list of addresses that have the following two mappings set!
     mapping(address => bool) public CUSTOM_FEES;
     mapping(address => bool) public FEE_EXPCEPTIONS;
 
