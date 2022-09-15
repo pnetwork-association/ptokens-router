@@ -38,26 +38,26 @@ Output:
   NOTE: The tool requires a '.env' file to exist in the root of the repository with the following info:
     ENDPOINT=<rpc-endpoint-for-blochain-to-interact-with>
 
-  NOTE: To call the 'verifyContract' function, the following extra environment variable is required:
+  NOTE: To call the 'verifyRouterContract' function, the following extra environment variable is required:
     ETHERSCAN_API_KEY=<api-key-for-automated-contract-verifications>
 
 ❍ Usage:
   cli.js --help
   cli.js --version
-  cli.js deployContract
   cli.js showWalletDetails
+  cli.js deployRouterContract
   cli.js showExistingContracts
   cli.js getAdmins <deployedAddress>
   cli.js encodeInitArgs <ethAddress>
   cli.js getSafeVaultAddress <deployedAddress>
-  cli.js verifyContract <network> <deployedAddress>
+  cli.js verifyRouterContract <network> <deployedAddress>
   cli.js getVaultAddress <deployedAddress> <chainId>
   cli.js removeVaultAddress <deployedAddress> <chainId>
   cli.js addVaultAddress <deployedAddress> <chainId> <ethAddress>
 
 ❍ Commands:
-  deployContract        ❍ Deploy the logic contract.
-  verifyContract        ❍ Verify the logic contract.
+  deployRouterContract        ❍ Deploy the logic contract.
+  verifyRouterContract        ❍ Verify the logic contract.
   getAdmins             ❍ Get the admins of the contract at <deployedAddress>.
   removeVaultAddress    ❍ Removess vault address with <chainId> from <deployedAddress>.
   getVaultAddress       ❍ Get vault address from router at <deployedAddress> via <chainId>.

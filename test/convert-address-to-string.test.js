@@ -1,5 +1,6 @@
 const assert = require('assert')
 const { prop } = require('ramda')
+const { getRandomAddress } = require('./test-utils')
 
 describe('Convert Address To String Contract', () => {
   let CONTRACT, CONTRACT_FACTORY
@@ -13,7 +14,7 @@ describe('Convert Address To String Contract', () => {
   it('Should convert address type to string correctly', async () => {
     const NUM_ADDRESSES = 20
     const getXRandomAddresses = _x =>
-      new Array(_x).fill().map(_ => ethers.Wallet.createRandom().address)
+      new Array(_x).fill().map(_ => getRandomAddress(ethers))
     const addresses = getXRandomAddresses(NUM_ADDRESSES)
     const results = await Promise.all(addresses.map(_address => CONTRACT.convertAddressToString(_address)))
     results.map((_result, _i) => assert.strictEqual(_result, prop(_i, addresses).toLowerCase()))

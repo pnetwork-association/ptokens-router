@@ -3,39 +3,26 @@
 pragma solidity ^0.8.0;
 
 import "./interfaces/IPToken.sol";
+import "./PTokensRouterStorage.sol";
 import "./PTokensMetadataDecoder.sol";
 import "./ConvertAddressToString.sol";
+import "./interfaces/IPTokensFees.sol";
+import "./interfaces/IPTokensVault.sol";
 import "./interfaces/IOriginChainIdGetter.sol";
 import "@openzeppelin/contracts/interfaces/IERC20.sol";
-import "@openzeppelin/contracts/interfaces/IERC777.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import "@openzeppelin/contracts-upgradeable/interfaces/IERC1820RegistryUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/token/ERC777/IERC777RecipientUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/access/AccessControlEnumerableUpgradeable.sol";
-
-interface IVault {
-    function pegIn(
-        uint256 _tokenAmount,
-        address _tokenAddress,
-        string memory _destinationAddress,
-        bytes memory _userData,
-        bytes4 _destinationChainId
-    ) external returns (bool);
-}
 
 contract PTokensRouter is
     Initializable,
     PTokensMetadataDecoder,
     ConvertAddressToString,
     IERC777RecipientUpgradeable,
-    AccessControlEnumerableUpgradeable
+    AccessControlEnumerableUpgradeable,
+    PTokensRouterStorage
 {
-    address public SAFE_VAULT_ADDRESS;
-    bytes4 public constant ORIGIN_CHAIN_ID = 0xffffffff;
-    bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
-    bytes32 public constant TOKENS_RECIPIENT_INTERFACE_HASH = keccak256("ERC777TokensRecipient");
-    mapping(bytes4 => address) public interimVaultAddresses;
-
     function initialize (
         address safeVaultAddress
     )
@@ -122,30 +109,42 @@ contract PTokensRouter is
     )
         internal
         pure
-        returns(bytes memory, bytes4, string memory)
+        returns(bytes memory, bytes4, bytes4, string memory, string memory)
     {
         if (_userData[0] == 0x02) {
             (
                 , // NOTE: Metadata Version
                 bytes memory userData,
-                , // NOTE: Origin Chain Id
-                , // NOTE: Origin Address
+                bytes4 originChainId,
+                address originAddress,
                 bytes4 destinationChainId,
                 address destinationAddress,
                 ,
             ) = decodeMetadataV2(_userData);
-            return (userData, destinationChainId, convertAddressToString(destinationAddress));
+            return (
+                userData,
+                originChainId,
+                destinationChainId,
+                convertAddressToString(originAddress),
+                convertAddressToString(destinationAddress)
+            );
         } else if (_userData[0] == 0x03) {
             (
                 , // NOTE: Metadata Version
                 bytes memory userData,
-                , // NOTE: Origin Chain Id
-                , // NOTE: Origin Address
+                bytes4 originChainId,
+                string memory originAddress,
                 bytes4 destinationChainId,
                 string memory destinationAddress,
                 ,
             ) = decodeMetadataV3(_userData);
-            return (userData, destinationChainId, destinationAddress);
+            return (
+                userData,
+                originChainId,
+                destinationChainId,
+                originAddress,
+                destinationAddress
+            );
         } else {
             revert("Unrecognized pTokens metadata version!");
         }
@@ -163,29 +162,116 @@ contract PTokensRouter is
         override
     {
         (   bytes memory userData,
+            bytes4 originChainId,
             bytes4 destinationChainId,
+            string memory originAddress,
             string memory destinationAddress
         ) = decodeParamsFromUserData(_userData);
         address tokenAddress = msg.sender;
-        if (getOriginChainIdFromContract(tokenAddress) == destinationChainId) {
-            // NOTE: This is a full peg-out of tokens back to their native chain.
-            IPToken(tokenAddress).redeem(
-                _amount,
-                userData,
-                destinationAddress,
-                destinationChainId
-            );
-        } else {
-            // NOTE: This is either from a peg-in, or a peg-out to a different host chain.
-            address vaultAddress = safelyGetVaultAddress(destinationChainId);
-            IERC20(tokenAddress).approve(vaultAddress, _amount);
-            IVault(vaultAddress).pegIn(
+
+        // NOTE: We give the fee contract an allowance up to the total amount so that it can transfer fees...
+        FEE_CONTRACT_ADDRESS != address(0) && IERC20(tokenAddress).approve(FEE_CONTRACT_ADDRESS, _amount);
+
+        getOriginChainIdFromContract(tokenAddress) == destinationChainId
+            ? pegOut( // NOTE: This is a full peg-out of tokens back to their native chain.
                 _amount,
                 tokenAddress,
-                destinationAddress,
                 userData,
-                destinationChainId
+                destinationAddress,
+                originChainId,
+                destinationChainId,
+                originAddress
+            )
+            : pegIn( // NOTE: This is either from a peg-in, or a peg-out to a different host chain.
+                _amount,
+                tokenAddress,
+                userData,
+                destinationAddress,
+                originChainId,
+                destinationChainId,
+                originAddress
+            );
+
+        // NOTE: Finally, we revoke the fee contract's allowance.
+        FEE_CONTRACT_ADDRESS != address(0) && IERC20(tokenAddress).approve(FEE_CONTRACT_ADDRESS, 0);
+    }
+
+    function pegOut(
+        uint256 _amount,
+        address _tokenAddress,
+        bytes memory _userData,
+        string memory _destinationAddress,
+        bytes4 _originChainId,
+        bytes4 _destinationChainId,
+        string memory _originAddress
+    )
+        internal
+    {
+        uint256 amountToPegOut = FEE_CONTRACT_ADDRESS == address(0)
+            ? _amount
+            : IPTokensFees(FEE_CONTRACT_ADDRESS)
+                .calculateAndTransferFee(
+                    _tokenAddress,
+                    _amount,
+                    false,
+                    _userData,
+                    _originChainId,
+                    _destinationChainId,
+                    _originAddress,
+                    _destinationAddress
+                );
+        if (amountToPegOut > 0) {
+            IPToken(_tokenAddress).redeem(
+                amountToPegOut,
+                _userData,
+                _destinationAddress,
+                _destinationChainId
             );
         }
+    }
+
+    function pegIn(
+        uint256 _amount,
+        address _tokenAddress,
+        bytes memory _userData,
+        string memory _destinationAddress,
+        bytes4 _originChainId,
+        bytes4 _destinationChainId,
+        string memory _originAddress
+    )
+        internal
+    {
+        uint256 amountToPegIn = FEE_CONTRACT_ADDRESS == address(0)
+            ? _amount
+            : IPTokensFees(FEE_CONTRACT_ADDRESS).calculateAndTransferFee(
+                _tokenAddress,
+                _amount,
+                true,
+                _userData,
+                _originChainId,
+                _destinationChainId,
+                _originAddress,
+                _destinationAddress
+            );
+        if (amountToPegIn > 0) {
+            address vaultAddress = safelyGetVaultAddress(_destinationChainId);
+            IERC20(_tokenAddress).approve(vaultAddress, amountToPegIn);
+            IPTokensVault(vaultAddress).pegIn(
+                amountToPegIn,
+                _tokenAddress,
+                _destinationAddress,
+                _userData,
+                _destinationChainId
+            );
+        }
+    }
+
+    function setFeeContractAddress(
+        address _feeContractAddress
+    )
+        external
+        onlyAdmin
+    {
+        FEE_CONTRACT_ADDRESS = _feeContractAddress;
     }
 }

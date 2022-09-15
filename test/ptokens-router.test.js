@@ -1,7 +1,10 @@
 const {
   EMPTY_DATA,
+  NON_ADMIN_ERROR,
   keccakHashString,
   INTERIM_CHAIN_ID,
+  getRandomAddress,
+  deployFeesContract,
   SAMPLE_ETH_ADDRESS_1,
   SAMPLE_ETH_ADDRESS_2,
   getMockVaultContract,
@@ -16,11 +19,9 @@ const { curry } = require('ramda')
 const { BigNumber } = require('ethers')
 const { encodeCoreMetadata } = require('../lib/metadata-encoder')
 
-// FIXME add tests for v3 encoded metatadata!
 describe('pTokens Router Contract', () => {
   let ROUTER_CONTRACT, NON_ADMIN, NON_ADMIN_ROUTER_CONTRACT, OWNER
 
-  const NON_ADMIN_ERROR = 'Caller is not an admin'
   const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000'
   const DEFAULT_ADMIN_ROLE = '0x0000000000000000000000000000000000000000000000000000000000000000'
 
@@ -149,6 +150,10 @@ describe('pTokens Router Contract', () => {
 
   METADATA_VERSIONS.map(_metadataVersion =>
     describe(`Metadata Version ${_metadataVersion} Routing Tests`, () => {
+      const PEG_IN_BASIS_POINTS = 10
+      const PEG_OUT_BASIS_POINTS = 25
+      const FEE_SINK_ADDRESS = getRandomAddress(ethers)
+
       const decodePegInCalledEvent = _event =>
         new Promise((resolve, reject) => {
           const codec = new ethers.utils.AbiCoder()
@@ -225,6 +230,72 @@ describe('pTokens Router Contract', () => {
           assert(routerContractBalance.eq(0))
           assert(vaultContractBalance.eq(amount))
         })
+
+        it('Should take correct peg in fees', async () => {
+          // Deploy a fee contract...
+          const feeContract = await deployFeesContract(FEE_SINK_ADDRESS, PEG_IN_BASIS_POINTS, PEG_OUT_BASIS_POINTS)
+
+          // Set the chain ID in the ptoken contract...
+          const chainId = '0xdeadbeef'
+          assert.notStrictEqual(chainId, INTERIM_CHAIN_ID)
+          const pTokenContract = await getMockErc777Contract(chainId)
+
+          // Add the fee contract to the mapping in the router...
+          ROUTER_CONTRACT.setFeeContractAddress(feeContract.address)
+
+          // Set up the vault contract...
+          const vaultContract = await getMockVaultContract(INTERIM_CHAIN_ID)
+          await ROUTER_CONTRACT.addVaultAddress(SAMPLE_METADATA_CHAIN_ID_2, vaultContract.address)
+
+          // Assert the various contracts' token balances before the peg in...
+          let feeSinkBalance = await pTokenContract.balanceOf(FEE_SINK_ADDRESS)
+          let vaultContractBalance = await pTokenContract.balanceOf(vaultContract.address)
+          let routerContractBalance = await pTokenContract.balanceOf(ROUTER_CONTRACT.address)
+          assert(feeSinkBalance.eq(0))
+          assert(vaultContractBalance.eq(0))
+          assert(routerContractBalance.eq(0))
+
+          // Create and make the transaction...
+          const amount = 1337
+          const userData = '0xc0ffee'
+          const originChainId = SAMPLE_METADATA_CHAIN_ID_1
+          const originAddress = SAMPLE_ETH_ADDRESS_1
+          const destinationChainId = SAMPLE_METADATA_CHAIN_ID_2
+          const destinationAddress = SAMPLE_ETH_ADDRESS_2
+          const metadata = await encodeCoreMetadata(
+            userData,
+            originChainId,
+            originAddress,
+            destinationChainId,
+            destinationAddress,
+            _metadataVersion,
+          )
+          const tx = await pTokenContract.send(ROUTER_CONTRACT.address, amount, metadata)
+          const receipt = await tx.wait()
+          const event = await getPegInCalledEventFromReceipt(receipt)
+          const result = await decodePegInCalledEvent(event)
+
+          // Calculate the expected fee and expected final amount
+          const basisPointsDivisor = await feeContract.FEE_BASIS_POINTS_DIVISOR()
+          const pegInBasisPoints = await feeContract.PEG_IN_BASIS_POINTS()
+          const expectedFee = Math.floor(amount * pegInBasisPoints / basisPointsDivisor)
+          const expectedAmountMinusFee = BigNumber.from(amount - expectedFee)
+          assert(result.amount.eq(expectedAmountMinusFee))
+
+          // Assert the remaining tx return values...
+          assert.strictEqual(result.tokenAddress.toLowerCase(), pTokenContract.address.toLowerCase())
+          assert.strictEqual(result.destinationAddress.toLowerCase(), SAMPLE_ETH_ADDRESS_2.toLowerCase())
+          assert.strictEqual(result.userData, userData)
+          assert.strictEqual(result.destinationChainId, SAMPLE_METADATA_CHAIN_ID_2)
+
+          // And finally assert the token balances of the various accounts involved.
+          feeSinkBalance = await pTokenContract.balanceOf(FEE_SINK_ADDRESS)
+          vaultContractBalance = await pTokenContract.balanceOf(vaultContract.address)
+          routerContractBalance = await pTokenContract.balanceOf(ROUTER_CONTRACT.address)
+          assert(routerContractBalance.eq(0))
+          assert(feeSinkBalance.eq(BigNumber.from(expectedFee)))
+          assert(vaultContractBalance.eq(expectedAmountMinusFee))
+        })
       })
 
       describe('Peg Out Route Tests', () => {
@@ -268,6 +339,77 @@ describe('pTokens Router Contract', () => {
           assert(vaultContractBalance.eq(0))
           assert(routerContractBalance.eq(0))
           assert(pTokenContractBalance.eq(0))
+        })
+
+        it('Should take correct peg out fees', async () => {
+          // Deploy a fee contract...
+          const feeContract = await deployFeesContract(FEE_SINK_ADDRESS, PEG_IN_BASIS_POINTS, PEG_OUT_BASIS_POINTS)
+
+          // Deploy the ptoken & vault contracts...
+          const chainId = '0xdeadbeef'
+          assert.notStrictEqual(chainId, INTERIM_CHAIN_ID)
+          const pTokenContract = await getMockErc777Contract(chainId)
+          const vaultContract = await getMockVaultContract(INTERIM_CHAIN_ID)
+
+          // Add the fee contract to the mapping in the router...
+          ROUTER_CONTRACT.setFeeContractAddress(feeContract.address)
+
+          // Create the tx params...
+          const amount = 1337
+          const userData = '0xc0ffee'
+          const originChainId = SAMPLE_METADATA_CHAIN_ID_1
+          const originAddress = SAMPLE_ETH_ADDRESS_1
+          const destinationChainId = chainId
+          const destinationAddress = SAMPLE_ETH_ADDRESS_2
+          const metadata = await encodeCoreMetadata(
+            userData,
+            originChainId,
+            originAddress,
+            destinationChainId,
+            destinationAddress,
+            _metadataVersion,
+          )
+
+          // Send some tokens to the vault so there's a balance to be pegged out...
+          await pTokenContract.send(vaultContract.address, amount, EMPTY_DATA)
+
+          // Get & assert the various token balances before the peg out...
+          let feeSinkBalance = await pTokenContract.balanceOf(FEE_SINK_ADDRESS)
+          let vaultContractBalance = await pTokenContract.balanceOf(vaultContract.address)
+          let routerContractBalance = await pTokenContract.balanceOf(ROUTER_CONTRACT.address)
+          let pTokenContractBalance = await pTokenContract.balanceOf(pTokenContract.address)
+          assert(feeSinkBalance.eq(0))
+          assert(routerContractBalance.eq(0))
+          assert(pTokenContractBalance.eq(0))
+          assert(vaultContractBalance.eq(amount))
+
+          // Make the peg out tx...
+          const tx = await vaultContract.pegOut(ROUTER_CONTRACT.address, pTokenContract.address, amount, metadata)
+          const receipt = await tx.wait()
+          const redeemEvent = await getRedeemCalledEventFromReceipt(receipt)
+          const result = await decodePegOutCalledEvent(redeemEvent)
+
+          // Calculate the expected fee and expected final amount
+          const basisPointsDivisor = await feeContract.FEE_BASIS_POINTS_DIVISOR()
+          const pegOutBasisPoints = await feeContract.PEG_OUT_BASIS_POINTS()
+          const expectedFee = Math.floor(amount * pegOutBasisPoints / basisPointsDivisor)
+          const expectedAmountMinusFee = BigNumber.from(amount - expectedFee)
+          assert(result.amount.eq(expectedAmountMinusFee))
+
+          // Assert the remaining return values...
+          assert.strictEqual(result.userData, userData)
+          assert.strictEqual(result.destinationAddress.toLowerCase(), destinationAddress.toLowerCase())
+          assert.strictEqual(result.destinationChainId, destinationChainId)
+
+          // Get & assert the final contract values...
+          feeSinkBalance = await pTokenContract.balanceOf(FEE_SINK_ADDRESS)
+          vaultContractBalance = await pTokenContract.balanceOf(vaultContract.address)
+          routerContractBalance = await pTokenContract.balanceOf(ROUTER_CONTRACT.address)
+          pTokenContractBalance = await pTokenContract.balanceOf(pTokenContract.address)
+          assert(vaultContractBalance.eq(0))
+          assert(routerContractBalance.eq(0))
+          assert(pTokenContractBalance.eq(0))
+          assert(feeSinkBalance.eq(expectedFee))
         })
 
         it('Should peg out from one vault to another successfully', async () => {
