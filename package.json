@@ -1,13 +1,13 @@
 {
   "name": "ptokens-router-contract",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "description": "The pTokens interim-chain router contract & CLI",
   "main": "cli.js",
   "scripts": {
     "lint": "npx eslint ./",
     "test": "ENDPOINT=http://localhost:8545 npx hardhat test",
     "tests": "ENDPOINT=http://localhost:8545 npx hardhat test",
-    "compile": "npx hardhat compile"
+    "compile": "ENDPOINT=http://localhost:8545 npx hardhat compile"
   },
   "keywords": [
     "pTokens",
