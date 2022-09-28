@@ -4,6 +4,7 @@ const {
   keccakHashString,
   INTERIM_CHAIN_ID,
   getRandomAddress,
+  METADATA_VERSIONS,
   deployFeesContract,
   SAMPLE_ETH_ADDRESS_1,
   SAMPLE_ETH_ADDRESS_2,
@@ -143,10 +144,6 @@ describe('pTokens Router Contract', () => {
       assert.strictEqual(result, chainId)
     })
   })
-
-  const METADATA_VERSION_2_BYTE = '0x02'
-  const METADATA_VERSION_3_BYTE = '0x03'
-  const METADATA_VERSIONS = [ METADATA_VERSION_2_BYTE, METADATA_VERSION_3_BYTE ]
 
   METADATA_VERSIONS.map(_metadataVersion =>
     describe(`Metadata Version ${_metadataVersion} Routing Tests`, () => {
