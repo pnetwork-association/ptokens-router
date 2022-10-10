@@ -6,6 +6,7 @@ import "./interfaces/IPToken.sol";
 import "./PTokensRouterStorage.sol";
 import "./PTokensMetadataDecoder.sol";
 import "./ConvertAddressToString.sol";
+import "./ConvertStringToAddress.sol";
 import "./interfaces/IPTokensFees.sol";
 import "./interfaces/IPTokensVault.sol";
 import "./interfaces/IOriginChainIdGetter.sol";
@@ -21,6 +22,7 @@ contract PTokensRouter is
     ConvertAddressToString,
     IERC777RecipientUpgradeable,
     AccessControlEnumerableUpgradeable,
+    ConvertStringToAddress,
     PTokensRouterStorage
 {
     function initialize (
@@ -221,12 +223,18 @@ contract PTokensRouter is
                     _destinationAddress
                 );
         if (amountToPegOut > 0) {
-            IPToken(_tokenAddress).redeem(
-                amountToPegOut,
-                _userData,
-                _destinationAddress,
-                _destinationChainId
-            );
+            if (_destinationChainId == ORIGIN_CHAIN_ID) {
+                // NOTE: If the destination is the interim chain, we simply transfer the tokens.
+                IERC20(_tokenAddress).transfer(convertStringToAddress(_destinationAddress), amountToPegOut);
+            } else {
+                // NOTE: Otherwise, we make the peg-out via the relevant interim pToken contract.
+                IPToken(_tokenAddress).redeem(
+                    amountToPegOut,
+                    _userData,
+                    _destinationAddress,
+                    _destinationChainId
+                );
+            }
         }
     }
 
@@ -254,15 +262,21 @@ contract PTokensRouter is
                 _destinationAddress
             );
         if (amountToPegIn > 0) {
-            address vaultAddress = safelyGetVaultAddress(_destinationChainId);
-            IERC20(_tokenAddress).approve(vaultAddress, amountToPegIn);
-            IPTokensVault(vaultAddress).pegIn(
-                amountToPegIn,
-                _tokenAddress,
-                _destinationAddress,
-                _userData,
-                _destinationChainId
-            );
+            if (_destinationChainId == ORIGIN_CHAIN_ID) {
+                // NOTE: If the destination is the interim chain, we simply transfer the tokens.
+                IERC20(_tokenAddress).transfer(convertStringToAddress(_destinationAddress), amountToPegIn);
+            } else {
+                // NOTE: Otherwise, we make the peg-in to the relevant vault.
+                address vaultAddress = safelyGetVaultAddress(_destinationChainId);
+                IERC20(_tokenAddress).approve(vaultAddress, amountToPegIn);
+                IPTokensVault(vaultAddress).pegIn(
+                    amountToPegIn,
+                    _tokenAddress,
+                    _destinationAddress,
+                    _userData,
+                    _destinationChainId
+                );
+            }
         }
     }
 
