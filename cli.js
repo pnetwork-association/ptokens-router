@@ -29,6 +29,7 @@ const { deployRouterContract } = require('./lib/deploy-router-contract')
 const { setFeeContractAddress } = require('./lib/set-fee-contract-address')
 const { deploySafeVaultContract } = require('./lib/deploy-safe-vault-contract')
 const { showExistingContractAddresses } = require('./lib/show-existing-contracts')
+const { setSafeVaultContractAddress } = require('./lib/set-safe-vault-contract-address')
 
 const TOOL_NAME = 'cli.js'
 const HELP_OPTION = '--help'
@@ -55,6 +56,7 @@ const REMOVE_VAULT_ADDRESS_CMD = 'removeVaultAddress'
 const REMOVE_FEE_EXCEPTION_CMD = 'removeFeeException'
 const PEG_OUT_BASIS_POINTS_ARG = '<pegOutBasisPoints>'
 const DEPLOY_SAFE_VAULT_CMD = 'deploySafeVaultContract'
+const SET_SAFE_VAULT_ADDRESS_CMD = 'setSafeVaultAddress'
 const GET_SAFE_VAULT_ADDRESS_CMD = 'getSafeVaultAddress'
 const VERIFY_ROUTER_CONTRACT_CMD = 'verifyRouterContract'
 const SET_PEG_IN_BASIS_POINTS_CMD = 'setPegInBasisPoints'
@@ -101,6 +103,7 @@ const USAGE_INFO = `
   ${TOOL_NAME} ${ADD_FEE_EXCEPTION_CMD} ${DEPLOYED_ADDRESS_ARG} ${ETH_ADDRESS_ARG}
   ${TOOL_NAME} ${VERIFY_ROUTER_CONTRACT_CMD} ${NETWORK_ARG} ${DEPLOYED_ADDRESS_ARG}
   ${TOOL_NAME} ${REMOVE_FEE_EXCEPTION_CMD} ${DEPLOYED_ADDRESS_ARG} ${ETH_ADDRESS_ARG}
+  ${TOOL_NAME} ${SET_SAFE_VAULT_ADDRESS_CMD} ${DEPLOYED_ADDRESS_ARG} ${ETH_ADDRESS_ARG}
   ${TOOL_NAME} ${SET_PEG_IN_BASIS_POINTS_CMD} ${DEPLOYED_ADDRESS_ARG} ${PEG_IN_BASIS_POINTS_ARG}
   ${TOOL_NAME} ${ADD_VAULT_ADDRESS_CMD} ${DEPLOYED_ADDRESS_ARG} ${CHAIN_ID_ARG} ${ETH_ADDRESS_ARG}
   ${TOOL_NAME} ${SET_PEG_OUT_BASIS_POINTS_CMD} ${DEPLOYED_ADDRESS_ARG} ${PEG_OUT_BASIS_POINTS_ARG}
@@ -115,6 +118,7 @@ const USAGE_INFO = `
   ${VERIFY_ROUTER_CONTRACT_CMD}     ❍ Verify the router logic contract.
   ${GET_VAULT_ADDRESSES_CMD}        ❍ Gets all set vault addresses at ${DEPLOYED_ADDRESS_ARG}.
   ${GET_ADMINS_CMD}                ❍ Get the admins of the contract at ${DEPLOYED_ADDRESS_ARG}.
+  ${SET_SAFE_VAULT_ADDRESS_CMD}      ❍ Set the address of the safe vault in the router contract.
   ${SET_FEE_CONTRACT_ADDRESS_CMD}            ❍ Set the fee contract stored in the router to ${ETH_ADDRESS_ARG}.
   ${REMOVE_VAULT_ADDRESS_CMD}       ❍ Removess vault address with ${CHAIN_ID_ARG} from ${DEPLOYED_ADDRESS_ARG}.
   ${GET_VAULT_ADDRESS_CMD}          ❍ Get vault address from router at ${DEPLOYED_ADDRESS_ARG} via ${CHAIN_ID_ARG}.
@@ -183,6 +187,8 @@ const main = _ => {
     return removeFeeException(CLI_ARGS[DEPLOYED_ADDRESS_ARG], CLI_ARGS[ETH_ADDRESS_ARG])
   if (CLI_ARGS[DEPLOY_SAFE_VAULT_CMD])
     return deploySafeVaultContract()
+  if (CLI_ARGS[SET_SAFE_VAULT_ADDRESS_CMD])
+    return setSafeVaultContractAddress(CLI_ARGS[DEPLOYED_ADDRESS_ARG], CLI_ARGS[ETH_ADDRESS_ARG])
   if (CLI_ARGS[DEPLOY_FEE_CONTRACT_CMD]) {
     return deployFeeContract(
       CLI_ARGS[FEE_SINK_ADDRESS_ARG],
