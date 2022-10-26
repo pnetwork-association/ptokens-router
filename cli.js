@@ -27,6 +27,7 @@ const { getEncodedInitArgs } = require('./lib/get-encoded-init-args')
 const { getSafeVaultAddress } = require('./lib/get-safe-vault-address')
 const { deployRouterContract } = require('./lib/deploy-router-contract')
 const { setFeeContractAddress } = require('./lib/set-fee-contract-address')
+const { deploySafeVaultContract } = require('./lib/deploy-safe-vault-contract')
 const { showExistingContractAddresses } = require('./lib/show-existing-contracts')
 
 const TOOL_NAME = 'cli.js'
@@ -53,6 +54,7 @@ const PEG_IN_BASIS_POINTS_ARG = '<pegInBasisPoints>'
 const REMOVE_VAULT_ADDRESS_CMD = 'removeVaultAddress'
 const REMOVE_FEE_EXCEPTION_CMD = 'removeFeeException'
 const PEG_OUT_BASIS_POINTS_ARG = '<pegOutBasisPoints>'
+const DEPLOY_SAFE_VAULT_CMD = 'deploySafeVaultContract'
 const GET_SAFE_VAULT_ADDRESS_CMD = 'getSafeVaultAddress'
 const VERIFY_ROUTER_CONTRACT_CMD = 'verifyRouterContract'
 const SET_PEG_IN_BASIS_POINTS_CMD = 'setPegInBasisPoints'
@@ -87,6 +89,7 @@ const USAGE_INFO = `
   ${TOOL_NAME} ${SHOW_WALLET_DETAILS_CMD}
   ${TOOL_NAME} ${DEPLOY_ROUTER_CONTRACT_CMD}
   ${TOOL_NAME} ${SHOW_EXISTING_CONTRACTS_CMD}
+  ${TOOL_NAME} ${DEPLOY_SAFE_VAULT_CMD}
   ${TOOL_NAME} ${GET_ADMINS_CMD} ${DEPLOYED_ADDRESS_ARG}
   ${TOOL_NAME} ${GET_ENCODED_INIT_ARGS_CMD} ${ETH_ADDRESS_ARG}
   ${TOOL_NAME} ${GET_ROUTER_STATE} ${DEPLOYED_ADDRESS_ARG}
@@ -105,38 +108,39 @@ const USAGE_INFO = `
   ${TOOL_NAME} ${VERIFY_FEE_CONTRACT_CMD} ${DEPLOYED_ADDRESS_ARG} ${NETWORK_ARG} ${FEE_SINK_ADDRESS_ARG} ${PEG_IN_BASIS_POINTS_ARG} ${PEG_OUT_BASIS_POINTS_ARG}
 
 ❍ Commands:
-  ${DEPLOY_FEE_CONTRACT_CMD}     ❍ Deploy the fee contract.
-  ${VERIFY_FEE_CONTRACT_CMD}     ❍ Verify the fee contract.
-  ${DEPLOY_ROUTER_CONTRACT_CMD}  ❍ Deploy the router logic contract.
-  ${VERIFY_ROUTER_CONTRACT_CMD}  ❍ Verify the router logic contract.
-  ${GET_VAULT_ADDRESSES_CMD}     ❍ Gets all set vault addresses at ${DEPLOYED_ADDRESS_ARG}.
-  ${GET_ADMINS_CMD}             ❍ Get the admins of the contract at ${DEPLOYED_ADDRESS_ARG}.
-  ${SET_FEE_CONTRACT_ADDRESS_CMD}         ❍ Set the fee contract stored in the router to ${ETH_ADDRESS_ARG}.
-  ${REMOVE_VAULT_ADDRESS_CMD}    ❍ Removess vault address with ${CHAIN_ID_ARG} from ${DEPLOYED_ADDRESS_ARG}.
-  ${GET_VAULT_ADDRESS_CMD}       ❍ Get vault address from router at ${DEPLOYED_ADDRESS_ARG} via ${CHAIN_ID_ARG}.
-  ${ADD_FEE_EXCEPTION_CMD}       ❍ Adds ${ETH_ADDRESS_ARG} to the fee exception list in the fee contract.
-  ${SHOW_WALLET_DETAILS_CMD}     ❍ Decrypts the private key and shows address & balance information.
-  ${GET_SAFE_VAULT_ADDRESS_CMD}   ❍ Get the safe vault address set in the router at ${DEPLOYED_ADDRESS_ARG}.
-  ${GET_ROUTER_STATE}        ❍ Gets all supported tokens from all vaults set in ${DEPLOYED_ADDRESS_ARG}.
-  ${GET_ENCODED_INIT_ARGS_CMD}        ❍ Calculate the initializer function arguments in ABI encoded format.
-  ${REMOVE_FEE_EXCEPTION_CMD}    ❍ Removes ${ETH_ADDRESS_ARG} from the fee exception list in the fee contract.
-  ${ADD_VAULT_ADDRESS_CMD}       ❍ Adds ${ETH_ADDRESS_ARG} as vault address with ${CHAIN_ID_ARG} to ${DEPLOYED_ADDRESS_ARG}.
-  ${SHOW_CHAIN_IDS_CMD}          ❍ Shows a list of the metadata chain IDs for supported pNetwork blockchains.
-  ${SHOW_EXISTING_CONTRACTS_CMD} ❍ Show list of existing pToken logic contract addresses on various blockchains.
-  ${SET_PEG_IN_BASIS_POINTS_CMD}   ❍ Sets the peg-in basis points in the fee contract @ ${DEPLOYED_ADDRESS_ARG} to ${PEG_IN_BASIS_POINTS_ARG}.
-  ${SET_PEG_OUT_BASIS_POINTS_CMD}  ❍ Sets the peg-out basis points in the fee contract @ ${DEPLOYED_ADDRESS_ARG} to ${PEG_OUT_BASIS_POINTS_ARG}.
+  ${DEPLOY_FEE_CONTRACT_CMD}        ❍ Deploy the fee contract.
+  ${VERIFY_FEE_CONTRACT_CMD}        ❍ Verify the fee contract.
+  ${DEPLOY_SAFE_VAULT_CMD}  ❍ Deploy the safe vault contract.
+  ${DEPLOY_ROUTER_CONTRACT_CMD}     ❍ Deploy the router logic contract.
+  ${VERIFY_ROUTER_CONTRACT_CMD}     ❍ Verify the router logic contract.
+  ${GET_VAULT_ADDRESSES_CMD}        ❍ Gets all set vault addresses at ${DEPLOYED_ADDRESS_ARG}.
+  ${GET_ADMINS_CMD}                ❍ Get the admins of the contract at ${DEPLOYED_ADDRESS_ARG}.
+  ${SET_FEE_CONTRACT_ADDRESS_CMD}            ❍ Set the fee contract stored in the router to ${ETH_ADDRESS_ARG}.
+  ${REMOVE_VAULT_ADDRESS_CMD}       ❍ Removess vault address with ${CHAIN_ID_ARG} from ${DEPLOYED_ADDRESS_ARG}.
+  ${GET_VAULT_ADDRESS_CMD}          ❍ Get vault address from router at ${DEPLOYED_ADDRESS_ARG} via ${CHAIN_ID_ARG}.
+  ${ADD_FEE_EXCEPTION_CMD}          ❍ Adds ${ETH_ADDRESS_ARG} to the fee exception list in the fee contract.
+  ${SHOW_WALLET_DETAILS_CMD}        ❍ Decrypts the private key and shows address & balance information.
+  ${GET_SAFE_VAULT_ADDRESS_CMD}      ❍ Get the safe vault address set in the router at ${DEPLOYED_ADDRESS_ARG}.
+  ${GET_ROUTER_STATE}           ❍ Gets all supported tokens from all vaults set in ${DEPLOYED_ADDRESS_ARG}.
+  ${GET_ENCODED_INIT_ARGS_CMD}           ❍ Calculate the initializer function arguments in ABI encoded format.
+  ${REMOVE_FEE_EXCEPTION_CMD}       ❍ Removes ${ETH_ADDRESS_ARG} from the fee exception list in the fee contract.
+  ${ADD_VAULT_ADDRESS_CMD}          ❍ Adds ${ETH_ADDRESS_ARG} as vault address with ${CHAIN_ID_ARG} to ${DEPLOYED_ADDRESS_ARG}.
+  ${SHOW_CHAIN_IDS_CMD}             ❍ Shows a list of the metadata chain IDs for supported pNetwork blockchains.
+  ${SHOW_EXISTING_CONTRACTS_CMD}    ❍ Show list of existing pToken logic contract addresses on various blockchains.
+  ${SET_PEG_IN_BASIS_POINTS_CMD}      ❍ Sets the peg-in basis points in the fee contract @ ${DEPLOYED_ADDRESS_ARG} to ${PEG_IN_BASIS_POINTS_ARG}.
+  ${SET_PEG_OUT_BASIS_POINTS_CMD}     ❍ Sets the peg-out basis points in the fee contract @ ${DEPLOYED_ADDRESS_ARG} to ${PEG_OUT_BASIS_POINTS_ARG}.
 
 
 ❍ Options:
-  ${HELP_OPTION}                ❍ Show this message.
-  ${VERSION_OPTION}             ❍ Show tool version.
-  ${ETH_ADDRESS_ARG}          ❍ A valid ETH address.
-  ${DEPLOYED_ADDRESS_ARG}     ❍ The ETH address of the deployed pToken.
-  ${CHAIN_ID_ARG}             ❍ A pToken metadata chain ID, as a 'bytes4' solidity type.
-  ${PEG_IN_BASIS_POINTS_ARG}    ❍ The basis points used to calculate a fee during a peg in.
-  ${PEG_OUT_BASIS_POINTS_ARG}   ❍ The basis points used to calculate a fee during a peg out.
-  ${FEE_SINK_ADDRESS_ARG}      ❍ The address set in the fee contract where fees are accrued.
-  ${NETWORK_ARG}             ❍ Network the contract is deployed on. It must exist in the 'hardhat.config.json'.
+  ${HELP_OPTION}                   ❍ Show this message.
+  ${VERSION_OPTION}                ❍ Show tool version.
+  ${ETH_ADDRESS_ARG}             ❍ A valid ETH address.
+  ${DEPLOYED_ADDRESS_ARG}        ❍ The ETH address of the deployed pToken.
+  ${CHAIN_ID_ARG}                ❍ A pToken metadata chain ID, as a 'bytes4' solidity type.
+  ${PEG_IN_BASIS_POINTS_ARG}       ❍ The basis points used to calculate a fee during a peg in.
+  ${PEG_OUT_BASIS_POINTS_ARG}      ❍ The basis points used to calculate a fee during a peg out.
+  ${FEE_SINK_ADDRESS_ARG}         ❍ The address set in the fee contract where fees are accrued.
+  ${NETWORK_ARG}                ❍ Network the contract is deployed on. It must exist in the 'hardhat.config.json'.
 `
 
 const main = _ => {
@@ -177,6 +181,8 @@ const main = _ => {
     return addFeeException(CLI_ARGS[DEPLOYED_ADDRESS_ARG], CLI_ARGS[ETH_ADDRESS_ARG])
   if (CLI_ARGS[REMOVE_FEE_EXCEPTION_CMD])
     return removeFeeException(CLI_ARGS[DEPLOYED_ADDRESS_ARG], CLI_ARGS[ETH_ADDRESS_ARG])
+  if (CLI_ARGS[DEPLOY_SAFE_VAULT_CMD])
+    return deploySafeVaultContract()
   if (CLI_ARGS[DEPLOY_FEE_CONTRACT_CMD]) {
     return deployFeeContract(
       CLI_ARGS[FEE_SINK_ADDRESS_ARG],
