@@ -26,6 +26,7 @@ contract PTokensSafeVault is Ownable {
       bytes memory _userData,
       bytes4 _destinationChainId
    ) external returns (bool) {
+      IERC20(_tokenAddress).transferFrom(msg.sender, address(this), _tokenAmount);
       emit SafeVaultPegInCalled(_tokenAmount, _tokenAddress, _destinationAddress, _userData, _destinationChainId);
       return true;
    }
