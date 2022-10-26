@@ -6,8 +6,9 @@ import "@openzeppelin/contracts/interfaces/IERC20.sol";
 
 // NOTE: The "safe" vault is a stub of a vault to which tokens are sent by the router in the case
 // that it can't determine the correct vault address for a given peg in. This safe vault has the
-// `pegIn` function signature that the router expects, which function does nothing else. Also
-// exposed is another function to move tokens owned by this vault on to wherever the caller wishes.
+// `pegIn` function signature that the router expects, which function does nothing but move the
+// tokens in question to itself. Also exposed is another function to move any tokens owned by this
+// vault on to where ever the caller wishes.
 
 contract PTokensSafeVault is Ownable {
 
