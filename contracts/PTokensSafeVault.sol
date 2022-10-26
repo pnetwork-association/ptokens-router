@@ -29,4 +29,17 @@ contract PTokensSafeVault is Ownable {
       emit SafeVaultPegInCalled(_tokenAmount, _tokenAddress, _destinationAddress, _userData, _destinationChainId);
       return true;
    }
+
+   function transfer(
+      address _tokenAddress,
+      address _destinationAddress,
+      uint256 _amount
+   )
+      external
+      onlyOwner
+      returns (bool)
+   {
+       IERC20(_tokenAddress).transfer(_destinationAddress, _amount);
+       return true;
+   }
 }
