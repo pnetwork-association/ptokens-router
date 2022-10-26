@@ -42,6 +42,12 @@ const getMockVaultContract = _originChainId =>
     [ _originChainId ],
   )
 
+const deploySafeVaultContract = (_deployArgs = []) =>
+  deployNonUpgradeableContract('contracts/PTokensSafeVault.sol:PTokensSafeVault', [])
+
+const deployErc20TokenContract = (_name, _symbol) =>
+  deployNonUpgradeableContract('contracts/test-contracts/ERC20Token.sol:ERC20Token', [ _name, _symbol ])
+
 const keccakHashString = _s =>
   ethers.utils.keccak256(ethers.utils.toUtf8Bytes(_s))
 
@@ -58,6 +64,8 @@ module.exports = {
   SAMPLE_METADATA_CHAIN_ID_1,
   SAMPLE_METADATA_CHAIN_ID_2,
   SAMPLE_SAFE_VAULT_ADDRESS,
+  deployErc20TokenContract,
+  deploySafeVaultContract,
   getMockErc777Contract,
   getMockVaultContract,
   silenceConsoleOutput,
