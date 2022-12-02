@@ -33,7 +33,7 @@ describe('Fees Contract Tests', () => {
       assert(ethers.BigNumber.from(PEG_OUT_BASIS_POINTS).eq(result))
     })
 
-    it('Should have set the fee sink address oin deployment', async () => {
+    it('Should have set the fee sink address on deployment', async () => {
       const result = await FEES_CONTRACT.FEE_SINK_ADDRESS()
       assert.strictEqual(result, FEE_SINK_ADDRESS)
     })
@@ -267,6 +267,56 @@ describe('Fees Contract Tests', () => {
         assert(_err.message.includes(NON_ADMIN_ERROR))
         const boolAfter = await FEES_CONTRACT.FEE_EXPCEPTIONS(address)
         assert(boolAfter)
+      }
+    })
+  })
+
+  describe('Setting custom fees tests', () => {
+    const CUSTOM_FEE = 1337
+
+    it('Only admin can set custom peg in fees', async () => {
+      const address = getRandomAddress(ethers)
+      const customFeeBefore = await FEES_CONTRACT.CUSTOM_PEG_IN_FEES(address)
+      assert(customFeeBefore.eq(0))
+      await FEES_CONTRACT.setCustomPegInFee(address, CUSTOM_FEE)
+      const customFeeAfter = await FEES_CONTRACT.CUSTOM_PEG_IN_FEES(address)
+      assert(customFeeAfter.eq(CUSTOM_FEE))
+    })
+
+    it('Non admin cannot set custom peg in fees', async () => {
+      const address = getRandomAddress(ethers)
+      const customFeeBefore = await FEES_CONTRACT.CUSTOM_PEG_IN_FEES(address)
+      assert(customFeeBefore.eq(0))
+      try {
+        await NON_ADMIN_FEES_CONTRACT.setCustomPegInFee(address, CUSTOM_FEE)
+        assert.fail('Should not have succeeded!')
+      } catch (_err) {
+        assert(_err.message.includes(NON_ADMIN_ERROR))
+        const customFeeAfter = await FEES_CONTRACT.CUSTOM_PEG_IN_FEES(address)
+        assert(customFeeAfter.eq(0))
+      }
+    })
+
+    it('Only admin can set custom peg out fees', async () => {
+      const address = getRandomAddress(ethers)
+      const customFeeBefore = await FEES_CONTRACT.CUSTOM_PEG_OUT_FEES(address)
+      assert(customFeeBefore.eq(0))
+      await FEES_CONTRACT.setCustomPegOutFee(address, CUSTOM_FEE)
+      const customFeeAfter = await FEES_CONTRACT.CUSTOM_PEG_OUT_FEES(address)
+      assert(customFeeAfter.eq(CUSTOM_FEE))
+    })
+
+    it('Non admin cannot set custom peg out fees', async () => {
+      const address = getRandomAddress(ethers)
+      const customFeeBefore = await FEES_CONTRACT.CUSTOM_PEG_IN_FEES(address)
+      assert(customFeeBefore.eq(0))
+      try {
+        await NON_ADMIN_FEES_CONTRACT.setCustomPegOutFee(address, CUSTOM_FEE)
+        assert.fail('Should not have succeeded!')
+      } catch (_err) {
+        assert(_err.message.includes(NON_ADMIN_ERROR))
+        const customFeeAfter = await FEES_CONTRACT.CUSTOM_PEG_IN_FEES(address)
+        assert(customFeeAfter.eq(0))
       }
     })
   })

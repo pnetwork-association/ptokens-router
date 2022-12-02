@@ -14,11 +14,17 @@ contract PTokensFees is AccessControlEnumerable {
     uint256 public FEE_BASIS_POINTS_DIVISOR = 10000;
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
 
-    // TODO We ought to keep a list of addresses that have the following two mappings set!
-    mapping(address => bool) public CUSTOM_FEES;
+    // NOTE: This allows fees to be skipped entirely for a given address
     mapping(address => bool) public FEE_EXPCEPTIONS;
 
+    // NOTE: This allows an address to use a custom peg in fee.
+    mapping(address => uint256) public CUSTOM_PEG_IN_FEES;
+
+    // NOTE: This allows an address to use a custom peg out fee.
+    mapping(address => uint256) public CUSTOM_PEG_OUT_FEES;
+
     event LogFees(uint256 indexed feeAmount, uint256 indexed amountMinusFee);
+    event LogCustomFeesSet(address indexed tokenAddress, uint256 basisPoints, bool isForPegIns);
 
     constructor(
         address _feeSinkAddress,
@@ -161,5 +167,44 @@ contract PTokensFees is AccessControlEnumerable {
             FEE_EXPCEPTIONS[_address] = false;
         }
         return true;
+    }
+
+    function setCustomFee(
+        address _tokenAddress,
+        uint256 _basisPoints,
+        bool _isPegIn
+    )
+        internal
+        returns (bool success)
+    {
+        if (_isPegIn) {
+            CUSTOM_PEG_IN_FEES[_tokenAddress] = _basisPoints;
+        } else {
+            CUSTOM_PEG_OUT_FEES[_tokenAddress] = _basisPoints;
+        }
+        emit LogCustomFeesSet(_tokenAddress,  _basisPoints, _isPegIn);
+        return true;
+    }
+
+    function setCustomPegInFee(
+        address _tokenAddress,
+        uint256 _basisPoints
+    )
+        public
+        onlyAdmin
+        returns (bool success)
+    {
+        return setCustomFee(_tokenAddress, _basisPoints, true);
+    }
+
+    function setCustomPegOutFee(
+        address _tokenAddress,
+        uint256 _basisPoints
+    )
+        public
+        onlyAdmin
+        returns (bool success)
+    {
+        return setCustomFee(_tokenAddress, _basisPoints, false);
     }
 }
