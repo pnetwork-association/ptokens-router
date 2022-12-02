@@ -135,9 +135,11 @@ const USAGE_INFO = `
   ${SET_SAFE_VAULT_ADDRESS_CMD}      ❍ Set the address of the safe vault in the router contract.
   ${SET_FEE_CONTRACT_ADDRESS_CMD}            ❍ Set the fee contract stored in the router to ${ETH_ADDRESS_ARG}.
   ${REMOVE_VAULT_ADDRESS_CMD}       ❍ Removess vault address with ${CHAIN_ID_ARG} from ${DEPLOYED_ADDRESS_ARG}.
-  ${GET_VAULT_ADDRESS_CMD}          ❍ Get vault address from router at ${DEPLOYED_ADDRESS_ARG} via ${CHAIN_ID_ARG}.
+  ${SET_CUSTOM_PEG_IN_FEE_CMD}        ❍ Set custom peg in fees to ${PEG_IN_BASIS_POINTS_ARG} for ${TOKEN_ADDRESS_ARG}.
   ${ADD_FEE_EXCEPTION_CMD}          ❍ Adds ${ETH_ADDRESS_ARG} to the fee exception list in the fee contract.
+  ${GET_VAULT_ADDRESS_CMD}          ❍ Get vault address from router at ${DEPLOYED_ADDRESS_ARG} via ${CHAIN_ID_ARG}.
   ${SHOW_WALLET_DETAILS_CMD}        ❍ Decrypts the private key and shows address & balance information.
+  ${SET_CUSTOM_PEG_OUT_FEE_CMD}       ❍ Set custom peg out fees to ${PEG_OUT_BASIS_POINTS_ARG} for ${TOKEN_ADDRESS_ARG}.
   ${GET_SAFE_VAULT_ADDRESS_CMD}      ❍ Get the safe vault address set in the router at ${DEPLOYED_ADDRESS_ARG}.
   ${GET_ROUTER_STATE}           ❍ Gets all supported tokens from all vaults set in ${DEPLOYED_ADDRESS_ARG}.
   ${GET_ENCODED_INIT_ARGS_CMD}           ❍ Calculate the initializer function arguments in ABI encoded format.
