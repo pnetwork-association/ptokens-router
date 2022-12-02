@@ -33,7 +33,7 @@ describe('Fees Contract Tests', () => {
       assert(ethers.BigNumber.from(PEG_OUT_BASIS_POINTS).eq(result))
     })
 
-    it('Should have set the fee sink address oin deployment', async () => {
+    it('Should have set the fee sink address on deployment', async () => {
       const result = await FEES_CONTRACT.FEE_SINK_ADDRESS()
       assert.strictEqual(result, FEE_SINK_ADDRESS)
     })
@@ -269,5 +269,165 @@ describe('Fees Contract Tests', () => {
         assert(boolAfter)
       }
     })
+  })
+
+  describe('Setting custom fees tests', () => {
+    const CUSTOM_FEE = 1337
+
+    it('Only admin can set custom peg in fees', async () => {
+      const address = getRandomAddress(ethers)
+      const customFeeBefore = await FEES_CONTRACT.CUSTOM_PEG_IN_FEES(address)
+      assert(customFeeBefore.eq(0))
+      await FEES_CONTRACT.setCustomPegInFee(address, CUSTOM_FEE)
+      const customFeeAfter = await FEES_CONTRACT.CUSTOM_PEG_IN_FEES(address)
+      assert(customFeeAfter.eq(CUSTOM_FEE))
+    })
+
+    it('Non admin cannot set custom peg in fees', async () => {
+      const address = getRandomAddress(ethers)
+      const customFeeBefore = await FEES_CONTRACT.CUSTOM_PEG_IN_FEES(address)
+      assert(customFeeBefore.eq(0))
+      try {
+        await NON_ADMIN_FEES_CONTRACT.setCustomPegInFee(address, CUSTOM_FEE)
+        assert.fail('Should not have succeeded!')
+      } catch (_err) {
+        assert(_err.message.includes(NON_ADMIN_ERROR))
+        const customFeeAfter = await FEES_CONTRACT.CUSTOM_PEG_IN_FEES(address)
+        assert(customFeeAfter.eq(0))
+      }
+    })
+
+    it('Only admin can set custom peg out fees', async () => {
+      const address = getRandomAddress(ethers)
+      const customFeeBefore = await FEES_CONTRACT.CUSTOM_PEG_OUT_FEES(address)
+      assert(customFeeBefore.eq(0))
+      await FEES_CONTRACT.setCustomPegOutFee(address, CUSTOM_FEE)
+      const customFeeAfter = await FEES_CONTRACT.CUSTOM_PEG_OUT_FEES(address)
+      assert(customFeeAfter.eq(CUSTOM_FEE))
+    })
+
+    it('Non admin cannot set custom peg out fees', async () => {
+      const address = getRandomAddress(ethers)
+      const customFeeBefore = await FEES_CONTRACT.CUSTOM_PEG_IN_FEES(address)
+      assert(customFeeBefore.eq(0))
+      try {
+        await NON_ADMIN_FEES_CONTRACT.setCustomPegOutFee(address, CUSTOM_FEE)
+        assert.fail('Should not have succeeded!')
+      } catch (_err) {
+        assert(_err.message.includes(NON_ADMIN_ERROR))
+        const customFeeAfter = await FEES_CONTRACT.CUSTOM_PEG_IN_FEES(address)
+        assert(customFeeAfter.eq(0))
+      }
+    })
+  })
+
+  describe('Fee Basis Point Getter', () => {
+    const CUSTOM_FEE = 1337
+    const bools = [ false, true ]
+
+    bools.map(_isPegIn =>
+      describe(`For Peg ${_isPegIn ? 'Ins' : 'Outs'}`, () => {
+        it(`Should use default peg ${_isPegIn ? 'in' : 'out'} basis points if no custom fee set`, async () => {
+          const address = getRandomAddress(ethers)
+
+          // NOTE: Assert there's no custom fee set
+          const contractPegInDefaultFee = _isPegIn
+            ? await FEES_CONTRACT.PEG_IN_BASIS_POINTS()
+            : await FEES_CONTRACT.PEG_OUT_BASIS_POINTS()
+          assert(contractPegInDefaultFee.eq(_isPegIn ? PEG_IN_BASIS_POINTS : PEG_OUT_BASIS_POINTS))
+
+          // NOTE: Assert there's no fee exception set
+          const customFee = _isPegIn
+            ? await FEES_CONTRACT.CUSTOM_PEG_IN_FEES(address)
+            : await FEES_CONTRACT.CUSTOM_PEG_OUT_FEES(address)
+          assert(customFee.eq(0))
+
+          // NOTE: Assert that we get the expected fee
+          const expectedFee = _isPegIn
+            ? await FEES_CONTRACT.PEG_IN_BASIS_POINTS()
+            : await FEES_CONTRACT.PEG_OUT_BASIS_POINTS()
+          const fee = await FEES_CONTRACT.getFeeBasisPoints(_isPegIn, address)
+          assert(fee.eq(expectedFee))
+        })
+
+        it(`Should return custom peg ${_isPegIn ? 'in' : 'out'} basis points if set`, async () => {
+          const address = getRandomAddress(ethers)
+
+          // NOTE: Assert there's no custom fee set
+          const contractPegInDefaultFee = _isPegIn
+            ? await FEES_CONTRACT.PEG_IN_BASIS_POINTS()
+            : await FEES_CONTRACT.PEG_OUT_BASIS_POINTS()
+          assert(contractPegInDefaultFee.eq(_isPegIn ? PEG_IN_BASIS_POINTS : PEG_OUT_BASIS_POINTS))
+
+          // NOTE: Assert there's no fee exception set
+          const customFee = _isPegIn
+            ? await FEES_CONTRACT.CUSTOM_PEG_IN_FEES(address)
+            : await FEES_CONTRACT.CUSTOM_PEG_OUT_FEES(address)
+          assert(customFee.eq(0))
+
+          // NOTE Set a custom fee
+          _isPegIn
+            ? await FEES_CONTRACT.setCustomPegInFee(address, CUSTOM_FEE)
+            : await FEES_CONTRACT.setCustomPegOutFee(address, CUSTOM_FEE)
+
+          // NOTE: Assert that we get the expected fee
+          const fee = await FEES_CONTRACT.getFeeBasisPoints(_isPegIn, address)
+          assert(fee.eq(CUSTOM_FEE))
+        })
+
+        it(`Should allow a zero custom peg ${_isPegIn ? 'in' : 'out'} fee`, async () => {
+          const zeroFee = 0
+          const address = getRandomAddress(ethers)
+
+          // NOTE: Assert there's no custom fee set
+          const contractPegInDefaultFee = _isPegIn
+            ? await FEES_CONTRACT.PEG_IN_BASIS_POINTS()
+            : await FEES_CONTRACT.PEG_OUT_BASIS_POINTS()
+          assert(contractPegInDefaultFee.eq(_isPegIn ? PEG_IN_BASIS_POINTS : PEG_OUT_BASIS_POINTS))
+
+          // NOTE: Assert there's no fee exception set
+          const customFee = _isPegIn
+            ? await FEES_CONTRACT.CUSTOM_PEG_IN_FEES(address)
+            : await FEES_CONTRACT.CUSTOM_PEG_OUT_FEES(address)
+          assert(customFee.eq(0))
+
+          // NOTE Set a zero fee for the target side we care about. See note in contract for the
+          // perverse logic here.
+          _isPegIn
+            ? await FEES_CONTRACT.setCustomPegOutFee(address, PEG_OUT_BASIS_POINTS)
+            : await FEES_CONTRACT.setCustomPegInFee(address, PEG_IN_BASIS_POINTS)
+
+          // NOTE: Assert that we get the expected fee
+          const fee = await FEES_CONTRACT.getFeeBasisPoints(_isPegIn, address)
+          assert(fee.eq(zeroFee))
+        })
+
+        it('Should return 0 if peg in fee exception set', async () => {
+          const address = getRandomAddress(ethers)
+
+          // NOTE: Assert that there is a default fee set
+          const defaultFee = _isPegIn
+            ? await FEES_CONTRACT.PEG_IN_BASIS_POINTS()
+            : await FEES_CONTRACT.PEG_OUT_BASIS_POINTS()
+          assert(defaultFee.gt(0))
+
+          // NOTE Set a custom fee
+          _isPegIn
+            ? await FEES_CONTRACT.setCustomPegInFee(address, CUSTOM_FEE)
+            : await FEES_CONTRACT.setCustomPegOutFee(address, CUSTOM_FEE)
+
+          // NOTE: Assert that a custom fee is indeed set
+          const customFee = await FEES_CONTRACT.getFeeBasisPoints(_isPegIn, address)
+          assert(customFee.eq(CUSTOM_FEE))
+
+          // NOTE Set a fee exception for this address
+          await FEES_CONTRACT.addFeeException(address)
+
+          // NOTE Finally, assert that the exception causes fees to always be zero.
+          const fee = await FEES_CONTRACT.getFeeBasisPoints(_isPegIn, address)
+          assert(fee.eq(0))
+        })
+      })
+    )
   })
 })

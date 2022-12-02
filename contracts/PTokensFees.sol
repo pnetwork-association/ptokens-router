@@ -14,11 +14,17 @@ contract PTokensFees is AccessControlEnumerable {
     uint256 public FEE_BASIS_POINTS_DIVISOR = 10000;
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
 
-    // TODO We ought to keep a list of addresses that have the following two mappings set!
-    mapping(address => bool) public CUSTOM_FEES;
+    // NOTE: This allows fees to be skipped entirely for a given address
     mapping(address => bool) public FEE_EXPCEPTIONS;
 
+    // NOTE: This allows an address to use a custom peg in fee.
+    mapping(address => uint256) public CUSTOM_PEG_IN_FEES;
+
+    // NOTE: This allows an address to use a custom peg out fee.
+    mapping(address => uint256) public CUSTOM_PEG_OUT_FEES;
+
     event LogFees(uint256 indexed feeAmount, uint256 indexed amountMinusFee);
+    event LogCustomFeesSet(address indexed tokenAddress, uint256 basisPoints, bool isForPegIns);
 
     constructor(
         address _feeSinkAddress,
@@ -60,6 +66,35 @@ contract PTokensFees is AccessControlEnumerable {
         return amountMinusFee;
     }
 
+    function getFeeBasisPoints(
+        bool _isPegIn,
+        address _tokenAddress
+    )
+        public
+        view
+        returns (uint256 basisPoints)
+    {
+        // TODO If we move to a more expensive chain, we can make this much cheaper by storing a fee
+        // struct holding two smaller integers packed into one slot, and just read from that.
+
+        // NOTE: Perversely, if you need a zero fee on one side of the bridge, you'll need to set the custom
+        // fee of the _other_ side, even if that is to remain the default.
+        if (CUSTOM_PEG_IN_FEES[_tokenAddress] == 0 && CUSTOM_PEG_OUT_FEES[_tokenAddress] == 0) {
+            // NOTE: No custom fees are set for either peg-ins or -outs, so lets use the defaults...
+            basisPoints = _isPegIn ? PEG_IN_BASIS_POINTS : PEG_OUT_BASIS_POINTS;
+        } else {
+            // NOTE: One or more custom fees are set, let's use those instead...
+            basisPoints = _isPegIn ? CUSTOM_PEG_IN_FEES[_tokenAddress] : CUSTOM_PEG_OUT_FEES[_tokenAddress];
+        }
+        // NOTE: Check if there is an exception for fees for this token address. This overrules the above
+        // and results in zero fees being take for either peg-ins or -outs.
+        if (FEE_EXPCEPTIONS[_tokenAddress]) {
+            basisPoints = 0;
+        }
+
+        return basisPoints;
+    }
+
     function calculateFee(
         bool _isPegIn,
         uint256 _amount,
@@ -69,14 +104,15 @@ contract PTokensFees is AccessControlEnumerable {
         view
         returns (uint256 feeAmount, uint256 amountMinusFee)
     {
-        uint256 basisPoints = _isPegIn ? PEG_IN_BASIS_POINTS : PEG_OUT_BASIS_POINTS;
-        if (basisPoints == 0 || FEE_EXPCEPTIONS[_tokenAddress]) {
-            return (0, _amount);
-        }
-        feeAmount = _amount * basisPoints / FEE_BASIS_POINTS_DIVISOR;
-        amountMinusFee = _amount - feeAmount;
+        uint256 basisPoints = getFeeBasisPoints(_isPegIn, _tokenAddress);
 
-        return (feeAmount, amountMinusFee);
+        if (basisPoints == 0) {
+            return (0, _amount);
+        } else {
+            feeAmount = _amount * basisPoints / FEE_BASIS_POINTS_DIVISOR;
+            amountMinusFee = _amount - feeAmount;
+            return (feeAmount, amountMinusFee);
+        }
     }
 
     function    transferFeeToFeeSinkAddress(
@@ -161,5 +197,44 @@ contract PTokensFees is AccessControlEnumerable {
             FEE_EXPCEPTIONS[_address] = false;
         }
         return true;
+    }
+
+    function setCustomFee(
+        address _tokenAddress,
+        uint256 _basisPoints,
+        bool _isPegIn
+    )
+        internal
+        returns (bool success)
+    {
+        if (_isPegIn) {
+            CUSTOM_PEG_IN_FEES[_tokenAddress] = _basisPoints;
+        } else {
+            CUSTOM_PEG_OUT_FEES[_tokenAddress] = _basisPoints;
+        }
+        emit LogCustomFeesSet(_tokenAddress,  _basisPoints, _isPegIn);
+        return true;
+    }
+
+    function setCustomPegInFee(
+        address _tokenAddress,
+        uint256 _basisPoints
+    )
+        public
+        onlyAdmin
+        returns (bool success)
+    {
+        return setCustomFee(_tokenAddress, _basisPoints, true);
+    }
+
+    function setCustomPegOutFee(
+        address _tokenAddress,
+        uint256 _basisPoints
+    )
+        public
+        onlyAdmin
+        returns (bool success)
+    {
+        return setCustomFee(_tokenAddress, _basisPoints, false);
     }
 }
