@@ -66,6 +66,34 @@ contract PTokensFees is AccessControlEnumerable {
         return amountMinusFee;
     }
 
+    function getFeeBasisPoints(
+        bool _isPegIn,
+        address _tokenAddress
+    )
+        public
+        view
+        returns (uint256 basisPoints)
+    {
+        // NOTE: Check if there are custom fees set for this token address...
+        if (_isPegIn) {
+            basisPoints = CUSTOM_PEG_IN_FEES[_tokenAddress] == 0
+                ? PEG_IN_BASIS_POINTS
+                : CUSTOM_PEG_IN_FEES[_tokenAddress];
+        } else {
+            basisPoints = CUSTOM_PEG_OUT_FEES[_tokenAddress] == 0
+                ? PEG_OUT_BASIS_POINTS
+                : CUSTOM_PEG_OUT_FEES[_tokenAddress];
+        }
+
+        // NOTE: Check if there is an exception for fees for this token address. This overrules the above
+        // and results in zero fees being take for either peg-ins or -outs.
+        if (FEE_EXPCEPTIONS[_tokenAddress]) {
+            basisPoints = 0;
+        }
+
+        return basisPoints;
+    }
+
     function calculateFee(
         bool _isPegIn,
         uint256 _amount,
@@ -75,14 +103,15 @@ contract PTokensFees is AccessControlEnumerable {
         view
         returns (uint256 feeAmount, uint256 amountMinusFee)
     {
-        uint256 basisPoints = _isPegIn ? PEG_IN_BASIS_POINTS : PEG_OUT_BASIS_POINTS;
-        if (basisPoints == 0 || FEE_EXPCEPTIONS[_tokenAddress]) {
-            return (0, _amount);
-        }
-        feeAmount = _amount * basisPoints / FEE_BASIS_POINTS_DIVISOR;
-        amountMinusFee = _amount - feeAmount;
+        uint256 basisPoints = getFeeBasisPoints(_isPegIn, _tokenAddress);
 
-        return (feeAmount, amountMinusFee);
+        if (basisPoints == 0) {
+            return (0, _amount);
+        } else {
+            feeAmount = _amount * basisPoints / FEE_BASIS_POINTS_DIVISOR;
+            amountMinusFee = _amount - feeAmount;
+            return (feeAmount, amountMinusFee);
+        }
     }
 
     function    transferFeeToFeeSinkAddress(
