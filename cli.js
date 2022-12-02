@@ -12,6 +12,10 @@ const {
   addFeeException,
   removeFeeException,
 } = require('./lib/set-fee-exception')
+const {
+  setCustomPegInFee,
+  setCustomPegOutFee,
+} = require('./lib/set-custom-fees')
 const { docopt } = require('docopt')
 const { version } = require('./package.json')
 const { getAdmins } = require('./lib/get-admins')
@@ -55,9 +59,11 @@ const GET_VAULT_ADDRESSES_CMD = 'getVaultAddresses'
 const DEPLOY_FEE_CONTRACT_CMD = 'deployFeeContract'
 const SET_FEE_CONTRACT_ADDRESS_CMD = 'setFeeAddress'
 const PEG_IN_BASIS_POINTS_ARG = '<pegInBasisPoints>'
+const SET_CUSTOM_PEG_IN_FEE_CMD = 'setCustomPegInFee'
 const REMOVE_VAULT_ADDRESS_CMD = 'removeVaultAddress'
 const REMOVE_FEE_EXCEPTION_CMD = 'removeFeeException'
 const PEG_OUT_BASIS_POINTS_ARG = '<pegOutBasisPoints>'
+const SET_CUSTOM_PEG_OUT_FEE_CMD = 'setCustomPegOutFee'
 const DEPLOY_SAFE_VAULT_CMD = 'deploySafeVaultContract'
 const SET_SAFE_VAULT_ADDRESS_CMD = 'setSafeVaultAddress'
 const GET_SAFE_VAULT_ADDRESS_CMD = 'getSafeVaultAddress'
@@ -111,6 +117,8 @@ const USAGE_INFO = `
   ${TOOL_NAME} ${SET_PEG_IN_BASIS_POINTS_CMD} ${DEPLOYED_ADDRESS_ARG} ${PEG_IN_BASIS_POINTS_ARG}
   ${TOOL_NAME} ${ADD_VAULT_ADDRESS_CMD} ${DEPLOYED_ADDRESS_ARG} ${CHAIN_ID_ARG} ${ETH_ADDRESS_ARG}
   ${TOOL_NAME} ${SET_PEG_OUT_BASIS_POINTS_CMD} ${DEPLOYED_ADDRESS_ARG} ${PEG_OUT_BASIS_POINTS_ARG}
+  ${TOOL_NAME} ${SET_CUSTOM_PEG_IN_FEE_CMD} ${DEPLOYED_ADDRESS_ARG} ${TOKEN_ADDRESS_ARG} ${PEG_IN_BASIS_POINTS_ARG}
+  ${TOOL_NAME} ${SET_CUSTOM_PEG_OUT_FEE_CMD} ${DEPLOYED_ADDRESS_ARG} ${TOKEN_ADDRESS_ARG} ${PEG_OUT_BASIS_POINTS_ARG}
   ${TOOL_NAME} ${DEPLOY_FEE_CONTRACT_CMD} ${FEE_SINK_ADDRESS_ARG} ${PEG_IN_BASIS_POINTS_ARG} ${PEG_OUT_BASIS_POINTS_ARG}
   ${TOOL_NAME} ${TRANSFER_FROM_SAFE_VAULT_CMD} ${DEPLOYED_ADDRESS_ARG} ${TOKEN_ADDRESS_ARG} ${ETH_ADDRESS_ARG} ${AMOUNT_ARG}
   ${TOOL_NAME} ${VERIFY_FEE_CONTRACT_CMD} ${DEPLOYED_ADDRESS_ARG} ${NETWORK_ARG} ${FEE_SINK_ADDRESS_ARG} ${PEG_IN_BASIS_POINTS_ARG} ${PEG_OUT_BASIS_POINTS_ARG}
@@ -197,6 +205,20 @@ const main = _ => {
     return deploySafeVaultContract()
   if (CLI_ARGS[SET_SAFE_VAULT_ADDRESS_CMD])
     return setSafeVaultContractAddress(CLI_ARGS[DEPLOYED_ADDRESS_ARG], CLI_ARGS[ETH_ADDRESS_ARG])
+  if (CLI_ARGS[SET_CUSTOM_PEG_IN_FEE_CMD]) {
+    return setCustomPegInFee(
+      CLI_ARGS[DEPLOYED_ADDRESS_ARG],
+      CLI_ARGS[TOKEN_ADDRESS_ARG],
+      CLI_ARGS[PEG_IN_BASIS_POINTS_ARG],
+    )
+  }
+  if (CLI_ARGS[SET_CUSTOM_PEG_OUT_FEE_CMD]) {
+    return setCustomPegOutFee(
+      CLI_ARGS[DEPLOYED_ADDRESS_ARG],
+      CLI_ARGS[TOKEN_ADDRESS_ARG],
+      CLI_ARGS[PEG_OUT_BASIS_POINTS_ARG],
+    )
+  }
   if (CLI_ARGS[DEPLOY_FEE_CONTRACT_CMD]) {
     return deployFeeContract(
       CLI_ARGS[FEE_SINK_ADDRESS_ARG],
