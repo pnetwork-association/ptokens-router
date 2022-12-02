@@ -74,17 +74,18 @@ contract PTokensFees is AccessControlEnumerable {
         view
         returns (uint256 basisPoints)
     {
-        // NOTE: Check if there are custom fees set for this token address...
-        if (_isPegIn) {
-            basisPoints = CUSTOM_PEG_IN_FEES[_tokenAddress] == 0
-                ? PEG_IN_BASIS_POINTS
-                : CUSTOM_PEG_IN_FEES[_tokenAddress];
-        } else {
-            basisPoints = CUSTOM_PEG_OUT_FEES[_tokenAddress] == 0
-                ? PEG_OUT_BASIS_POINTS
-                : CUSTOM_PEG_OUT_FEES[_tokenAddress];
-        }
+        // TODO If we move to a more expensive chain, we can make this much cheaper by storing a fee
+        // struct holding two smaller integers packed into one slot, and just read from that.
 
+        // NOTE: Perversely, if you need a zero fee on one side of the bridge, you'll need to set the custom
+        // fee of the _other_ side, even if that is to remain the default.
+        if (CUSTOM_PEG_IN_FEES[_tokenAddress] == 0 && CUSTOM_PEG_OUT_FEES[_tokenAddress] == 0) {
+            // NOTE: No custom fees are set for either peg-ins or -outs, so lets use the defaults...
+            basisPoints = _isPegIn ? PEG_IN_BASIS_POINTS : PEG_OUT_BASIS_POINTS;
+        } else {
+            // NOTE: One or more custom fees are set, let's use those instead...
+            basisPoints = _isPegIn ? CUSTOM_PEG_IN_FEES[_tokenAddress] : CUSTOM_PEG_OUT_FEES[_tokenAddress];
+        }
         // NOTE: Check if there is an exception for fees for this token address. This overrules the above
         // and results in zero fees being take for either peg-ins or -outs.
         if (FEE_EXPCEPTIONS[_tokenAddress]) {

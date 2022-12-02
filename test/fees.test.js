@@ -375,6 +375,33 @@ describe('Fees Contract Tests', () => {
           assert(fee.eq(CUSTOM_FEE))
         })
 
+        it(`Should allow a zero custom peg ${_isPegIn ? 'in' : 'out'} fee`, async () => {
+          const zeroFee = 0
+          const address = getRandomAddress(ethers)
+
+          // NOTE: Assert there's no custom fee set
+          const contractPegInDefaultFee = _isPegIn
+            ? await FEES_CONTRACT.PEG_IN_BASIS_POINTS()
+            : await FEES_CONTRACT.PEG_OUT_BASIS_POINTS()
+          assert(contractPegInDefaultFee.eq(_isPegIn ? PEG_IN_BASIS_POINTS : PEG_OUT_BASIS_POINTS))
+
+          // NOTE: Assert there's no fee exception set
+          const customFee = _isPegIn
+            ? await FEES_CONTRACT.CUSTOM_PEG_IN_FEES(address)
+            : await FEES_CONTRACT.CUSTOM_PEG_OUT_FEES(address)
+          assert(customFee.eq(0))
+
+          // NOTE Set a zero fee for the target side we care about. See note in contract for the
+          // perverse logic here.
+          _isPegIn
+            ? await FEES_CONTRACT.setCustomPegOutFee(address, PEG_OUT_BASIS_POINTS)
+            : await FEES_CONTRACT.setCustomPegInFee(address, PEG_IN_BASIS_POINTS)
+
+          // NOTE: Assert that we get the expected fee
+          const fee = await FEES_CONTRACT.getFeeBasisPoints(_isPegIn, address)
+          assert(fee.eq(zeroFee))
+        })
+
         it('Should return 0 if peg in fee exception set', async () => {
           const address = getRandomAddress(ethers)
 
