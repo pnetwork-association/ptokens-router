@@ -15,9 +15,6 @@ contract PTokensFees is AccessControlEnumerable {
     uint256 public FEE_BASIS_POINTS_DIVISOR = 10000;
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
 
-    // NOTE: This allows fees to be skipped entirely for a given address
-    mapping(address => bool) public FEE_EXPCEPTIONS;
-
     // NOTE: This allows an address to use a custom peg in fee.
     mapping(address => uint256) public CUSTOM_PEG_IN_FEES;
 
@@ -88,11 +85,6 @@ contract PTokensFees is AccessControlEnumerable {
         } else {
             // NOTE: One or more custom fees are set, let's use those instead...
             basisPoints = _isPegIn ? CUSTOM_PEG_IN_FEES[_tokenAddress] : CUSTOM_PEG_OUT_FEES[_tokenAddress];
-        }
-        // NOTE: Check if there is an exception for fees for this token address. This overrules the above
-        // and results in zero fees being take for either peg-ins or -outs.
-        if (FEE_EXPCEPTIONS[_tokenAddress]) {
-            basisPoints = 0;
         }
 
         return basisPoints;
@@ -183,32 +175,6 @@ contract PTokensFees is AccessControlEnumerable {
     {
         require(_basisPoints <= MAX_FEE_BASIS_POINTS, "Basis points value exceeds maximum!");
         return _basisPoints;
-    }
-
-    function addFeeException(
-        address _address
-    )
-        public
-        onlyAdmin
-        returns (bool success)
-    {
-        if (!FEE_EXPCEPTIONS[_address]) {
-            FEE_EXPCEPTIONS[_address] = true;
-        }
-        return true;
-    }
-
-    function removeFeeException(
-        address _address
-    )
-        public
-        onlyAdmin
-        returns (bool success)
-    {
-        if(FEE_EXPCEPTIONS[_address]) {
-            FEE_EXPCEPTIONS[_address] = false;
-        }
-        return true;
     }
 
     function setCustomFee(

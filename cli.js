@@ -9,10 +9,6 @@ const {
   setPegOutBasisPoints,
 } = require('./lib/set-basis-points')
 const {
-  addFeeException,
-  removeFeeException,
-} = require('./lib/set-fee-exception')
-const {
   setCustomPegInFee,
   setCustomPegOutFee,
 } = require('./lib/set-custom-fees')
@@ -50,7 +46,6 @@ const TOKEN_ADDRESS_ARG = '<tokenAddress>'
 const NETWORK_FEE_SINK_ARG = '<neworkFeeSink>'
 const ADD_VAULT_ADDRESS_CMD = 'addVaultAddress'
 const GET_VAULT_ADDRESS_CMD = 'getVaultAddress'
-const ADD_FEE_EXCEPTION_CMD = 'addFeeException'
 const DEPLOYED_ADDRESS_ARG = '<deployedAddress>'
 const GET_ENCODED_INIT_ARGS_CMD = 'encodeInitArgs'
 const VERIFY_FEE_CONTRACT_CMD = 'verifyFeeContract'
@@ -61,7 +56,6 @@ const SET_FEE_CONTRACT_ADDRESS_CMD = 'setFeeAddress'
 const PEG_IN_BASIS_POINTS_ARG = '<pegInBasisPoints>'
 const SET_CUSTOM_PEG_IN_FEE_CMD = 'setCustomPegInFee'
 const REMOVE_VAULT_ADDRESS_CMD = 'removeVaultAddress'
-const REMOVE_FEE_EXCEPTION_CMD = 'removeFeeException'
 const PEG_OUT_BASIS_POINTS_ARG = '<pegOutBasisPoints>'
 const SET_CUSTOM_PEG_OUT_FEE_CMD = 'setCustomPegOutFee'
 const DEPLOY_SAFE_VAULT_CMD = 'deploySafeVaultContract'
@@ -111,9 +105,7 @@ const USAGE_INFO = `
   ${TOOL_NAME} ${GET_VAULT_ADDRESS_CMD} ${DEPLOYED_ADDRESS_ARG} ${CHAIN_ID_ARG}
   ${TOOL_NAME} ${SET_FEE_CONTRACT_ADDRESS_CMD} ${DEPLOYED_ADDRESS_ARG} ${ETH_ADDRESS_ARG}
   ${TOOL_NAME} ${REMOVE_VAULT_ADDRESS_CMD} ${DEPLOYED_ADDRESS_ARG} ${CHAIN_ID_ARG}
-  ${TOOL_NAME} ${ADD_FEE_EXCEPTION_CMD} ${DEPLOYED_ADDRESS_ARG} ${ETH_ADDRESS_ARG}
   ${TOOL_NAME} ${VERIFY_ROUTER_CONTRACT_CMD} ${NETWORK_ARG} ${DEPLOYED_ADDRESS_ARG}
-  ${TOOL_NAME} ${REMOVE_FEE_EXCEPTION_CMD} ${DEPLOYED_ADDRESS_ARG} ${ETH_ADDRESS_ARG}
   ${TOOL_NAME} ${SET_SAFE_VAULT_ADDRESS_CMD} ${DEPLOYED_ADDRESS_ARG} ${ETH_ADDRESS_ARG}
   ${TOOL_NAME} ${SET_PEG_IN_BASIS_POINTS_CMD} ${DEPLOYED_ADDRESS_ARG} ${PEG_IN_BASIS_POINTS_ARG}
   ${TOOL_NAME} ${ADD_VAULT_ADDRESS_CMD} ${DEPLOYED_ADDRESS_ARG} ${CHAIN_ID_ARG} ${ETH_ADDRESS_ARG}
@@ -137,14 +129,12 @@ const USAGE_INFO = `
   ${SET_FEE_CONTRACT_ADDRESS_CMD}            ❍ Set the fee contract stored in the router to ${ETH_ADDRESS_ARG}.
   ${REMOVE_VAULT_ADDRESS_CMD}       ❍ Removess vault address with ${CHAIN_ID_ARG} from ${DEPLOYED_ADDRESS_ARG}.
   ${SET_CUSTOM_PEG_IN_FEE_CMD}        ❍ Set custom peg in fees to ${PEG_IN_BASIS_POINTS_ARG} for ${TOKEN_ADDRESS_ARG}.
-  ${ADD_FEE_EXCEPTION_CMD}          ❍ Adds ${ETH_ADDRESS_ARG} to the fee exception list in the fee contract.
   ${GET_VAULT_ADDRESS_CMD}          ❍ Get vault address from router at ${DEPLOYED_ADDRESS_ARG} via ${CHAIN_ID_ARG}.
   ${SHOW_WALLET_DETAILS_CMD}        ❍ Decrypts the private key and shows address & balance information.
   ${SET_CUSTOM_PEG_OUT_FEE_CMD}       ❍ Set custom peg out fees to ${PEG_OUT_BASIS_POINTS_ARG} for ${TOKEN_ADDRESS_ARG}.
   ${GET_SAFE_VAULT_ADDRESS_CMD}      ❍ Get the safe vault address set in the router at ${DEPLOYED_ADDRESS_ARG}.
   ${GET_ROUTER_STATE}           ❍ Gets all supported tokens from all vaults set in ${DEPLOYED_ADDRESS_ARG}.
   ${GET_ENCODED_INIT_ARGS_CMD}           ❍ Calculate the initializer function arguments in ABI encoded format.
-  ${REMOVE_FEE_EXCEPTION_CMD}       ❍ Removes ${ETH_ADDRESS_ARG} from the fee exception list in the fee contract.
   ${ADD_VAULT_ADDRESS_CMD}          ❍ Adds ${ETH_ADDRESS_ARG} as vault address with ${CHAIN_ID_ARG} to ${DEPLOYED_ADDRESS_ARG}.
   ${SHOW_CHAIN_IDS_CMD}             ❍ Shows a list of the metadata chain IDs for supported pNetwork blockchains.
   ${SHOW_EXISTING_CONTRACTS_CMD}    ❍ Show list of existing pToken logic contract addresses on various blockchains.
@@ -201,10 +191,6 @@ const main = _ => {
     return setPegInBasisPoints(CLI_ARGS[DEPLOYED_ADDRESS_ARG], CLI_ARGS[PEG_IN_BASIS_POINTS_ARG])
   if (CLI_ARGS[SET_PEG_OUT_BASIS_POINTS_CMD])
     return setPegOutBasisPoints(CLI_ARGS[DEPLOYED_ADDRESS_ARG], CLI_ARGS[PEG_OUT_BASIS_POINTS_ARG])
-  if (CLI_ARGS[ADD_FEE_EXCEPTION_CMD])
-    return addFeeException(CLI_ARGS[DEPLOYED_ADDRESS_ARG], CLI_ARGS[ETH_ADDRESS_ARG])
-  if (CLI_ARGS[REMOVE_FEE_EXCEPTION_CMD])
-    return removeFeeException(CLI_ARGS[DEPLOYED_ADDRESS_ARG], CLI_ARGS[ETH_ADDRESS_ARG])
   if (CLI_ARGS[DEPLOY_SAFE_VAULT_CMD])
     return deploySafeVaultContract()
   if (CLI_ARGS[SET_SAFE_VAULT_ADDRESS_CMD])

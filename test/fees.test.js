@@ -202,106 +202,27 @@ describe('Fees Contract Tests', () => {
         assert(pegOutBasisPoints.gt(0))
       })
 
-      describe('With NO fee exception set', () => {
-        beforeEach(async () => {
-          const tokenIsInExceptionList = await FEES_CONTRACT.FEE_EXPCEPTIONS[TOKEN_ADDRESS]
-          assert(!tokenIsInExceptionList)
-        })
-
-        it('Should calculate peg in fees correctly', async () => {
-          const isPegin = true
-          const { feeAmount, amountMinusFee } = await FEES_CONTRACT.calculateFee(isPegin, AMOUNT, TOKEN_ADDRESS)
-          const expectedFeeAmount = ethers
-            .BigNumber
-            .from(Math.floor(AMOUNT * PEG_IN_BASIS_POINTS / FEE_BASIS_POINTS_DIVISOR))
-          const expectedAmountMinusFee = ethers.BigNumber.from(AMOUNT).sub(expectedFeeAmount)
-          assert(feeAmount.eq(expectedFeeAmount))
-          assert(amountMinusFee.eq(expectedAmountMinusFee))
-        })
-
-        it('Should calculate peg out fees correctly', async () => {
-          const isPegin = false
-          const { feeAmount, amountMinusFee } = await FEES_CONTRACT.calculateFee(isPegin, AMOUNT, TOKEN_ADDRESS)
-          const expectedFeeAmount = ethers
-            .BigNumber
-            .from(Math.floor(AMOUNT * PEG_OUT_BASIS_POINTS / FEE_BASIS_POINTS_DIVISOR))
-          const expectedAmountMinusFee = ethers.BigNumber.from(AMOUNT).sub(expectedFeeAmount)
-          assert(feeAmount.eq(expectedFeeAmount))
-          assert(amountMinusFee.eq(expectedAmountMinusFee))
-        })
+      it('Should calculate peg in fees correctly', async () => {
+        const isPegin = true
+        const { feeAmount, amountMinusFee } = await FEES_CONTRACT.calculateFee(isPegin, AMOUNT, TOKEN_ADDRESS)
+        const expectedFeeAmount = ethers
+          .BigNumber
+          .from(Math.floor(AMOUNT * PEG_IN_BASIS_POINTS / FEE_BASIS_POINTS_DIVISOR))
+        const expectedAmountMinusFee = ethers.BigNumber.from(AMOUNT).sub(expectedFeeAmount)
+        assert(feeAmount.eq(expectedFeeAmount))
+        assert(amountMinusFee.eq(expectedAmountMinusFee))
       })
 
-      describe('WITH fee exception set', () => {
-        beforeEach(async () => {
-          await FEES_CONTRACT.addFeeException(TOKEN_ADDRESS)
-          const tokenIsInExceptionList = await FEES_CONTRACT.FEE_EXPCEPTIONS(TOKEN_ADDRESS)
-          assert(tokenIsInExceptionList)
-        })
-
-        it('Should calculate peg in fees correctly', async () => {
-          const isPegin = true
-          const { feeAmount, amountMinusFee } = await FEES_CONTRACT.calculateFee(isPegin, AMOUNT, TOKEN_ADDRESS)
-          assert(feeAmount.eq(0))
-          assert(amountMinusFee.eq(AMOUNT))
-        })
-
-        it('Should calculate peg out fees correctly', async () => {
-          const isPegin = false
-          const { feeAmount, amountMinusFee } = await FEES_CONTRACT.calculateFee(isPegin, AMOUNT, TOKEN_ADDRESS)
-          assert(feeAmount.eq(0))
-          assert(amountMinusFee.eq(AMOUNT))
-        })
+      it('Should calculate peg out fees correctly', async () => {
+        const isPegin = false
+        const { feeAmount, amountMinusFee } = await FEES_CONTRACT.calculateFee(isPegin, AMOUNT, TOKEN_ADDRESS)
+        const expectedFeeAmount = ethers
+          .BigNumber
+          .from(Math.floor(AMOUNT * PEG_OUT_BASIS_POINTS / FEE_BASIS_POINTS_DIVISOR))
+        const expectedAmountMinusFee = ethers.BigNumber.from(AMOUNT).sub(expectedFeeAmount)
+        assert(feeAmount.eq(expectedFeeAmount))
+        assert(amountMinusFee.eq(expectedAmountMinusFee))
       })
-    })
-  })
-
-  describe('Fee exceptions list tests', () => {
-    it('Admin can add address to fee exceptions list', async () => {
-      const address = getRandomAddress(ethers)
-      const boolBefore = await FEES_CONTRACT.FEE_EXPCEPTIONS(address)
-      assert(!boolBefore)
-      await FEES_CONTRACT.addFeeException(address)
-      const boolAfter = await FEES_CONTRACT.FEE_EXPCEPTIONS(address)
-      assert(boolAfter)
-    })
-
-    it('Non admin cannot add address to fee exception list', async () => {
-      const address = getRandomAddress(ethers)
-      const boolBefore = await FEES_CONTRACT.FEE_EXPCEPTIONS(address)
-      assert(!boolBefore)
-      try {
-        await NON_ADMIN_FEES_CONTRACT.addFeeException(address)
-        assert.fail('Should not have resolved!')
-      } catch (_err) {
-        assert(_err.message.includes(NON_ADMIN_ERROR))
-        const boolAfter = await FEES_CONTRACT.FEE_EXPCEPTIONS(address)
-        assert(!boolAfter)
-      }
-    })
-
-    it('Admin can remove address to fee exceptions list', async () => {
-      const address = getRandomAddress(ethers)
-      await FEES_CONTRACT.addFeeException(address)
-      const boolBefore = await FEES_CONTRACT.FEE_EXPCEPTIONS(address)
-      assert(boolBefore)
-      await FEES_CONTRACT.removeFeeException(address)
-      const boolAfter = await FEES_CONTRACT.FEE_EXPCEPTIONS(address)
-      assert(!boolAfter)
-    })
-
-    it('Non admin cannot remove address to fee exception list', async () => {
-      const address = getRandomAddress(ethers)
-      await FEES_CONTRACT.addFeeException(address)
-      const boolBefore = await FEES_CONTRACT.FEE_EXPCEPTIONS(address)
-      assert(boolBefore)
-      try {
-        await NON_ADMIN_FEES_CONTRACT.removeFeeException(address)
-        assert.fail('Should not have resolved!')
-      } catch (_err) {
-        assert(_err.message.includes(NON_ADMIN_ERROR))
-        const boolAfter = await FEES_CONTRACT.FEE_EXPCEPTIONS(address)
-        assert(boolAfter)
-      }
     })
   })
 
@@ -434,32 +355,6 @@ describe('Fees Contract Tests', () => {
           // NOTE: Assert that we get the expected fee
           const fee = await FEES_CONTRACT.getFeeBasisPoints(_isPegIn, address)
           assert(fee.eq(zeroFee))
-        })
-
-        it('Should return 0 if peg in fee exception set', async () => {
-          const address = getRandomAddress(ethers)
-
-          // NOTE: Assert that there is a default fee set
-          const defaultFee = _isPegIn
-            ? await FEES_CONTRACT.PEG_IN_BASIS_POINTS()
-            : await FEES_CONTRACT.PEG_OUT_BASIS_POINTS()
-          assert(defaultFee.gt(0))
-
-          // NOTE Set a custom fee
-          _isPegIn
-            ? await FEES_CONTRACT.setCustomPegInFee(address, CUSTOM_FEE)
-            : await FEES_CONTRACT.setCustomPegOutFee(address, CUSTOM_FEE)
-
-          // NOTE: Assert that a custom fee is indeed set
-          const customFee = await FEES_CONTRACT.getFeeBasisPoints(_isPegIn, address)
-          assert(customFee.eq(CUSTOM_FEE))
-
-          // NOTE Set a fee exception for this address
-          await FEES_CONTRACT.addFeeException(address)
-
-          // NOTE Finally, assert that the exception causes fees to always be zero.
-          const fee = await FEES_CONTRACT.getFeeBasisPoints(_isPegIn, address)
-          assert(fee.eq(0))
         })
       })
     )
