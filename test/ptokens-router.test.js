@@ -149,7 +149,7 @@ describe('pTokens Router Contract', () => {
     describe(`Metadata Version ${_metadataVersion} Routing Tests`, () => {
       const PEG_IN_BASIS_POINTS = 10
       const PEG_OUT_BASIS_POINTS = 25
-      const FEE_SINK_ADDRESS = getRandomAddress(ethers)
+      const NODE_OPERATORS_FEE_SINK_ADDRESS = getRandomAddress(ethers)
 
       const decodePegInCalledEvent = _event =>
         new Promise((resolve, reject) => {
@@ -230,7 +230,7 @@ describe('pTokens Router Contract', () => {
 
         it('Should take correct peg in fees', async () => {
           // Deploy a fee contract...
-          const feeContract = await deployFeesContract(FEE_SINK_ADDRESS, PEG_IN_BASIS_POINTS, PEG_OUT_BASIS_POINTS)
+          const feeContract = await deployFeesContract(NODE_OPERATORS_FEE_SINK_ADDRESS, PEG_IN_BASIS_POINTS, PEG_OUT_BASIS_POINTS)
 
           // Set the chain ID in the ptoken contract...
           const chainId = '0xdeadbeef'
@@ -245,7 +245,7 @@ describe('pTokens Router Contract', () => {
           await ROUTER_CONTRACT.addVaultAddress(SAMPLE_METADATA_CHAIN_ID_2, vaultContract.address)
 
           // Assert the various contracts' token balances before the peg in...
-          let feeSinkBalance = await pTokenContract.balanceOf(FEE_SINK_ADDRESS)
+          let feeSinkBalance = await pTokenContract.balanceOf(NODE_OPERATORS_FEE_SINK_ADDRESS)
           let vaultContractBalance = await pTokenContract.balanceOf(vaultContract.address)
           let routerContractBalance = await pTokenContract.balanceOf(ROUTER_CONTRACT.address)
           assert(feeSinkBalance.eq(0))
@@ -286,7 +286,7 @@ describe('pTokens Router Contract', () => {
           assert.strictEqual(result.destinationChainId, SAMPLE_METADATA_CHAIN_ID_2)
 
           // And finally assert the token balances of the various accounts involved.
-          feeSinkBalance = await pTokenContract.balanceOf(FEE_SINK_ADDRESS)
+          feeSinkBalance = await pTokenContract.balanceOf(NODE_OPERATORS_FEE_SINK_ADDRESS)
           vaultContractBalance = await pTokenContract.balanceOf(vaultContract.address)
           routerContractBalance = await pTokenContract.balanceOf(ROUTER_CONTRACT.address)
           assert(routerContractBalance.eq(0))
@@ -340,7 +340,7 @@ describe('pTokens Router Contract', () => {
 
         it('Should take correct peg out fees', async () => {
           // Deploy a fee contract...
-          const feeContract = await deployFeesContract(FEE_SINK_ADDRESS, PEG_IN_BASIS_POINTS, PEG_OUT_BASIS_POINTS)
+          const feeContract = await deployFeesContract(NODE_OPERATORS_FEE_SINK_ADDRESS, PEG_IN_BASIS_POINTS, PEG_OUT_BASIS_POINTS)
 
           // Deploy the ptoken & vault contracts...
           const chainId = '0xdeadbeef'
@@ -371,7 +371,7 @@ describe('pTokens Router Contract', () => {
           await pTokenContract.send(vaultContract.address, amount, EMPTY_DATA)
 
           // Get & assert the various token balances before the peg out...
-          let feeSinkBalance = await pTokenContract.balanceOf(FEE_SINK_ADDRESS)
+          let feeSinkBalance = await pTokenContract.balanceOf(NODE_OPERATORS_FEE_SINK_ADDRESS)
           let vaultContractBalance = await pTokenContract.balanceOf(vaultContract.address)
           let routerContractBalance = await pTokenContract.balanceOf(ROUTER_CONTRACT.address)
           let pTokenContractBalance = await pTokenContract.balanceOf(pTokenContract.address)
@@ -399,7 +399,7 @@ describe('pTokens Router Contract', () => {
           assert.strictEqual(result.destinationChainId, destinationChainId)
 
           // Get & assert the final contract values...
-          feeSinkBalance = await pTokenContract.balanceOf(FEE_SINK_ADDRESS)
+          feeSinkBalance = await pTokenContract.balanceOf(NODE_OPERATORS_FEE_SINK_ADDRESS)
           vaultContractBalance = await pTokenContract.balanceOf(vaultContract.address)
           routerContractBalance = await pTokenContract.balanceOf(ROUTER_CONTRACT.address)
           pTokenContractBalance = await pTokenContract.balanceOf(pTokenContract.address)

@@ -13,12 +13,12 @@ describe('Fees Contract Tests', () => {
   const MAX_FEE_BASIS_POINTS = 100
   const FEE_BASIS_POINTS_DIVISOR = 1e4
   const TOKEN_ADDRESS = getRandomAddress(ethers)
-  const FEE_SINK_ADDRESS = getRandomAddress(ethers)
+  const NODE_OPERATORS_FEE_SINK_ADDRESS = getRandomAddress(ethers)
 
   beforeEach(async () => {
     const signers = await ethers.getSigners()
     NON_ADMIN = signers[1]
-    FEES_CONTRACT = await deployFeesContract(FEE_SINK_ADDRESS, PEG_IN_BASIS_POINTS, PEG_OUT_BASIS_POINTS)
+    FEES_CONTRACT = await deployFeesContract(NODE_OPERATORS_FEE_SINK_ADDRESS, PEG_IN_BASIS_POINTS, PEG_OUT_BASIS_POINTS)
     NON_ADMIN_FEES_CONTRACT = FEES_CONTRACT.connect(NON_ADMIN)
   })
 
@@ -34,32 +34,32 @@ describe('Fees Contract Tests', () => {
     })
 
     it('Should have set the fee sink address on deployment', async () => {
-      const result = await FEES_CONTRACT.FEE_SINK_ADDRESS()
-      assert.strictEqual(result, FEE_SINK_ADDRESS)
+      const result = await FEES_CONTRACT.NODE_OPERATORS_FEE_SINK_ADDRESS()
+      assert.strictEqual(result, NODE_OPERATORS_FEE_SINK_ADDRESS)
     })
   })
 
   describe('Admin tests', () => {
     it('Only admin can set new fee sink address', async () => {
       const newFeeSinkAddress = getRandomAddress(ethers)
-      const feeSinkAddressBefore = await FEES_CONTRACT.FEE_SINK_ADDRESS()
-      assert.strictEqual(feeSinkAddressBefore, FEE_SINK_ADDRESS)
-      await FEES_CONTRACT.setFeeSinkAddress(newFeeSinkAddress)
-      const feeSinkAddressAfter = await FEES_CONTRACT.FEE_SINK_ADDRESS()
+      const feeSinkAddressBefore = await FEES_CONTRACT.NODE_OPERATORS_FEE_SINK_ADDRESS()
+      assert.strictEqual(feeSinkAddressBefore, NODE_OPERATORS_FEE_SINK_ADDRESS)
+      await FEES_CONTRACT.setNodeOperatorsFeeSinkAddress(newFeeSinkAddress)
+      const feeSinkAddressAfter = await FEES_CONTRACT.NODE_OPERATORS_FEE_SINK_ADDRESS()
       assert.strictEqual(feeSinkAddressAfter, newFeeSinkAddress)
     })
 
     it('Non admin cannot set new fee sink address', async () => {
       const newFeeSinkAddress = getRandomAddress(ethers)
-      const feeSinkAddressBefore = await FEES_CONTRACT.FEE_SINK_ADDRESS()
-      assert.strictEqual(feeSinkAddressBefore, FEE_SINK_ADDRESS)
+      const feeSinkAddressBefore = await FEES_CONTRACT.NODE_OPERATORS_FEE_SINK_ADDRESS()
+      assert.strictEqual(feeSinkAddressBefore, NODE_OPERATORS_FEE_SINK_ADDRESS)
       try {
-        await NON_ADMIN_FEES_CONTRACT.setFeeSinkAddress(newFeeSinkAddress)
+        await NON_ADMIN_FEES_CONTRACT.setNodeOperatorsFeeSinkAddress(newFeeSinkAddress)
         assert.fail('Should not have resolved!')
       } catch (_err) {
         assert(_err.message.includes(NON_ADMIN_ERROR))
-        const feeSinkAddressAfter = await FEES_CONTRACT.FEE_SINK_ADDRESS()
-        assert.strictEqual(feeSinkAddressAfter, FEE_SINK_ADDRESS)
+        const feeSinkAddressAfter = await FEES_CONTRACT.NODE_OPERATORS_FEE_SINK_ADDRESS()
+        assert.strictEqual(feeSinkAddressAfter, NODE_OPERATORS_FEE_SINK_ADDRESS)
       }
     })
 
@@ -86,18 +86,18 @@ describe('Fees Contract Tests', () => {
     })
 
     it('Admin can change fee sink address', async () => {
-      const feeSinkBefore = await FEES_CONTRACT.FEE_SINK_ADDRESS()
-      assert.strictEqual(feeSinkBefore, FEE_SINK_ADDRESS)
+      const feeSinkBefore = await FEES_CONTRACT.NODE_OPERATORS_FEE_SINK_ADDRESS()
+      assert.strictEqual(feeSinkBefore, NODE_OPERATORS_FEE_SINK_ADDRESS)
       const newAddress = getRandomAddress(ethers)
-      await FEES_CONTRACT.setFeeSinkAddress(newAddress)
-      const feeSinkAfter = await FEES_CONTRACT.FEE_SINK_ADDRESS()
+      await FEES_CONTRACT.setNodeOperatorsFeeSinkAddress(newAddress)
+      const feeSinkAfter = await FEES_CONTRACT.NODE_OPERATORS_FEE_SINK_ADDRESS()
       assert.strictEqual(feeSinkAfter, newAddress)
     })
 
     it('Non admin cannot change fee sink address', async () => {
       try {
         await NON_ADMIN_FEES_CONTRACT
-          .setFeeSinkAddress(TOKEN_ADDRESS)
+          .setNodeOperatorsFeeSinkAddress(TOKEN_ADDRESS)
         assert.fail('Should not have resolved!')
       } catch (_err) {
         assert(_err.message.includes(NON_ADMIN_ERROR))

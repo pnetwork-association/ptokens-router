@@ -7,7 +7,7 @@ import "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
 
 contract PTokensFees is AccessControlEnumerable {
 
-    address public FEE_SINK_ADDRESS;
+    address public NODE_OPERATORS_FEE_SINK_ADDRESS;
     uint256 public PEG_IN_BASIS_POINTS;
     uint256 public PEG_OUT_BASIS_POINTS;
     uint256 public MAX_FEE_BASIS_POINTS = 100;
@@ -27,11 +27,11 @@ contract PTokensFees is AccessControlEnumerable {
     event LogCustomFeesSet(address indexed tokenAddress, uint256 basisPoints, bool isForPegIns);
 
     constructor(
-        address _feeSinkAddress,
+        address _nodeOperatorsFeeSinkAddress,
         uint256 _pegInBasisPoints,
         uint256 _pegOutBasisPoints
     ) {
-        FEE_SINK_ADDRESS = _feeSinkAddress;
+        NODE_OPERATORS_FEE_SINK_ADDRESS = _nodeOperatorsFeeSinkAddress;
         PEG_IN_BASIS_POINTS = _pegInBasisPoints;
         PEG_OUT_BASIS_POINTS = _pegOutBasisPoints;
         _setupRole(ADMIN_ROLE, _msgSender());
@@ -122,17 +122,17 @@ contract PTokensFees is AccessControlEnumerable {
         public
         returns (bool success)
     {
-        IERC20(_tokenAddress).transferFrom(msg.sender, FEE_SINK_ADDRESS, _tokenAmount);
+        IERC20(_tokenAddress).transferFrom(msg.sender, NODE_OPERATORS_FEE_SINK_ADDRESS, _tokenAmount);
         return true;
     }
 
-    function setFeeSinkAddress(
-        address _newFeeSinkAddress
+    function setNodeOperatorsFeeSinkAddress(
+        address _newAddress
     )
         external
         onlyAdmin
     {
-        FEE_SINK_ADDRESS = _newFeeSinkAddress;
+        NODE_OPERATORS_FEE_SINK_ADDRESS = _newAddress;
     }
 
     function setPegInBasisPoints(
