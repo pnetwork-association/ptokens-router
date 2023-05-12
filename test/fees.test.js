@@ -13,12 +13,18 @@ describe('Fees Contract Tests', () => {
   const MAX_FEE_BASIS_POINTS = 100
   const FEE_BASIS_POINTS_DIVISOR = 1e4
   const TOKEN_ADDRESS = getRandomAddress(ethers)
+  const NETWORK_FEE_SINK_ADDRESS = getRandomAddress(ethers)
   const NODE_OPERATORS_FEE_SINK_ADDRESS = getRandomAddress(ethers)
 
   beforeEach(async () => {
     const signers = await ethers.getSigners()
     NON_ADMIN = signers[1]
-    FEES_CONTRACT = await deployFeesContract(NODE_OPERATORS_FEE_SINK_ADDRESS, PEG_IN_BASIS_POINTS, PEG_OUT_BASIS_POINTS)
+    FEES_CONTRACT = await deployFeesContract(
+      NODE_OPERATORS_FEE_SINK_ADDRESS,
+      NETWORK_FEE_SINK_ADDRESS,
+      PEG_IN_BASIS_POINTS,
+      PEG_OUT_BASIS_POINTS,
+    )
     NON_ADMIN_FEES_CONTRACT = FEES_CONTRACT.connect(NON_ADMIN)
   })
 
@@ -33,14 +39,19 @@ describe('Fees Contract Tests', () => {
       assert(ethers.BigNumber.from(PEG_OUT_BASIS_POINTS).eq(result))
     })
 
-    it('Should have set the fee sink address on deployment', async () => {
+    it('Should have set the node operators fee sink address on deployment', async () => {
       const result = await FEES_CONTRACT.NODE_OPERATORS_FEE_SINK_ADDRESS()
       assert.strictEqual(result, NODE_OPERATORS_FEE_SINK_ADDRESS)
+    })
+
+    it('Should have set the network fee sink address on deployment', async () => {
+      const result = await FEES_CONTRACT.NETWORK_FEE_SINK_ADDRESS()
+      assert.strictEqual(result, NETWORK_FEE_SINK_ADDRESS)
     })
   })
 
   describe('Admin tests', () => {
-    it('Only admin can set new fee sink address', async () => {
+    it('Only admin can set node operators fee sink address', async () => {
       const newFeeSinkAddress = getRandomAddress(ethers)
       const feeSinkAddressBefore = await FEES_CONTRACT.NODE_OPERATORS_FEE_SINK_ADDRESS()
       assert.strictEqual(feeSinkAddressBefore, NODE_OPERATORS_FEE_SINK_ADDRESS)
@@ -49,7 +60,16 @@ describe('Fees Contract Tests', () => {
       assert.strictEqual(feeSinkAddressAfter, newFeeSinkAddress)
     })
 
-    it('Non admin cannot set new fee sink address', async () => {
+    it('Only admin can set network fee sink address', async () => {
+      const newFeeSinkAddress = getRandomAddress(ethers)
+      const feeSinkAddressBefore = await FEES_CONTRACT.NETWORK_FEE_SINK_ADDRESS()
+      assert.strictEqual(feeSinkAddressBefore, NETWORK_FEE_SINK_ADDRESS)
+      await FEES_CONTRACT.setNetworkFeeSinkAddress(newFeeSinkAddress)
+      const feeSinkAddressAfter = await FEES_CONTRACT.NETWORK_FEE_SINK_ADDRESS()
+      assert.strictEqual(feeSinkAddressAfter, newFeeSinkAddress)
+    })
+
+    it('Non admin cannot set node operators fee sink address', async () => {
       const newFeeSinkAddress = getRandomAddress(ethers)
       const feeSinkAddressBefore = await FEES_CONTRACT.NODE_OPERATORS_FEE_SINK_ADDRESS()
       assert.strictEqual(feeSinkAddressBefore, NODE_OPERATORS_FEE_SINK_ADDRESS)
@@ -60,6 +80,20 @@ describe('Fees Contract Tests', () => {
         assert(_err.message.includes(NON_ADMIN_ERROR))
         const feeSinkAddressAfter = await FEES_CONTRACT.NODE_OPERATORS_FEE_SINK_ADDRESS()
         assert.strictEqual(feeSinkAddressAfter, NODE_OPERATORS_FEE_SINK_ADDRESS)
+      }
+    })
+
+    it('Non admin cannot set network fee sink address', async () => {
+      const newFeeSinkAddress = getRandomAddress(ethers)
+      const feeSinkAddressBefore = await FEES_CONTRACT.NETWORK_FEE_SINK_ADDRESS()
+      assert.strictEqual(feeSinkAddressBefore, NETWORK_FEE_SINK_ADDRESS)
+      try {
+        await NON_ADMIN_FEES_CONTRACT.setNetworkFeeSinkAddress(newFeeSinkAddress)
+        assert.fail('Should not have resolved!')
+      } catch (_err) {
+        assert(_err.message.includes(NON_ADMIN_ERROR))
+        const feeSinkAddressAfter = await FEES_CONTRACT.NETWORK_FEE_SINK_ADDRESS()
+        assert.strictEqual(feeSinkAddressAfter, NETWORK_FEE_SINK_ADDRESS)
       }
     })
 

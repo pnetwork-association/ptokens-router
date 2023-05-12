@@ -138,6 +138,15 @@ contract PTokensFees is AccessControlEnumerable {
         NODE_OPERATORS_FEE_SINK_ADDRESS = _newAddress;
     }
 
+    function setNetworkFeeSinkAddress(
+        address _newAddress
+    )
+        external
+        onlyAdmin
+    {
+        NETWORK_FEE_SINK_ADDRESS = _newAddress;
+    }
+
     function setPegInBasisPoints(
         uint256 _newBasisPoints
     )
