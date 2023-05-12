@@ -7,6 +7,7 @@ import "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
 
 contract PTokensFees is AccessControlEnumerable {
 
+    address public NETWORK_FEE_SINK_ADDRESS;
     address public NODE_OPERATORS_FEE_SINK_ADDRESS;
     uint256 public PEG_IN_BASIS_POINTS;
     uint256 public PEG_OUT_BASIS_POINTS;
@@ -28,10 +29,12 @@ contract PTokensFees is AccessControlEnumerable {
 
     constructor(
         address _nodeOperatorsFeeSinkAddress,
+        address _networkFeeSinkAddress,
         uint256 _pegInBasisPoints,
         uint256 _pegOutBasisPoints
     ) {
         NODE_OPERATORS_FEE_SINK_ADDRESS = _nodeOperatorsFeeSinkAddress;
+        NETWORK_FEE_SINK_ADDRESS = _networkFeeSinkAddress;
         PEG_IN_BASIS_POINTS = _pegInBasisPoints;
         PEG_OUT_BASIS_POINTS = _pegOutBasisPoints;
         _setupRole(ADMIN_ROLE, _msgSender());

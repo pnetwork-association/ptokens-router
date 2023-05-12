@@ -47,10 +47,10 @@ const ETH_ADDRESS_ARG = '<ethAddress>'
 const SHOW_CHAIN_IDS_CMD = 'showChainIds'
 const GET_ROUTER_STATE = 'getRouterState'
 const TOKEN_ADDRESS_ARG = '<tokenAddress>'
+const NETWORK_FEE_SINK_ARG = '<neworkFeeSink>'
 const ADD_VAULT_ADDRESS_CMD = 'addVaultAddress'
 const GET_VAULT_ADDRESS_CMD = 'getVaultAddress'
 const ADD_FEE_EXCEPTION_CMD = 'addFeeException'
-const FEE_SINK_ADDRESS_ARG = '<feeSinkAddress>'
 const DEPLOYED_ADDRESS_ARG = '<deployedAddress>'
 const GET_ENCODED_INIT_ARGS_CMD = 'encodeInitArgs'
 const VERIFY_FEE_CONTRACT_CMD = 'verifyFeeContract'
@@ -73,6 +73,7 @@ const DEPLOY_ROUTER_CONTRACT_CMD = 'deployRouterContract'
 const SET_PEG_OUT_BASIS_POINTS_CMD = 'setPegOutBasisPoints'
 const SHOW_EXISTING_CONTRACTS_CMD = 'showExistingContracts'
 const TRANSFER_FROM_SAFE_VAULT_CMD = 'transferFromSafeVault'
+const NODE_OPERATORS_FEE_SINK_ARG = '<nodeOperatorsFeeSink>'
 
 const USAGE_INFO = `
 ❍ pTokens Router Contract Command Line Interface
@@ -119,9 +120,9 @@ const USAGE_INFO = `
   ${TOOL_NAME} ${SET_PEG_OUT_BASIS_POINTS_CMD} ${DEPLOYED_ADDRESS_ARG} ${PEG_OUT_BASIS_POINTS_ARG}
   ${TOOL_NAME} ${SET_CUSTOM_PEG_IN_FEE_CMD} ${DEPLOYED_ADDRESS_ARG} ${TOKEN_ADDRESS_ARG} ${PEG_IN_BASIS_POINTS_ARG}
   ${TOOL_NAME} ${SET_CUSTOM_PEG_OUT_FEE_CMD} ${DEPLOYED_ADDRESS_ARG} ${TOKEN_ADDRESS_ARG} ${PEG_OUT_BASIS_POINTS_ARG}
-  ${TOOL_NAME} ${DEPLOY_FEE_CONTRACT_CMD} ${FEE_SINK_ADDRESS_ARG} ${PEG_IN_BASIS_POINTS_ARG} ${PEG_OUT_BASIS_POINTS_ARG}
   ${TOOL_NAME} ${TRANSFER_FROM_SAFE_VAULT_CMD} ${DEPLOYED_ADDRESS_ARG} ${TOKEN_ADDRESS_ARG} ${ETH_ADDRESS_ARG} ${AMOUNT_ARG}
-  ${TOOL_NAME} ${VERIFY_FEE_CONTRACT_CMD} ${DEPLOYED_ADDRESS_ARG} ${NETWORK_ARG} ${FEE_SINK_ADDRESS_ARG} ${PEG_IN_BASIS_POINTS_ARG} ${PEG_OUT_BASIS_POINTS_ARG}
+  ${TOOL_NAME} ${DEPLOY_FEE_CONTRACT_CMD} ${NODE_OPERATORS_FEE_SINK_ARG} ${NETWORK_FEE_SINK_ARG} ${PEG_IN_BASIS_POINTS_ARG} ${PEG_OUT_BASIS_POINTS_ARG}
+  ${TOOL_NAME} ${VERIFY_FEE_CONTRACT_CMD} ${DEPLOYED_ADDRESS_ARG} ${NETWORK_ARG} ${NODE_OPERATORS_FEE_SINK_ARG} ${PEG_IN_BASIS_POINTS_ARG} ${PEG_OUT_BASIS_POINTS_ARG}
 
 ❍ Commands:
   ${DEPLOY_FEE_CONTRACT_CMD}        ❍ Deploy the fee contract.
@@ -161,7 +162,8 @@ const USAGE_INFO = `
   ${CHAIN_ID_ARG}                ❍ A pToken metadata chain ID, as a 'bytes4' solidity type.
   ${PEG_IN_BASIS_POINTS_ARG}       ❍ The basis points used to calculate a fee during a peg in.
   ${PEG_OUT_BASIS_POINTS_ARG}      ❍ The basis points used to calculate a fee during a peg out.
-  ${FEE_SINK_ADDRESS_ARG}         ❍ The address set in the fee contract where fees are accrued.
+  ${NETWORK_FEE_SINK_ARG}          ❍ The address set in the fee contract where network fees are accrued.
+  ${NODE_OPERATORS_FEE_SINK_ARG}   ❍ The address set in the fee contract where node operator fees are accrued.
   ${NETWORK_ARG}                ❍ Network the contract is deployed on. It must exist in the 'hardhat.config.json'.
 `
 
@@ -223,7 +225,8 @@ const main = _ => {
   }
   if (CLI_ARGS[DEPLOY_FEE_CONTRACT_CMD]) {
     return deployFeeContract(
-      CLI_ARGS[FEE_SINK_ADDRESS_ARG],
+      CLI_ARGS[NODE_OPERATORS_FEE_SINK_ARG],
+      CLI_ARGS[NETWORK_FEE_SINK_ARG],
       CLI_ARGS[PEG_IN_BASIS_POINTS_ARG],
       CLI_ARGS[PEG_OUT_BASIS_POINTS_ARG]
     )
@@ -240,7 +243,7 @@ const main = _ => {
     return verifyFeeContract(
       CLI_ARGS[DEPLOYED_ADDRESS_ARG],
       CLI_ARGS[NETWORK_ARG],
-      CLI_ARGS[FEE_SINK_ADDRESS_ARG],
+      CLI_ARGS[NODE_OPERATORS_FEE_SINK_ARG],
       CLI_ARGS[PEG_IN_BASIS_POINTS_ARG],
       CLI_ARGS[PEG_OUT_BASIS_POINTS_ARG]
     )

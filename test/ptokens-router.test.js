@@ -149,6 +149,7 @@ describe('pTokens Router Contract', () => {
     describe(`Metadata Version ${_metadataVersion} Routing Tests`, () => {
       const PEG_IN_BASIS_POINTS = 10
       const PEG_OUT_BASIS_POINTS = 25
+      const NETWORK_FEE_SINK_ADDRESS = getRandomAddress(ethers)
       const NODE_OPERATORS_FEE_SINK_ADDRESS = getRandomAddress(ethers)
 
       const decodePegInCalledEvent = _event =>
@@ -230,7 +231,12 @@ describe('pTokens Router Contract', () => {
 
         it('Should take correct peg in fees', async () => {
           // Deploy a fee contract...
-          const feeContract = await deployFeesContract(NODE_OPERATORS_FEE_SINK_ADDRESS, PEG_IN_BASIS_POINTS, PEG_OUT_BASIS_POINTS)
+          const feeContract = await deployFeesContract(
+            NODE_OPERATORS_FEE_SINK_ADDRESS,
+            NETWORK_FEE_SINK_ADDRESS,
+            PEG_IN_BASIS_POINTS,
+            PEG_OUT_BASIS_POINTS,
+          )
 
           // Set the chain ID in the ptoken contract...
           const chainId = '0xdeadbeef'
@@ -340,7 +346,12 @@ describe('pTokens Router Contract', () => {
 
         it('Should take correct peg out fees', async () => {
           // Deploy a fee contract...
-          const feeContract = await deployFeesContract(NODE_OPERATORS_FEE_SINK_ADDRESS, PEG_IN_BASIS_POINTS, PEG_OUT_BASIS_POINTS)
+          const feeContract = await deployFeesContract(
+            NODE_OPERATORS_FEE_SINK_ADDRESS,
+            NETWORK_FEE_SINK_ADDRESS,
+            PEG_IN_BASIS_POINTS,
+            PEG_OUT_BASIS_POINTS,
+          )
 
           // Deploy the ptoken & vault contracts...
           const chainId = '0xdeadbeef'
