@@ -130,4 +130,41 @@ describe('Fees Setter Tests', () => {
       }
     })
   })
+
+  describe('Fixed fee setter tests', () => {
+    const FIXED_FEE = 1337
+
+    it('Admin can set fixed fee for all bridge crossings in one function call', async () => {
+      const feesBefore = await FEES_CONTRACT.getFees(TOKEN_ADDRESS)
+      feesBefore.map(_fee => {
+        assert(_fee.fixedFee.eq(0))
+        assert(_fee.basisPoints.eq(0))
+      })
+      await FEES_CONTRACT.setFixedFeesForToken(TOKEN_ADDRESS, FIXED_FEE)
+      const feesAfter = await FEES_CONTRACT.getFees(TOKEN_ADDRESS)
+      feesAfter.map(_fee => {
+        assert(_fee.fixedFee.eq(FIXED_FEE))
+        assert(_fee.basisPoints.eq(0))
+      })
+    })
+
+    it('Non admin cannot set fixed fee for all bridge crossings in one function call', async () => {
+      const feesBefore = await FEES_CONTRACT.getFees(TOKEN_ADDRESS)
+      feesBefore.map(_fee => {
+        assert(_fee.fixedFee.eq(0))
+        assert(_fee.basisPoints.eq(0))
+      })
+      try {
+        await NON_ADMIN_FEES_CONTRACT.setFixedFeesForToken(TOKEN_ADDRESS, FIXED_FEE)
+        assert.fail('Should not have succeeded!')
+      } catch(_err) {
+        assert(_err.message.includes(NON_ADMIN_ERROR))
+        const feesAfter = await FEES_CONTRACT.getFees(TOKEN_ADDRESS)
+        feesAfter.map(_fee => {
+          assert(_fee.fixedFee.eq(0))
+          assert(_fee.basisPoints.eq(0))
+        })
+      }
+    })
+  })
 })

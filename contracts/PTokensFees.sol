@@ -302,4 +302,11 @@ contract PTokensFees is PTokensRouterTypes, AccessControlEnumerable {
     function setFixedFeeMultiplier(bytes4 _metadataChainId, uint256 _amount) external onlyAdmin {
         FIXED_FEE_MULTIPLIER[_metadataChainId] = _amount;
     }
+
+    function setFixedFeesForToken(address _tokenAddress, uint128 _fee) external onlyAdmin {
+        BRIDGING_FEES[_tokenAddress][BridgeCrossing.HostToHost].fixedFee = _fee;
+        BRIDGING_FEES[_tokenAddress][BridgeCrossing.HostToNative].fixedFee = _fee;
+        BRIDGING_FEES[_tokenAddress][BridgeCrossing.NativeToHost].fixedFee = _fee;
+        BRIDGING_FEES[_tokenAddress][BridgeCrossing.NativeToNative].fixedFee = _fee;
+    }
 }
