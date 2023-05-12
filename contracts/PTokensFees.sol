@@ -2,13 +2,14 @@
 
 pragma solidity ^0.8.0;
 
+import "./PTokensRouterTypes.sol";
 import "@openzeppelin/contracts/interfaces/IERC20.sol";
 import "@openzeppelin/contracts/access/AccessControlEnumerable.sol";
 
-contract PTokensFees is AccessControlEnumerable {
-
+contract PTokensFees is PTokensRouterTypes, AccessControlEnumerable {
     address public NETWORK_FEE_SINK_ADDRESS;
     address public NODE_OPERATORS_FEE_SINK_ADDRESS;
+
     uint256 public PEG_IN_BASIS_POINTS;
     uint256 public PEG_OUT_BASIS_POINTS;
     uint256 public MAX_FEE_BASIS_POINTS = 100;
@@ -20,6 +21,18 @@ contract PTokensFees is AccessControlEnumerable {
 
     // NOTE: This allows an address to use a custom peg out fee.
     mapping(address => uint256) public CUSTOM_PEG_OUT_FEES;
+
+
+    struct Fees {
+        // NOTE: A bridge crossing fee will have a fixed compenent to cover associated network costs...
+        uint128 fixedFee;
+
+        // NOTE: And a percentage based component to fund pNetwork node operators.
+        uint128 basisPoints;
+    }
+
+    // NOTE: This maps token addresses to an enum of fees for each bridge crossing possibility.
+    mapping(address => mapping(BridgeCrossing => Fees)) BRIDGING_FEES;
 
     event LogFees(uint256 indexed feeAmount, uint256 indexed amountMinusFee);
     event LogCustomFeesSet(address indexed tokenAddress, uint256 basisPoints, bool isForPegIns);
@@ -214,5 +227,72 @@ contract PTokensFees is AccessControlEnumerable {
         returns (bool success)
     {
         return setCustomFee(_tokenAddress, _basisPoints, false);
+    }
+
+    function setHostToHostFees(address _token, Fees calldata _feesToSet) onlyAdmin public {
+        BRIDGING_FEES[_token][BridgeCrossing.HostToHost] = _feesToSet;
+    }
+
+    function setHostToNativeFees(address _token, Fees calldata _feesToSet) onlyAdmin public {
+        BRIDGING_FEES[_token][BridgeCrossing.HostToNative] = _feesToSet;
+    }
+
+    function setNativeToHostFees(address _token, Fees calldata _feesToSet) onlyAdmin public {
+        BRIDGING_FEES[_token][BridgeCrossing.NativeToHost] = _feesToSet;
+    }
+
+    function setNativeToNativeFees(address _token, Fees calldata _feesToSet) onlyAdmin public {
+        BRIDGING_FEES[_token][BridgeCrossing.NativeToNative] = _feesToSet;
+    }
+
+    function setFees(
+        address _token,
+        Fees calldata _hostToHostFees,
+        Fees calldata _hostToNativeFees,
+        Fees calldata _nativeToHostFees,
+        Fees calldata _nativeToNativeFees
+    )
+        public
+        onlyAdmin
+    {
+        setHostToHostFees(_token, _hostToHostFees);
+        setHostToNativeFees(_token, _hostToNativeFees);
+        setNativeToHostFees(_token, _nativeToHostFees);
+        setNativeToNativeFees(_token, _nativeToNativeFees);
+    }
+
+    function getHostToHostFees(address _token) public view returns (Fees memory) {
+        return BRIDGING_FEES[_token][BridgeCrossing.HostToHost];
+    }
+
+    function getHostToNativeFees(address _token) public view returns (Fees memory) {
+        return BRIDGING_FEES[_token][BridgeCrossing.HostToNative];
+    }
+
+    function getNativeToHostFees(address _token) public view returns (Fees memory) {
+        return BRIDGING_FEES[_token][BridgeCrossing.NativeToHost];
+    }
+
+    function getNativeToNativeFees(address _token) public view returns (Fees memory) {
+        return BRIDGING_FEES[_token][BridgeCrossing.NativeToNative];
+    }
+
+    function getFees(address _token)
+        public
+        view
+        returns (
+            Fees memory hostToHost,
+            Fees memory hostToNative,
+            Fees memory nativeToHost,
+            Fees memory nativeToNative
+        )
+    {
+        return (
+            getHostToHostFees(_token),
+            getHostToNativeFees(_token),
+            getNativeToHostFees(_token),
+            getNativeToNativeFees(_token)
+
+        );
     }
 }
