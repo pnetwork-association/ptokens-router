@@ -104,4 +104,30 @@ describe('Fees Setter Tests', () => {
       })
     })
   })
+
+  describe('Fee multiplier setting tests', () => {
+    const FEE_MULTIPLIER = 42
+    const CHAIN_ID = 0xffffffff
+
+    it('Admin can set fee multiplier', async () => {
+      const multiplierBefore = await FEES_CONTRACT.FIXED_FEE_MULTIPLIER(CHAIN_ID)
+      assert(multiplierBefore.eq(0))
+      await FEES_CONTRACT.setFixedFeeMultiplier(CHAIN_ID, FEE_MULTIPLIER)
+      const multiplierAfter = await FEES_CONTRACT.FIXED_FEE_MULTIPLIER(CHAIN_ID)
+      assert(multiplierAfter.eq(FEE_MULTIPLIER))
+    })
+
+    it('Non admin cannot set fee multiplier', async () => {
+      const multiplierBefore = await FEES_CONTRACT.FIXED_FEE_MULTIPLIER(CHAIN_ID)
+      assert(multiplierBefore.eq(0))
+      try {
+        await NON_ADMIN_FEES_CONTRACT.setFixedFeeMultiplier(CHAIN_ID, FEE_MULTIPLIER)
+        assert.fail('Should not have succeeded!')
+      } catch (_err) {
+        assert(_err.message.includes(NON_ADMIN_ERROR))
+        const multiplierAfter = await FEES_CONTRACT.FIXED_FEE_MULTIPLIER(CHAIN_ID)
+        assert(multiplierAfter.eq(0))
+      }
+    })
+  })
 })

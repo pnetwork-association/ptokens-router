@@ -34,6 +34,9 @@ contract PTokensFees is PTokensRouterTypes, AccessControlEnumerable {
     // NOTE: This maps token addresses to an enum of fees for each bridge crossing possibility.
     mapping(address => mapping(BridgeCrossing => Fees)) BRIDGING_FEES;
 
+    // NOTE: This maps a metadata chain ID to a fee multiplier, so that the fee can be augmented on a per-chain basis.
+    mapping(bytes4 => uint256) public FIXED_FEE_MULTIPLIER;
+
     event LogFees(uint256 indexed feeAmount, uint256 indexed amountMinusFee);
     event LogCustomFeesSet(address indexed tokenAddress, uint256 basisPoints, bool isForPegIns);
 
@@ -294,5 +297,9 @@ contract PTokensFees is PTokensRouterTypes, AccessControlEnumerable {
             getNativeToNativeFees(_token)
 
         );
+    }
+
+    function setFixedFeeMultiplier(bytes4 _metadataChainId, uint256 _amount) external onlyAdmin {
+        FIXED_FEE_MULTIPLIER[_metadataChainId] = _amount;
     }
 }
