@@ -3,6 +3,7 @@
 pragma solidity ^0.8.0;
 
 import "./interfaces/IPToken.sol";
+import "./PTokensRouterTypes.sol";
 import "./PTokensRouterStorage.sol";
 import "./PTokensMetadataDecoder.sol";
 import "./ConvertAddressToString.sol";
@@ -23,7 +24,8 @@ contract PTokensRouter is
     IERC777RecipientUpgradeable,
     AccessControlEnumerableUpgradeable,
     ConvertStringToAddress,
-    PTokensRouterStorage
+    PTokensRouterStorage,
+    PTokensRouterTypes
 {
     function initialize (
         address safeVaultAddress
@@ -209,6 +211,10 @@ contract PTokensRouter is
     )
         internal
     {
+        BridgeCrossing bridgeCrossing = _originChainId == _destinationChainId
+            ? BridgeCrossing.NativeToNative
+            : BridgeCrossing.HostToNative;
+
         uint256 amountToPegOut = FEE_CONTRACT_ADDRESS == address(0)
             ? _amount
             : IPTokensFees(FEE_CONTRACT_ADDRESS)
@@ -249,6 +255,10 @@ contract PTokensRouter is
     )
         internal
     {
+        BridgeCrossing bridgeCrossing = _originChainId == getOriginChainIdFromContract(_tokenAddress)
+            ? BridgeCrossing.NativeToHost
+            : BridgeCrossing.HostToHost;
+
         uint256 amountToPegIn = FEE_CONTRACT_ADDRESS == address(0)
             ? _amount
             : IPTokensFees(FEE_CONTRACT_ADDRESS).calculateAndTransferFee(
