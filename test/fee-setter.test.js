@@ -27,24 +27,24 @@ describe('Fees Setter Tests', () => {
   })
 
   describe('Admin fee setting tests', () => {
-    const FIXED_FEE = 1337
+    const MULTIPLIER = 1337
     const BASIS_POINTS = 666
 
     const FEES = {
-      'fixedFee': FIXED_FEE,
+      'multiplier': MULTIPLIER,
       'basisPoints': BASIS_POINTS,
     }
 
     it('Only admin can set fees', async () => {
       const feesBefore = await FEES_CONTRACT.getFees(TOKEN_ADDRESS)
       feesBefore.map(_fee => {
-        assert(_fee.fixedFee.eq(0))
+        assert(_fee.multiplier.eq(0))
         assert(_fee.basisPoints.eq(0))
       })
       await FEES_CONTRACT.setFees(TOKEN_ADDRESS, FEES, FEES, FEES, FEES)
       const feesAfter = await FEES_CONTRACT.getFees(TOKEN_ADDRESS)
       feesAfter.map(_fee => {
-        assert(_fee.fixedFee.eq(FIXED_FEE))
+        assert(_fee.multiplier.eq(MULTIPLIER))
         assert(_fee.basisPoints.eq(BASIS_POINTS))
       })
     })
@@ -52,7 +52,7 @@ describe('Fees Setter Tests', () => {
     it('Non admin cannot set fees', async () => {
       const feesBefore = await FEES_CONTRACT.getFees(TOKEN_ADDRESS)
       feesBefore.map(_fee => {
-        assert(_fee.fixedFee.eq(0))
+        assert(_fee.multiplier.eq(0))
         assert(_fee.basisPoints.eq(0))
       })
       try {
@@ -62,7 +62,7 @@ describe('Fees Setter Tests', () => {
         assert(_err.message.includes(NON_ADMIN_ERROR))
         const feesAfter = await FEES_CONTRACT.getFees(TOKEN_ADDRESS)
         feesAfter.map(_fee => {
-          assert(_fee.fixedFee.eq(0))
+          assert(_fee.multiplier.eq(0))
           assert(_fee.basisPoints.eq(0))
         })
       }
@@ -79,17 +79,17 @@ describe('Fees Setter Tests', () => {
       describe(`${_fxnNamesuffix} fee setting test`, () => {
         it(`Only admin can set ${_fxnNamesuffix}`, async () => {
           const feesBefore = await FEES_CONTRACT[`get${_fxnNamesuffix}`](TOKEN_ADDRESS)
-          assert(feesBefore.fixedFee.eq(0))
+          assert(feesBefore.multiplier.eq(0))
           assert(feesBefore.basisPoints.eq(0))
           await FEES_CONTRACT[`set${_fxnNamesuffix}`](TOKEN_ADDRESS, FEES)
           const feesAfter = await FEES_CONTRACT[`get${_fxnNamesuffix}`](TOKEN_ADDRESS)
-          assert(feesAfter.fixedFee.eq(FIXED_FEE))
+          assert(feesAfter.multiplier.eq(MULTIPLIER))
           assert(feesAfter.basisPoints.eq(BASIS_POINTS))
         })
 
         it(`Non admin cannot set ${_fxnNamesuffix}`, async () => {
           const feesBefore = await FEES_CONTRACT[`get${_fxnNamesuffix}`](TOKEN_ADDRESS)
-          assert(feesBefore.fixedFee.eq(0))
+          assert(feesBefore.multiplier.eq(0))
           assert(feesBefore.basisPoints.eq(0))
           try {
             await NON_ADMIN_FEES_CONTRACT[`set${_fxnNamesuffix}`](TOKEN_ADDRESS, FEES)
@@ -97,7 +97,7 @@ describe('Fees Setter Tests', () => {
           } catch (_err) {
             assert(_err.message.includes(NON_ADMIN_ERROR))
             const feesAfter = await FEES_CONTRACT[`get${_fxnNamesuffix}`](TOKEN_ADDRESS)
-            assert(feesAfter.fixedFee.eq(0))
+            assert(feesAfter.multiplier.eq(0))
             assert(feesAfter.basisPoints.eq(0))
           }
         })
@@ -105,45 +105,45 @@ describe('Fees Setter Tests', () => {
     })
   })
 
-  describe('Fee multiplier setting tests', () => {
-    const FEE_MULTIPLIER = 42
+  describe('Exchange rate setting tests', () => {
+    const EXCHANGE_RATE = 42
     const CHAIN_ID = 0xffffffff
 
     it('Admin can set fee multiplier', async () => {
-      const multiplierBefore = await FEES_CONTRACT.FIXED_FEE_MULTIPLIER(CHAIN_ID)
+      const multiplierBefore = await FEES_CONTRACT.USD_EXCHANGE_RATE(CHAIN_ID)
       assert(multiplierBefore.eq(0))
-      await FEES_CONTRACT.setFixedFeeMultiplier(CHAIN_ID, FEE_MULTIPLIER)
-      const multiplierAfter = await FEES_CONTRACT.FIXED_FEE_MULTIPLIER(CHAIN_ID)
-      assert(multiplierAfter.eq(FEE_MULTIPLIER))
+      await FEES_CONTRACT.setUsdExchangeRate(CHAIN_ID, EXCHANGE_RATE)
+      const multiplierAfter = await FEES_CONTRACT.USD_EXCHANGE_RATE(CHAIN_ID)
+      assert(multiplierAfter.eq(EXCHANGE_RATE))
     })
 
-    it('Non admin cannot set fee multiplier', async () => {
-      const multiplierBefore = await FEES_CONTRACT.FIXED_FEE_MULTIPLIER(CHAIN_ID)
+    it('Non admin cannot set exchange rate', async () => {
+      const multiplierBefore = await FEES_CONTRACT.USD_EXCHANGE_RATE(CHAIN_ID)
       assert(multiplierBefore.eq(0))
       try {
-        await NON_ADMIN_FEES_CONTRACT.setFixedFeeMultiplier(CHAIN_ID, FEE_MULTIPLIER)
+        await NON_ADMIN_FEES_CONTRACT.setUsdExchangeRate(CHAIN_ID, EXCHANGE_RATE)
         assert.fail('Should not have succeeded!')
       } catch (_err) {
         assert(_err.message.includes(NON_ADMIN_ERROR))
-        const multiplierAfter = await FEES_CONTRACT.FIXED_FEE_MULTIPLIER(CHAIN_ID)
+        const multiplierAfter = await FEES_CONTRACT.USD_EXCHANGE_RATE(CHAIN_ID)
         assert(multiplierAfter.eq(0))
       }
     })
   })
 
-  describe('Fixed fee setter tests', () => {
-    const FIXED_FEE = 1337
+  describe('Multipler setter tests', () => {
+    const MULTIPLIER = 1337
 
     it('Admin can set fixed fee for all bridge crossings in one function call', async () => {
       const feesBefore = await FEES_CONTRACT.getFees(TOKEN_ADDRESS)
       feesBefore.map(_fee => {
-        assert(_fee.fixedFee.eq(0))
+        assert(_fee.multiplier.eq(0))
         assert(_fee.basisPoints.eq(0))
       })
-      await FEES_CONTRACT.setFixedFeesForToken(TOKEN_ADDRESS, FIXED_FEE)
+      await FEES_CONTRACT.setMultiplierForToken(TOKEN_ADDRESS, MULTIPLIER)
       const feesAfter = await FEES_CONTRACT.getFees(TOKEN_ADDRESS)
       feesAfter.map(_fee => {
-        assert(_fee.fixedFee.eq(FIXED_FEE))
+        assert(_fee.multiplier.eq(MULTIPLIER))
         assert(_fee.basisPoints.eq(0))
       })
     })
@@ -151,17 +151,17 @@ describe('Fees Setter Tests', () => {
     it('Non admin cannot set fixed fee for all bridge crossings in one function call', async () => {
       const feesBefore = await FEES_CONTRACT.getFees(TOKEN_ADDRESS)
       feesBefore.map(_fee => {
-        assert(_fee.fixedFee.eq(0))
+        assert(_fee.multiplier.eq(0))
         assert(_fee.basisPoints.eq(0))
       })
       try {
-        await NON_ADMIN_FEES_CONTRACT.setFixedFeesForToken(TOKEN_ADDRESS, FIXED_FEE)
+        await NON_ADMIN_FEES_CONTRACT.setMultiplierForToken(TOKEN_ADDRESS, MULTIPLIER)
         assert.fail('Should not have succeeded!')
       } catch(_err) {
         assert(_err.message.includes(NON_ADMIN_ERROR))
         const feesAfter = await FEES_CONTRACT.getFees(TOKEN_ADDRESS)
         feesAfter.map(_fee => {
-          assert(_fee.fixedFee.eq(0))
+          assert(_fee.multiplier.eq(0))
           assert(_fee.basisPoints.eq(0))
         })
       }

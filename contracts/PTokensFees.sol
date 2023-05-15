@@ -24,18 +24,23 @@ contract PTokensFees is PTokensRouterTypes, AccessControlEnumerable {
 
 
     struct Fees {
-        // NOTE: A bridge crossing fee will have a fixed compenent to cover associated network costs...
-        uint128 fixedFee;
+        // NOTE: A bridge crossing will have a fixed fee calculated from the USD rate of a token
+        // multiplied by this multiplier. This way fees can be granular per bridge crossing,
+        // since some crossings incur lower blockchain network fees than others.
+        uint128 multiplier;
 
-        // NOTE: And a percentage based component to fund pNetwork node operators.
+        // NOTE: This forms the percentage based component of the fees, used to to fund pNetwork
+        // node operators.
         uint128 basisPoints;
     }
 
     // NOTE: This maps token addresses to an enum of fees for each bridge crossing possibility.
     mapping(address => mapping(BridgeCrossing => Fees)) BRIDGING_FEES;
 
-    // NOTE: This maps a metadata chain ID to a fee multiplier, so that the fee can be augmented on a per-chain basis.
-    mapping(bytes4 => uint256) public FIXED_FEE_MULTIPLIER;
+    // NOTE: This maps a metadata chain ID to a USD exchange rate. This combined with the multiplier
+    // in the Fee struct allows for very granular fee calculations that take into account ingress
+    // and egress chain network fees.
+    mapping(bytes4 => uint256) public USD_EXCHANGE_RATE;
 
     event LogFees(uint256 indexed feeAmount, uint256 indexed amountMinusFee);
     event LogCustomFeesSet(address indexed tokenAddress, uint256 basisPoints, bool isForPegIns);
@@ -299,14 +304,14 @@ contract PTokensFees is PTokensRouterTypes, AccessControlEnumerable {
         );
     }
 
-    function setFixedFeeMultiplier(bytes4 _metadataChainId, uint256 _amount) external onlyAdmin {
-        FIXED_FEE_MULTIPLIER[_metadataChainId] = _amount;
+    function setUsdExchangeRate(bytes4 _metadataChainId, uint256 _amount) external onlyAdmin {
+        USD_EXCHANGE_RATE[_metadataChainId] = _amount;
     }
 
-    function setFixedFeesForToken(address _tokenAddress, uint128 _fee) external onlyAdmin {
-        BRIDGING_FEES[_tokenAddress][BridgeCrossing.HostToHost].fixedFee = _fee;
-        BRIDGING_FEES[_tokenAddress][BridgeCrossing.HostToNative].fixedFee = _fee;
-        BRIDGING_FEES[_tokenAddress][BridgeCrossing.NativeToHost].fixedFee = _fee;
-        BRIDGING_FEES[_tokenAddress][BridgeCrossing.NativeToNative].fixedFee = _fee;
+    function setMultiplierForToken(address _tokenAddress, uint128 _fee) external onlyAdmin {
+        BRIDGING_FEES[_tokenAddress][BridgeCrossing.HostToHost].multiplier = _fee;
+        BRIDGING_FEES[_tokenAddress][BridgeCrossing.HostToNative].multiplier = _fee;
+        BRIDGING_FEES[_tokenAddress][BridgeCrossing.NativeToHost].multiplier = _fee;
+        BRIDGING_FEES[_tokenAddress][BridgeCrossing.NativeToNative].multiplier = _fee;
     }
 }
