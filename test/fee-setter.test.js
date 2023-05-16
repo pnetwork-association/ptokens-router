@@ -157,7 +157,7 @@ describe('Fees Setter Tests', () => {
       try {
         await NON_ADMIN_FEES_CONTRACT.setMultiplierForToken(TOKEN_ADDRESS, MULTIPLIER)
         assert.fail('Should not have succeeded!')
-      } catch(_err) {
+      } catch (_err) {
         assert(_err.message.includes(NON_ADMIN_ERROR))
         const feesAfter = await FEES_CONTRACT.getFees(TOKEN_ADDRESS)
         feesAfter.map(_fee => {

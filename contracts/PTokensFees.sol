@@ -198,45 +198,6 @@ contract PTokensFees is PTokensRouterTypes, AccessControlEnumerable {
         return _basisPoints;
     }
 
-    function setCustomFee(
-        address _tokenAddress,
-        uint256 _basisPoints,
-        bool _isPegIn
-    )
-        internal
-        returns (bool success)
-    {
-        if (_isPegIn) {
-            CUSTOM_PEG_IN_FEES[_tokenAddress] = _basisPoints;
-        } else {
-            CUSTOM_PEG_OUT_FEES[_tokenAddress] = _basisPoints;
-        }
-        emit LogCustomFeesSet(_tokenAddress,  _basisPoints, _isPegIn);
-        return true;
-    }
-
-    function setCustomPegInFee(
-        address _tokenAddress,
-        uint256 _basisPoints
-    )
-        public
-        onlyAdmin
-        returns (bool success)
-    {
-        return setCustomFee(_tokenAddress, _basisPoints, true);
-    }
-
-    function setCustomPegOutFee(
-        address _tokenAddress,
-        uint256 _basisPoints
-    )
-        public
-        onlyAdmin
-        returns (bool success)
-    {
-        return setCustomFee(_tokenAddress, _basisPoints, false);
-    }
-
     function setHostToHostFees(address _token, Fees calldata _feesToSet) onlyAdmin public {
         BRIDGING_FEES[_token][BridgeCrossing.HostToHost] = _feesToSet;
     }

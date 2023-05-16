@@ -8,10 +8,6 @@ const {
   setPegInBasisPoints,
   setPegOutBasisPoints,
 } = require('./lib/set-basis-points')
-const {
-  setCustomPegInFee,
-  setCustomPegOutFee,
-} = require('./lib/set-custom-fees')
 const { docopt } = require('docopt')
 const { version } = require('./package.json')
 const { getAdmins } = require('./lib/get-admins')
@@ -54,10 +50,8 @@ const GET_VAULT_ADDRESSES_CMD = 'getVaultAddresses'
 const DEPLOY_FEE_CONTRACT_CMD = 'deployFeeContract'
 const SET_FEE_CONTRACT_ADDRESS_CMD = 'setFeeAddress'
 const PEG_IN_BASIS_POINTS_ARG = '<pegInBasisPoints>'
-const SET_CUSTOM_PEG_IN_FEE_CMD = 'setCustomPegInFee'
 const REMOVE_VAULT_ADDRESS_CMD = 'removeVaultAddress'
 const PEG_OUT_BASIS_POINTS_ARG = '<pegOutBasisPoints>'
-const SET_CUSTOM_PEG_OUT_FEE_CMD = 'setCustomPegOutFee'
 const DEPLOY_SAFE_VAULT_CMD = 'deploySafeVaultContract'
 const SET_SAFE_VAULT_ADDRESS_CMD = 'setSafeVaultAddress'
 const GET_SAFE_VAULT_ADDRESS_CMD = 'getSafeVaultAddress'
@@ -110,8 +104,6 @@ const USAGE_INFO = `
   ${TOOL_NAME} ${SET_PEG_IN_BASIS_POINTS_CMD} ${DEPLOYED_ADDRESS_ARG} ${PEG_IN_BASIS_POINTS_ARG}
   ${TOOL_NAME} ${ADD_VAULT_ADDRESS_CMD} ${DEPLOYED_ADDRESS_ARG} ${CHAIN_ID_ARG} ${ETH_ADDRESS_ARG}
   ${TOOL_NAME} ${SET_PEG_OUT_BASIS_POINTS_CMD} ${DEPLOYED_ADDRESS_ARG} ${PEG_OUT_BASIS_POINTS_ARG}
-  ${TOOL_NAME} ${SET_CUSTOM_PEG_IN_FEE_CMD} ${DEPLOYED_ADDRESS_ARG} ${TOKEN_ADDRESS_ARG} ${PEG_IN_BASIS_POINTS_ARG}
-  ${TOOL_NAME} ${SET_CUSTOM_PEG_OUT_FEE_CMD} ${DEPLOYED_ADDRESS_ARG} ${TOKEN_ADDRESS_ARG} ${PEG_OUT_BASIS_POINTS_ARG}
   ${TOOL_NAME} ${TRANSFER_FROM_SAFE_VAULT_CMD} ${DEPLOYED_ADDRESS_ARG} ${TOKEN_ADDRESS_ARG} ${ETH_ADDRESS_ARG} ${AMOUNT_ARG}
   ${TOOL_NAME} ${DEPLOY_FEE_CONTRACT_CMD} ${NODE_OPERATORS_FEE_SINK_ARG} ${NETWORK_FEE_SINK_ARG} ${PEG_IN_BASIS_POINTS_ARG} ${PEG_OUT_BASIS_POINTS_ARG}
   ${TOOL_NAME} ${VERIFY_FEE_CONTRACT_CMD} ${DEPLOYED_ADDRESS_ARG} ${NETWORK_ARG} ${NODE_OPERATORS_FEE_SINK_ARG} ${PEG_IN_BASIS_POINTS_ARG} ${PEG_OUT_BASIS_POINTS_ARG}
@@ -128,10 +120,8 @@ const USAGE_INFO = `
   ${SET_SAFE_VAULT_ADDRESS_CMD}      ❍ Set the address of the safe vault in the router contract.
   ${SET_FEE_CONTRACT_ADDRESS_CMD}            ❍ Set the fee contract stored in the router to ${ETH_ADDRESS_ARG}.
   ${REMOVE_VAULT_ADDRESS_CMD}       ❍ Removess vault address with ${CHAIN_ID_ARG} from ${DEPLOYED_ADDRESS_ARG}.
-  ${SET_CUSTOM_PEG_IN_FEE_CMD}        ❍ Set custom peg in fees to ${PEG_IN_BASIS_POINTS_ARG} for ${TOKEN_ADDRESS_ARG}.
   ${GET_VAULT_ADDRESS_CMD}          ❍ Get vault address from router at ${DEPLOYED_ADDRESS_ARG} via ${CHAIN_ID_ARG}.
   ${SHOW_WALLET_DETAILS_CMD}        ❍ Decrypts the private key and shows address & balance information.
-  ${SET_CUSTOM_PEG_OUT_FEE_CMD}       ❍ Set custom peg out fees to ${PEG_OUT_BASIS_POINTS_ARG} for ${TOKEN_ADDRESS_ARG}.
   ${GET_SAFE_VAULT_ADDRESS_CMD}      ❍ Get the safe vault address set in the router at ${DEPLOYED_ADDRESS_ARG}.
   ${GET_ROUTER_STATE}           ❍ Gets all supported tokens from all vaults set in ${DEPLOYED_ADDRESS_ARG}.
   ${GET_ENCODED_INIT_ARGS_CMD}           ❍ Calculate the initializer function arguments in ABI encoded format.
@@ -195,20 +185,6 @@ const main = _ => {
     return deploySafeVaultContract()
   if (CLI_ARGS[SET_SAFE_VAULT_ADDRESS_CMD])
     return setSafeVaultContractAddress(CLI_ARGS[DEPLOYED_ADDRESS_ARG], CLI_ARGS[ETH_ADDRESS_ARG])
-  if (CLI_ARGS[SET_CUSTOM_PEG_IN_FEE_CMD]) {
-    return setCustomPegInFee(
-      CLI_ARGS[DEPLOYED_ADDRESS_ARG],
-      CLI_ARGS[TOKEN_ADDRESS_ARG],
-      CLI_ARGS[PEG_IN_BASIS_POINTS_ARG],
-    )
-  }
-  if (CLI_ARGS[SET_CUSTOM_PEG_OUT_FEE_CMD]) {
-    return setCustomPegOutFee(
-      CLI_ARGS[DEPLOYED_ADDRESS_ARG],
-      CLI_ARGS[TOKEN_ADDRESS_ARG],
-      CLI_ARGS[PEG_OUT_BASIS_POINTS_ARG],
-    )
-  }
   if (CLI_ARGS[DEPLOY_FEE_CONTRACT_CMD]) {
     return deployFeeContract(
       CLI_ARGS[NODE_OPERATORS_FEE_SINK_ARG],
