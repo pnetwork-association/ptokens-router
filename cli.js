@@ -1,13 +1,5 @@
 #!/usr/bin/env node
 /* eslint-disable max-len */
-const {
-  verifyFeeContract,
-  verifyRouterContract,
-} = require('./lib/verify-contract')
-const {
-  setPegInBasisPoints,
-  setPegOutBasisPoints,
-} = require('./lib/set-basis-points')
 const { docopt } = require('docopt')
 const { version } = require('./package.json')
 const { getAdmins } = require('./lib/get-admins')
@@ -15,9 +7,9 @@ const { showChainIds } = require('./lib/show-chain-ids')
 const { getRouterState } = require('./lib/get-router-state')
 const { addVaultAddress } = require('./lib/add-vault-address')
 const { getVaultAddress } = require('./lib/get-vault-address')
+const { verifyRouterContract } = require('./lib/verify-contract')
 const { getVaultAddresses } = require('./lib/get-vault-addresses')
 const { showWalletDetails } = require('./lib/show-wallet-details')
-const { deployFeeContract } = require('./lib/deploy-fee-contract')
 const { removeVaultAddress } = require('./lib/remove-vault-address')
 const { getEncodedInitArgs } = require('./lib/get-encoded-init-args')
 const { getSafeVaultAddress } = require('./lib/get-safe-vault-address')
@@ -39,29 +31,21 @@ const ETH_ADDRESS_ARG = '<ethAddress>'
 const SHOW_CHAIN_IDS_CMD = 'showChainIds'
 const GET_ROUTER_STATE = 'getRouterState'
 const TOKEN_ADDRESS_ARG = '<tokenAddress>'
-const NETWORK_FEE_SINK_ARG = '<neworkFeeSink>'
 const ADD_VAULT_ADDRESS_CMD = 'addVaultAddress'
 const GET_VAULT_ADDRESS_CMD = 'getVaultAddress'
 const DEPLOYED_ADDRESS_ARG = '<deployedAddress>'
 const GET_ENCODED_INIT_ARGS_CMD = 'encodeInitArgs'
-const VERIFY_FEE_CONTRACT_CMD = 'verifyFeeContract'
 const SHOW_WALLET_DETAILS_CMD = 'showWalletDetails'
 const GET_VAULT_ADDRESSES_CMD = 'getVaultAddresses'
-const DEPLOY_FEE_CONTRACT_CMD = 'deployFeeContract'
 const SET_FEE_CONTRACT_ADDRESS_CMD = 'setFeeAddress'
-const PEG_IN_BASIS_POINTS_ARG = '<pegInBasisPoints>'
 const REMOVE_VAULT_ADDRESS_CMD = 'removeVaultAddress'
-const PEG_OUT_BASIS_POINTS_ARG = '<pegOutBasisPoints>'
 const DEPLOY_SAFE_VAULT_CMD = 'deploySafeVaultContract'
 const SET_SAFE_VAULT_ADDRESS_CMD = 'setSafeVaultAddress'
 const GET_SAFE_VAULT_ADDRESS_CMD = 'getSafeVaultAddress'
 const VERIFY_ROUTER_CONTRACT_CMD = 'verifyRouterContract'
-const SET_PEG_IN_BASIS_POINTS_CMD = 'setPegInBasisPoints'
 const DEPLOY_ROUTER_CONTRACT_CMD = 'deployRouterContract'
-const SET_PEG_OUT_BASIS_POINTS_CMD = 'setPegOutBasisPoints'
 const SHOW_EXISTING_CONTRACTS_CMD = 'showExistingContracts'
 const TRANSFER_FROM_SAFE_VAULT_CMD = 'transferFromSafeVault'
-const NODE_OPERATORS_FEE_SINK_ARG = '<nodeOperatorsFeeSink>'
 
 const USAGE_INFO = `
 ❍ pTokens Router Contract Command Line Interface
@@ -101,16 +85,10 @@ const USAGE_INFO = `
   ${TOOL_NAME} ${REMOVE_VAULT_ADDRESS_CMD} ${DEPLOYED_ADDRESS_ARG} ${CHAIN_ID_ARG}
   ${TOOL_NAME} ${VERIFY_ROUTER_CONTRACT_CMD} ${NETWORK_ARG} ${DEPLOYED_ADDRESS_ARG}
   ${TOOL_NAME} ${SET_SAFE_VAULT_ADDRESS_CMD} ${DEPLOYED_ADDRESS_ARG} ${ETH_ADDRESS_ARG}
-  ${TOOL_NAME} ${SET_PEG_IN_BASIS_POINTS_CMD} ${DEPLOYED_ADDRESS_ARG} ${PEG_IN_BASIS_POINTS_ARG}
   ${TOOL_NAME} ${ADD_VAULT_ADDRESS_CMD} ${DEPLOYED_ADDRESS_ARG} ${CHAIN_ID_ARG} ${ETH_ADDRESS_ARG}
-  ${TOOL_NAME} ${SET_PEG_OUT_BASIS_POINTS_CMD} ${DEPLOYED_ADDRESS_ARG} ${PEG_OUT_BASIS_POINTS_ARG}
   ${TOOL_NAME} ${TRANSFER_FROM_SAFE_VAULT_CMD} ${DEPLOYED_ADDRESS_ARG} ${TOKEN_ADDRESS_ARG} ${ETH_ADDRESS_ARG} ${AMOUNT_ARG}
-  ${TOOL_NAME} ${DEPLOY_FEE_CONTRACT_CMD} ${NODE_OPERATORS_FEE_SINK_ARG} ${NETWORK_FEE_SINK_ARG} ${PEG_IN_BASIS_POINTS_ARG} ${PEG_OUT_BASIS_POINTS_ARG}
-  ${TOOL_NAME} ${VERIFY_FEE_CONTRACT_CMD} ${DEPLOYED_ADDRESS_ARG} ${NETWORK_ARG} ${NODE_OPERATORS_FEE_SINK_ARG} ${PEG_IN_BASIS_POINTS_ARG} ${PEG_OUT_BASIS_POINTS_ARG}
 
 ❍ Commands:
-  ${DEPLOY_FEE_CONTRACT_CMD}        ❍ Deploy the fee contract.
-  ${VERIFY_FEE_CONTRACT_CMD}        ❍ Verify the fee contract.
   ${DEPLOY_SAFE_VAULT_CMD}  ❍ Deploy the safe vault contract.
   ${DEPLOY_ROUTER_CONTRACT_CMD}     ❍ Deploy the router logic contract.
   ${VERIFY_ROUTER_CONTRACT_CMD}     ❍ Verify the router logic contract.
@@ -128,8 +106,6 @@ const USAGE_INFO = `
   ${ADD_VAULT_ADDRESS_CMD}          ❍ Adds ${ETH_ADDRESS_ARG} as vault address with ${CHAIN_ID_ARG} to ${DEPLOYED_ADDRESS_ARG}.
   ${SHOW_CHAIN_IDS_CMD}             ❍ Shows a list of the metadata chain IDs for supported pNetwork blockchains.
   ${SHOW_EXISTING_CONTRACTS_CMD}    ❍ Show list of existing pToken logic contract addresses on various blockchains.
-  ${SET_PEG_IN_BASIS_POINTS_CMD}      ❍ Sets the peg-in basis points in the fee contract @ ${DEPLOYED_ADDRESS_ARG} to ${PEG_IN_BASIS_POINTS_ARG}.
-  ${SET_PEG_OUT_BASIS_POINTS_CMD}     ❍ Sets the peg-out basis points in the fee contract @ ${DEPLOYED_ADDRESS_ARG} to ${PEG_OUT_BASIS_POINTS_ARG}.
 
 
 ❍ Options:
@@ -140,10 +116,6 @@ const USAGE_INFO = `
   ${DEPLOYED_ADDRESS_ARG}        ❍ The ETH address of the deployed pToken.
   ${AMOUNT_ARG}                 ❍ An amount of tokens, in their most granular unit.
   ${CHAIN_ID_ARG}                ❍ A pToken metadata chain ID, as a 'bytes4' solidity type.
-  ${PEG_IN_BASIS_POINTS_ARG}       ❍ The basis points used to calculate a fee during a peg in.
-  ${PEG_OUT_BASIS_POINTS_ARG}      ❍ The basis points used to calculate a fee during a peg out.
-  ${NETWORK_FEE_SINK_ARG}          ❍ The address set in the fee contract where network fees are accrued.
-  ${NODE_OPERATORS_FEE_SINK_ARG}   ❍ The address set in the fee contract where node operator fees are accrued.
   ${NETWORK_ARG}                ❍ Network the contract is deployed on. It must exist in the 'hardhat.config.json'.
 `
 
@@ -177,37 +149,16 @@ const main = _ => {
     return getRouterState(CLI_ARGS[DEPLOYED_ADDRESS_ARG])
   if (CLI_ARGS[SET_FEE_CONTRACT_ADDRESS_CMD])
     return setFeeContractAddress(CLI_ARGS[DEPLOYED_ADDRESS_ARG], CLI_ARGS[ETH_ADDRESS_ARG])
-  if (CLI_ARGS[SET_PEG_IN_BASIS_POINTS_CMD])
-    return setPegInBasisPoints(CLI_ARGS[DEPLOYED_ADDRESS_ARG], CLI_ARGS[PEG_IN_BASIS_POINTS_ARG])
-  if (CLI_ARGS[SET_PEG_OUT_BASIS_POINTS_CMD])
-    return setPegOutBasisPoints(CLI_ARGS[DEPLOYED_ADDRESS_ARG], CLI_ARGS[PEG_OUT_BASIS_POINTS_ARG])
   if (CLI_ARGS[DEPLOY_SAFE_VAULT_CMD])
     return deploySafeVaultContract()
   if (CLI_ARGS[SET_SAFE_VAULT_ADDRESS_CMD])
     return setSafeVaultContractAddress(CLI_ARGS[DEPLOYED_ADDRESS_ARG], CLI_ARGS[ETH_ADDRESS_ARG])
-  if (CLI_ARGS[DEPLOY_FEE_CONTRACT_CMD]) {
-    return deployFeeContract(
-      CLI_ARGS[NODE_OPERATORS_FEE_SINK_ARG],
-      CLI_ARGS[NETWORK_FEE_SINK_ARG],
-      CLI_ARGS[PEG_IN_BASIS_POINTS_ARG],
-      CLI_ARGS[PEG_OUT_BASIS_POINTS_ARG]
-    )
-  }
   if (CLI_ARGS[TRANSFER_FROM_SAFE_VAULT_CMD]) {
     return transferFromSafeVault(
       CLI_ARGS[DEPLOYED_ADDRESS_ARG],
       CLI_ARGS[TOKEN_ADDRESS_ARG],
       CLI_ARGS[ETH_ADDRESS_ARG],
       CLI_ARGS[AMOUNT_ARG],
-    )
-  }
-  if (CLI_ARGS[VERIFY_FEE_CONTRACT_CMD]) {
-    return verifyFeeContract(
-      CLI_ARGS[DEPLOYED_ADDRESS_ARG],
-      CLI_ARGS[NETWORK_ARG],
-      CLI_ARGS[NODE_OPERATORS_FEE_SINK_ARG],
-      CLI_ARGS[PEG_IN_BASIS_POINTS_ARG],
-      CLI_ARGS[PEG_OUT_BASIS_POINTS_ARG]
     )
   }
 }
