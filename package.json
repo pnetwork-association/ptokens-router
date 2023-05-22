@@ -1,13 +1,14 @@
 {
   "name": "ptokens-router-contract",
-  "version": "1.12.0",
+  "version": "1.13.0",
   "description": "The pTokens interim-chain router contract & CLI",
   "main": "cli.js",
   "scripts": {
     "lint": "npx eslint ./",
     "test": "ENDPOINT=http://localhost:8545 npx hardhat test",
     "tests": "ENDPOINT=http://localhost:8545 npx hardhat test",
-    "compile": "ENDPOINT=http://localhost:8545 npx hardhat compile"
+    "compile": "ENDPOINT=http://localhost:8545 npx hardhat compile",
+    "storage": "ENDPOINT=http://localhost:8545 node ./scripts/show-storage-slots"
   },
   "keywords": [
     "pTokens",
@@ -27,6 +28,7 @@
     "ethers": "^5.5.1",
     "hardhat": "^2.6.8",
     "hardhat-erc1820": "^0.1.0",
+    "hardhat-storage-layout": "^0.1.7",
     "ptokens-utils": "github:provable-things/ptokens-utils.js",
     "ramda": "^0.27.1",
     "truffle-flattener": "^1.5.0"
