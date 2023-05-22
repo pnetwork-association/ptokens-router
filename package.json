@@ -1,6 +1,6 @@
 {
   "name": "ptokens-router-contract",
-  "version": "1.12.0",
+  "version": "1.13.0",
   "description": "The pTokens interim-chain router contract & CLI",
   "main": "cli.js",
   "scripts": {
