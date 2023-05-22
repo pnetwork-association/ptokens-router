@@ -8,6 +8,7 @@ const {
 } = require('./lib/constants')
 
 require('hardhat-erc1820')
+require('hardhat-storage-layout')
 require('@nomiclabs/hardhat-waffle')
 require('@nomiclabs/hardhat-etherscan')
 require('@openzeppelin/hardhat-upgrades')
