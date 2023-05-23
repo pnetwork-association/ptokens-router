@@ -3,7 +3,6 @@
 pragma solidity ^0.8.0;
 
 import "./interfaces/IPToken.sol";
-import "./PTokensRouterTypes.sol";
 import "./PTokensRouterStorage.sol";
 import "./PTokensMetadataDecoder.sol";
 import "./ConvertAddressToString.sol";
@@ -25,7 +24,7 @@ contract PTokensRouter is
     IERC777RecipientUpgradeable,
     AccessControlEnumerableUpgradeable,
     ConvertStringToAddress,
-    PTokensRouterStorage,
+    PTokensRouterStorage
 {
     function initialize (
         address safeVaultAddress
