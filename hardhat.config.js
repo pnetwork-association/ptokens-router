@@ -17,6 +17,7 @@ const SUPPORTED_NETWORKS = [
   'rinkeby',
   'ropsten',
   'ambrosTestnet',
+  'sepolia',
 ]
 
 const checkEnvironmentVariableExists = _name => {

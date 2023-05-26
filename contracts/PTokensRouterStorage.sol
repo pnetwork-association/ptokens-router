@@ -18,4 +18,8 @@ contract PTokensRouterStorage {
     mapping(bytes4 => address) public interimVaultAddresses;
 
     address public FEE_CONTRACT_ADDRESS;
+
+    // NOTE: So that we may extend this contract with further storage in future
+    // See: https://docs.openzeppelin.com/contracts/3.x/upgradeable#storage_gaps
+    uint256[50] private __gap;
 }

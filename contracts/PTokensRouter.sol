@@ -7,6 +7,7 @@ import "./PTokensRouterStorage.sol";
 import "./PTokensMetadataDecoder.sol";
 import "./ConvertAddressToString.sol";
 import "./ConvertStringToAddress.sol";
+import "./libraries/PTokensTypes.sol";
 import "./interfaces/IPTokensFees.sol";
 import "./interfaces/IPTokensVault.sol";
 import "./interfaces/IOriginChainIdGetter.sol";
@@ -209,13 +210,17 @@ contract PTokensRouter is
     )
         internal
     {
+        PTokensTypes.BridgeCrossing bridgeCrossing = _originChainId == _destinationChainId
+            ? PTokensTypes.BridgeCrossing.NativeToNative
+            : PTokensTypes.BridgeCrossing.HostToNative;
+
         uint256 amountToPegOut = FEE_CONTRACT_ADDRESS == address(0)
             ? _amount
             : IPTokensFees(FEE_CONTRACT_ADDRESS)
                 .calculateAndTransferFee(
                     _tokenAddress,
                     _amount,
-                    false,
+                    bridgeCrossing,
                     _userData,
                     _originChainId,
                     _destinationChainId,
@@ -249,12 +254,16 @@ contract PTokensRouter is
     )
         internal
     {
+        PTokensTypes.BridgeCrossing bridgeCrossing = _originChainId == getOriginChainIdFromContract(_tokenAddress)
+            ? PTokensTypes.BridgeCrossing.NativeToHost
+            : PTokensTypes.BridgeCrossing.HostToHost;
+
         uint256 amountToPegIn = FEE_CONTRACT_ADDRESS == address(0)
             ? _amount
             : IPTokensFees(FEE_CONTRACT_ADDRESS).calculateAndTransferFee(
                 _tokenAddress,
                 _amount,
-                true,
+                bridgeCrossing,
                 _userData,
                 _originChainId,
                 _destinationChainId,

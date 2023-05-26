@@ -24,10 +24,20 @@ const deployNonUpgradeableContract = (_contractPath, _deployArgs = []) =>
     .then(_contract => Promise.all([ _contract, _contract.deployTransaction.wait() ]))
     .then(([ _contract ]) => _contract)
 
-const deployFeesContract = (_feeSinkAddress, _pegInBasisPoints, _pegOutBasisPoints) =>
+const deployFeesContract = (
+  _nodeOperatorsFeeSinkAddress,
+  _networkFeeSinkAddress,
+  _pegInBasisPoints,
+  _pegOutBasisPoints,
+) =>
   deployNonUpgradeableContract(
     'contracts/PTokensFees.sol:PTokensFees',
-    [ _feeSinkAddress, _pegInBasisPoints, _pegOutBasisPoints ],
+    [
+      _nodeOperatorsFeeSinkAddress,
+      _networkFeeSinkAddress,
+      _pegInBasisPoints,
+      _pegOutBasisPoints
+    ],
   )
 
 const getMockErc777Contract = _originChainId =>
