@@ -1,10 +1,13 @@
 #!/usr/bin/env node
 /* eslint-disable max-len */
+const {
+  getRouterState,
+  getSupportedTokens,
+} = require('./lib/get-router-state')
 const { docopt } = require('docopt')
 const { version } = require('./package.json')
 const { getAdmins } = require('./lib/get-admins')
 const { showChainIds } = require('./lib/show-chain-ids')
-const { getRouterState } = require('./lib/get-router-state')
 const { addVaultAddress } = require('./lib/add-vault-address')
 const { getVaultAddress } = require('./lib/get-vault-address')
 const { verifyRouterContract } = require('./lib/verify-contract')
@@ -38,6 +41,7 @@ const GET_ENCODED_INIT_ARGS_CMD = 'encodeInitArgs'
 const SHOW_WALLET_DETAILS_CMD = 'showWalletDetails'
 const GET_VAULT_ADDRESSES_CMD = 'getVaultAddresses'
 const SET_FEE_CONTRACT_ADDRESS_CMD = 'setFeeAddress'
+const GET_SUPPORTED_TOKENS_CMD = 'getSupportedTokens'
 const REMOVE_VAULT_ADDRESS_CMD = 'removeVaultAddress'
 const DEPLOY_SAFE_VAULT_CMD = 'deploySafeVaultContract'
 const SET_SAFE_VAULT_ADDRESS_CMD = 'setSafeVaultAddress'
@@ -79,6 +83,7 @@ const USAGE_INFO = `
   ${TOOL_NAME} ${GET_ENCODED_INIT_ARGS_CMD} ${ETH_ADDRESS_ARG}
   ${TOOL_NAME} ${GET_ROUTER_STATE} ${DEPLOYED_ADDRESS_ARG}
   ${TOOL_NAME} ${GET_VAULT_ADDRESSES_CMD} ${DEPLOYED_ADDRESS_ARG}
+  ${TOOL_NAME} ${GET_SUPPORTED_TOKENS_CMD} ${DEPLOYED_ADDRESS_ARG}
   ${TOOL_NAME} ${GET_SAFE_VAULT_ADDRESS_CMD} ${DEPLOYED_ADDRESS_ARG}
   ${TOOL_NAME} ${GET_VAULT_ADDRESS_CMD} ${DEPLOYED_ADDRESS_ARG} ${CHAIN_ID_ARG}
   ${TOOL_NAME} ${SET_FEE_CONTRACT_ADDRESS_CMD} ${DEPLOYED_ADDRESS_ARG} ${ETH_ADDRESS_ARG}
@@ -95,6 +100,7 @@ const USAGE_INFO = `
   ${TRANSFER_FROM_SAFE_VAULT_CMD}    ❍ Transfer tokens from the safe vault.
   ${GET_VAULT_ADDRESSES_CMD}        ❍ Gets all set vault addresses at ${DEPLOYED_ADDRESS_ARG}.
   ${GET_ADMINS_CMD}                ❍ Get the admins of the contract at ${DEPLOYED_ADDRESS_ARG}.
+  ${GET_SUPPORTED_TOKENS_CMD}       ❍ Get list of all supported tokens in the interim vaults
   ${SET_SAFE_VAULT_ADDRESS_CMD}      ❍ Set the address of the safe vault in the router contract.
   ${SET_FEE_CONTRACT_ADDRESS_CMD}            ❍ Set the fee contract stored in the router to ${ETH_ADDRESS_ARG}.
   ${REMOVE_VAULT_ADDRESS_CMD}       ❍ Removess vault address with ${CHAIN_ID_ARG} from ${DEPLOYED_ADDRESS_ARG}.
@@ -153,6 +159,8 @@ const main = _ => {
     return deploySafeVaultContract()
   if (CLI_ARGS[SET_SAFE_VAULT_ADDRESS_CMD])
     return setSafeVaultContractAddress(CLI_ARGS[DEPLOYED_ADDRESS_ARG], CLI_ARGS[ETH_ADDRESS_ARG])
+  if (CLI_ARGS[GET_SUPPORTED_TOKENS_CMD])
+    return getSupportedTokens(CLI_ARGS[DEPLOYED_ADDRESS_ARG])
   if (CLI_ARGS[TRANSFER_FROM_SAFE_VAULT_CMD]) {
     return transferFromSafeVault(
       CLI_ARGS[DEPLOYED_ADDRESS_ARG],
