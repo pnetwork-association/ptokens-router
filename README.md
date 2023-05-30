@@ -21,7 +21,7 @@ Then, to see the usage guide, run:
 Output:
 
 ```
-
+node cli.js --help
 ❍ pTokens Router Contract Command Line Interface
 
   Copyright Provable Things 2021
@@ -38,43 +38,61 @@ Output:
   NOTE: The tool requires a '.env' file to exist in the root of the repository with the following info:
     ENDPOINT=<rpc-endpoint-for-blochain-to-interact-with>
 
-  NOTE: To call the 'verifyRouterContract' function, the following extra environment variable is required:
+  NOTE: To call the 'verifyRouterContract' function, this extra environment variable is required:
     ETHERSCAN_API_KEY=<api-key-for-automated-contract-verifications>
 
 ❍ Usage:
   cli.js --help
   cli.js --version
+  cli.js showChainIds
   cli.js showWalletDetails
   cli.js deployRouterContract
   cli.js showExistingContracts
+  cli.js deploySafeVaultContract
   cli.js getAdmins <deployedAddress>
   cli.js encodeInitArgs <ethAddress>
+  cli.js getRouterState <deployedAddress>
+  cli.js getVaultAddresses <deployedAddress>
+  cli.js getSupportedTokens <deployedAddress>
   cli.js getSafeVaultAddress <deployedAddress>
-  cli.js verifyRouterContract <network> <deployedAddress>
   cli.js getVaultAddress <deployedAddress> <chainId>
+  cli.js setFeeAddress <deployedAddress> <ethAddress>
   cli.js removeVaultAddress <deployedAddress> <chainId>
+  cli.js verifyRouterContract <network> <deployedAddress>
+  cli.js setSafeVaultAddress <deployedAddress> <ethAddress>
   cli.js addVaultAddress <deployedAddress> <chainId> <ethAddress>
+  cli.js transferFromSafeVault <deployedAddress> <tokenAddress> <ethAddress> <amount>
 
 ❍ Commands:
-  deployRouterContract        ❍ Deploy the logic contract.
-  verifyRouterContract        ❍ Verify the logic contract.
-  getAdmins             ❍ Get the admins of the contract at <deployedAddress>.
-  removeVaultAddress    ❍ Removess vault address with <chainId> from <deployedAddress>.
-  getVaultAddress       ❍ Get vault address from router at <deployedAddress> via <chainId>.
-  showWalletDetails     ❍ Decrypts the private key and shows address & balance information.
-  getSafeVaultAddress   ❍ Get the safe vault address set in the router at <deployedAddress>.
-  encodeInitArgs        ❍ Calculate the initializer function arguments in ABI encoded format.
-  addVaultAddress       ❍ Adds <ethAddress> as vault address with <chainId> to <deployedAddress>.
-  showExistingContracts ❍ Show list of existing pToken logic contract addresses on various blockchains.
+  deploySafeVaultContract  ❍ Deploy the safe vault contract.
+  deployRouterContract     ❍ Deploy the router logic contract.
+  verifyRouterContract     ❍ Verify the router logic contract.
+  transferFromSafeVault    ❍ Transfer tokens from the safe vault.
+  getVaultAddresses        ❍ Gets all set vault addresses at <deployedAddress>.
+  getAdmins                ❍ Get the admins of the contract at <deployedAddress>.
+  getSupportedTokens       ❍ Get list of all supported tokens in the interim vaults
+  setSafeVaultAddress      ❍ Set the address of the safe vault in the router contract.
+  setFeeAddress            ❍ Set the fee contract stored in the router to <ethAddress>.
+  removeVaultAddress       ❍ Removess vault address with <chainId> from <deployedAddress>.
+  getVaultAddress          ❍ Get vault address from router at <deployedAddress> via <chainId>.
+  showWalletDetails        ❍ Decrypts the private key and shows address & balance information.
+  getSafeVaultAddress      ❍ Get the safe vault address set in the router at <deployedAddress>.
+  getRouterState           ❍ Gets all supported tokens from all vaults set in <deployedAddress>.
+  encodeInitArgs           ❍ Calculate the initializer function arguments in ABI encoded format.
+  addVaultAddress          ❍ Adds <ethAddress> as vault address with <chainId> to <deployedAddress>.
+  showChainIds             ❍ Shows a list of the metadata chain IDs for supported pNetwork blockchains.
+  showExistingContracts    ❍ Show list of existing pToken logic contract addresses on various blockchains.
 
 
 ❍ Options:
-  --help                ❍ Show this message.
-  --version             ❍ Show tool version.
-  <ethAddress>          ❍ A valid ETH address.
-  <deployedAddress>     ❍ The ETH address of the deployed pToken.
-  <chainId>             ❍ A pToken metadata chain ID, as a 'bytes4' solidity type.
-  <network>             ❍ Network the contract is deployed on. It must exist in the 'hardhat.config.json'.
+  --help                   ❍ Show this message.
+  --version                ❍ Show tool version.
+  <ethAddress>             ❍ A valid ETH address.
+  <tokenAddress>           ❍ A valid token address.
+  <deployedAddress>        ❍ The ETH address of the deployed pToken.
+  <amount>                 ❍ An amount of tokens, in their most granular unit.
+  <chainId>                ❍ A pToken metadata chain ID, as a 'bytes4' solidity type.
+  <network>                ❍ Network the contract is deployed on. It must exist in the 'hardhat.config.json'.
 
 ```
 
