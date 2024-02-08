@@ -26,6 +26,8 @@ contract PTokensRouter is
     ConvertStringToAddress,
     PTokensRouterStorage
 {
+    event Metadata(bytes, bytes4, string, bytes4, string);
+
     function initialize (
         address safeVaultAddress
     )
@@ -170,6 +172,10 @@ contract PTokensRouter is
             string memory originAddress,
             string memory destinationAddress
         ) = decodeParamsFromUserData(_userData);
+        // NOTE: We emit this event to allow v2 cores to ready it & thus pass through origin chain tx
+        // information no atter what type of bridge crossing this is.
+        emit Metadata(userData, originChainId, originAddress, destinationChainId, destinationAddress);
+
         address tokenAddress = msg.sender;
 
         // NOTE: We give the fee contract an allowance up to the total amount so that it can transfer fees...
