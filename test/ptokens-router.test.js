@@ -173,6 +173,20 @@ describe('pTokens Router Contract', () => {
           }
         })
 
+      const decodeMetadataEvent = _event =>
+        new Promise((resolve, reject) => {
+          const codec = new ethers.utils.AbiCoder()
+          try {
+            const [ userData, originChainId, originAddress, destinationChainId, destinationAddress ] = codec.decode(
+              [ 'bytes', 'bytes4', 'string', 'bytes4', 'string' ],
+              _event.data
+            )
+            return resolve({ userData, originChainId, originAddress, destinationChainId, destinationAddress })
+          } catch (_err) {
+            return reject(_err)
+          }
+        })
+
       const getEventFromReceipt = curry((_eventSignature, _receipt) =>
         new Promise((resolve, reject) => {
           const eventTopic = keccakHashString(_eventSignature)
@@ -183,8 +197,27 @@ describe('pTokens Router Contract', () => {
         })
       )
 
+      const getMetadataEventFromReceipt = getEventFromReceipt('Metadata(bytes,bytes4,string,bytes4,string)')
       const getRedeemCalledEventFromReceipt = getEventFromReceipt('RedeemCalled(uint256,bytes,string,bytes4)')
       const getPegInCalledEventFromReceipt = getEventFromReceipt('PegInCalled(uint256,address,string,bytes,bytes4)')
+
+      const assertMetadataEventFromReceipt = (
+        _receipt,
+        _userData,
+        _originChainId,
+        _originAddress,
+        _destinationChainId,
+        _destinationAddress,
+      ) =>
+        getMetadataEventFromReceipt(_receipt)
+          .then(decodeMetadataEvent)
+          .then(_eventParams => {
+            assert.strictEqual(_eventParams.userData, _userData)
+            assert.strictEqual(_eventParams.originChainId, _originChainId)
+            assert.strictEqual(_eventParams.destinationChainId, _destinationChainId)
+            assert.strictEqual(_eventParams.originAddress.toLowerCase(), _originAddress.toLowerCase())
+            assert.strictEqual(_eventParams.destinationAddress.toLowerCase(), _destinationAddress.toLowerCase())
+          })
 
       describe('Peg In Route Tests', () => {
         it('Should peg in successfully', async () => {
@@ -209,6 +242,14 @@ describe('pTokens Router Contract', () => {
           await ROUTER_CONTRACT.addVaultAddress(SAMPLE_METADATA_CHAIN_ID_2, vaultContract.address)
           const tx = await pTokenContract.send(ROUTER_CONTRACT.address, amount, metadata)
           const receipt = await tx.wait()
+          await assertMetadataEventFromReceipt(
+            receipt,
+            userData,
+            originChainId,
+            originAddress,
+            destinationChainId,
+            destinationAddress
+          )
           const event = await getPegInCalledEventFromReceipt(receipt)
           const result = await decodePegInCalledEvent(event)
           assert(BigNumber.from(amount).eq(result.amount))
@@ -252,6 +293,14 @@ describe('pTokens Router Contract', () => {
           assert(pTokenContractBalance.eq(0))
           const tx = await vaultContract.pegOut(ROUTER_CONTRACT.address, pTokenContract.address, amount, metadata)
           const receipt = await tx.wait()
+          await assertMetadataEventFromReceipt(
+            receipt,
+            userData,
+            originChainId,
+            originAddress,
+            destinationChainId,
+            destinationAddress
+          )
           const redeemEvent = await getRedeemCalledEventFromReceipt(receipt)
           const result = await decodePegOutCalledEvent(redeemEvent)
           assert(result.amount.eq(amount))
@@ -310,6 +359,14 @@ describe('pTokens Router Contract', () => {
             metadata
           )
           const receipt = await tx.wait()
+          await assertMetadataEventFromReceipt(
+            receipt,
+            userData,
+            originChainId,
+            originAddress,
+            destinationChainId,
+            destinationAddress
+          )
           const pegInCalledEvent = await getPegInCalledEventFromReceipt(receipt)
           const result = await decodePegInCalledEvent(pegInCalledEvent)
           assert(BigNumber.from(amount).eq(result.amount))
