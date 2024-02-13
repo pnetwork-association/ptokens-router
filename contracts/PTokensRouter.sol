@@ -172,8 +172,8 @@ contract PTokensRouter is
             string memory originAddress,
             string memory destinationAddress
         ) = decodeParamsFromUserData(_userData);
-        // NOTE: We emit this event to allow v2 cores to ready it & thus pass through origin chain tx
-        // information no atter what type of bridge crossing this is.
+        // NOTE: We emit this event to allow v2 cores to read it & thus pass through origin chain tx
+        // information no matter what type of bridge crossing this is.
         emit Metadata(userData, originChainId, originAddress, destinationChainId, destinationAddress);
 
         address tokenAddress = msg.sender;
